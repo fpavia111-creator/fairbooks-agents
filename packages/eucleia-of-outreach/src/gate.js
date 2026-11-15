@@ -1,10 +1,13 @@
 import { toCsv } from 'mythos-agent-core';
 
-export const DEFAULTS = Object.freeze({ max_subject_chars: 30, max_body_words: 100, days: ['Tue', 'Wed'], start_hour: 8, end_hour: 17, time_zone: 'America/Chicago' });
+export const DEFAULTS = Object.freeze({ max_subject_chars: 30, max_body_words: 100, days: ['Tue', 'Wed'], start_hour: 8, end_hour: 17, time_zone: 'America/Chicago', max_links: 3, spam_policy: 'warn', max_per_day: 50, min_gap_minutes: 5 });
 const low = (s) => String(s ?? '').trim().toLowerCase();
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function words(text) { return String(text ?? '').trim().split(/\s+/).filter(Boolean).length; }
+
+export function validTimeZone(tz) { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } }
 
 /** Weekday and hour of an instant in a time zone (default America/Chicago). */
 export function localParts(iso, timeZone = DEFAULTS.time_zone) {
@@ -15,20 +18,33 @@ export function localParts(iso, timeZone = DEFAULTS.time_zone) {
   return { weekday: p.weekday, hour: Number(p.hour), minute: Number(p.minute), date: `${p.year}-${p.month}-${p.day}`, label: `${p.weekday} ${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute} ${timeZone}` };
 }
 
-export function inWindow(iso, cfg = DEFAULTS) {
-  const lp = localParts(iso, cfg.time_zone);
+/** The configured windows: "windows" if given, else one window from days/start_hour/end_hour. */
+export function windowsOf(cfg) {
+  return cfg.windows && cfg.windows.length ? cfg.windows : [{ days: cfg.days, start_hour: cfg.start_hour, end_hour: cfg.end_hour }];
+}
+const describe = (cfg, tz) => `${windowsOf(cfg).map((w) => `${w.days.join('/')} ${w.start_hour}:00–${w.end_hour}:00`).join(', ')} ${tz}`;
+
+/**
+ * Is an instant inside the send window? Evaluated in `timeZone` (a recipient's zone when
+ * the draft gives one) or the config's zone, so daylight-saving changes are handled by
+ * the time-zone database, not by fixed offsets. Blackout dates are local dates.
+ */
+export function inWindow(iso, cfg = DEFAULTS, timeZone) {
+  const c = { ...DEFAULTS, ...cfg };
+  const tz = timeZone || c.time_zone;
+  const lp = localParts(iso, tz);
   if (!lp) return { ok: false, reason: `send_at "${iso}" is not a valid date-time` };
-  const dayOk = cfg.days.includes(lp.weekday);
-  const hourOk = lp.hour >= cfg.start_hour && lp.hour < cfg.end_hour;
-  return { ok: dayOk && hourOk, local: lp.label, reason: dayOk && hourOk ? null : `${lp.label} is outside the send window (${cfg.days.join('/')} ${cfg.start_hour}:00–${cfg.end_hour}:00 ${cfg.time_zone})` };
+  if ((c.blackout_dates || []).includes(lp.date)) return { ok: false, local: lp.label, reason: `${lp.label} is a blackout date` };
+  const ok = windowsOf(c).some((w) => w.days.includes(lp.weekday) && lp.hour >= w.start_hour && lp.hour < w.end_hour);
+  return { ok, local: lp.label, reason: ok ? null : `${lp.label} is outside the send window (${describe(c, tz)})` };
 }
 
-/** Next instant inside the window, searching in 15-minute steps up to 14 days. */
-export function nextWindow(fromIso, cfg = DEFAULTS) {
+/** Next instant inside the window, searching in 15-minute steps up to 60 days. */
+export function nextWindow(fromIso, cfg = DEFAULTS, timeZone) {
   let t = new Date(fromIso).getTime();
   if (Number.isNaN(t)) return null;
   t = Math.ceil(t / 900000) * 900000;
-  for (let i = 0; i < 14 * 96; i++, t += 900000) if (inWindow(new Date(t).toISOString(), cfg).ok) return new Date(t).toISOString();
+  for (let i = 0; i < 60 * 96; i++, t += 900000) if (inWindow(new Date(t).toISOString(), cfg, timeZone).ok) return new Date(t).toISOString();
   return null;
 }
 
@@ -49,6 +65,58 @@ function suppressed(email, set) {
   return null;
 }
 
+// ---- Content checks ----------------------------------------------------------------
+
+/** Common spam-trigger phrases. A hit is cited with where it was found; by default it is a warning. */
+export const SPAM_PHRASES = Object.freeze(['free', 'guarantee', 'guaranteed', 'no obligation', 'risk-free', 'risk free', 'act now', 'limited time', 'urgent', 'winner', 'cash', '100%', 'click here', 'buy now', 'order now', 'special promotion', 'earn money', 'make money', 'double your', 'no cost', 'lowest price', 'once in a lifetime', 'congratulations', 'dear friend', 'this is not spam', 'increase sales', 'miracle', 'no catch', 'what are you waiting for', 'exclusive deal']);
+
+const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+export function spamHits(fields, extra = []) {
+  const hits = [];
+  for (const phrase of [...SPAM_PHRASES, ...extra.map((x) => x.toLowerCase())]) {
+    const re = new RegExp(`(^|[^a-z0-9])(${reEsc(phrase)})(?![a-z0-9])`, 'gi');
+    for (const [field, text] of Object.entries(fields)) {
+      let m; while ((m = re.exec(text))) {
+        const at = m.index + m[1].length;
+        hits.push({ phrase, field, index: at, snippet: text.slice(Math.max(0, at - 20), at + phrase.length + 20).replace(/\s+/g, ' ').trim() });
+      }
+    }
+  }
+  return hits.sort((a, b) => (a.field < b.field ? -1 : a.field > b.field ? 1 : a.index - b.index));
+}
+
+/** Unfilled merge tags: {{first_name}}, {first}, [FirstName], *|FNAME|*, %FNAME%. */
+export const PLACEHOLDER = /\{\{\s*[\w.-]+\s*\}\}|\{[A-Za-z_][\w.]*\}|\[(?:first|last|company|name|title|city)[\w ]*\]|\*\|[A-Z0-9_]+\|\*|%[A-Z][A-Z0-9_]+%/gi;
+export function placeholders(text) { return [...String(text ?? '').matchAll(PLACEHOLDER)].map((m) => m[0]); }
+
+export const SHORTENERS = Object.freeze(['bit.ly', 'tinyurl.com', 't.co', 'goo.gl', 'ow.ly', 'is.gd', 'buff.ly', 'rebrand.ly', 'cutt.ly', 'shorturl.at', 'tiny.cc', 'rb.gy', 'lnkd.in']);
+const URL_RE = /\b(?:https?:\/\/|www\.)[^\s<>()"'\]]+/gi;
+export function links(text) {
+  return [...String(text ?? '').matchAll(URL_RE)].map((m) => {
+    const raw = m[0].replace(/[.,;:!?]+$/, '');
+    const url = /^www\./i.test(raw) ? 'https://' + raw : raw;
+    let host = ''; try { host = new URL(url).hostname.toLowerCase(); } catch { host = ''; }
+    return { url: raw, host, https: /^https:/i.test(url) };
+  });
+}
+const allowed = (host, list) => list.some((d) => { const x = low(d).replace(/^\*\./, ''); return host === x || host.endsWith('.' + x); });
+
+/** Link checks: shorteners and raw IPs hold; hosts outside link_allowlist hold (when set); http and too many links warn. */
+export function linkFindings(body, unsub, cfg) {
+  const fails = [], warns = [];
+  const L = [...links(body).map((l) => ({ ...l, where: 'body' })), ...links(unsub).map((l) => ({ ...l, where: 'unsubscribe' }))];
+  for (const l of L) {
+    if (!l.host) { fails.push(`link: "${l.url}" in ${l.where} could not be read`); continue; }
+    if (SHORTENERS.includes(l.host)) fails.push(`link: ${l.host} is a URL shortener (${l.where}); use the full link`);
+    else if (/^\d{1,3}(\.\d{1,3}){3}$/.test(l.host) || l.host.startsWith('[')) fails.push(`link: ${l.url} points at a raw IP address (${l.where})`);
+    else if (cfg.link_allowlist && cfg.link_allowlist.length && !allowed(l.host, cfg.link_allowlist)) fails.push(`link: ${l.host} is not on the link allowlist (${l.where})`);
+    if (!l.https && l.where === 'body') warns.push(`link: ${l.url} is not https`);
+  }
+  const bodyLinks = L.filter((l) => l.where === 'body').length;
+  if (bodyLinks > (cfg.max_links ?? DEFAULTS.max_links)) warns.push(`link: ${bodyLinks} links in the body (more than ${cfg.max_links ?? DEFAULTS.max_links})`);
+  return { fails, warns, links: L };
+}
+
 /**
  * Check one draft. Fails closed: a missing field is a failure, not a warning.
  * Footer fields follow the CAN-SPAM basics (sender identity, valid postal address,
@@ -66,17 +134,24 @@ export function checkDraft(d, { suppression = new Set(), config = {} } = {}) {
   const wc = words(body);
   if (!wc) fails.push('body: empty');
   else if (wc >= cfg.max_body_words) fails.push(`body: ${wc} words (must be under ${cfg.max_body_words})`);
+  for (const [k, v] of [['subject', subj], ['body', body]]) { const p = placeholders(v); if (p.length) fails.push(`${k}: unfilled placeholder ${[...new Set(p)].join(', ')}`); }
   const from = d.from_name || cfg.from_name, addr = d.postal_address || cfg.postal_address, unsub = d.unsubscribe || cfg.unsubscribe;
   if (!String(from || '').trim()) fails.push('footer: sender name (from_name) missing');
   if (!String(addr || '').trim()) fails.push('footer: postal address missing');
   else if (String(addr).trim().length < 10 || !/\d/.test(addr)) fails.push('footer: postal address looks incomplete');
   if (!String(unsub || '').trim()) fails.push('footer: unsubscribe link or reply-to-opt-out instruction missing');
   else if (/^http:\/\//i.test(unsub)) warns.push('footer: unsubscribe link is not https');
-  if (d.send_at) { const w = inWindow(d.send_at, cfg); if (!w.ok) fails.push(`window: ${w.reason}`); }
+  const lf = linkFindings(body, unsub, cfg); fails.push(...lf.fails); warns.push(...lf.warns);
+  const tz = String(d.time_zone || d.tz || '').trim() || null;
+  if (tz && !validTimeZone(tz)) fails.push(`window: time_zone "${tz}" is not a known IANA time zone`);
+  const winTz = tz && validTimeZone(tz) ? tz : undefined;
+  if (d.send_at) { const w = inWindow(d.send_at, cfg, winTz); if (!w.ok) fails.push(`window: ${w.reason}`); }
   else warns.push('send_at not set; check the window before sending');
   if (/[A-Z]{6,}/.test(subj) || /!!/.test(subj)) warns.push('subject: shouting or "!!" tends to read as spam');
+  const spam = spamHits({ subject: subj, body }, cfg.spam_words || []);
+  for (const h of spam) (cfg.spam_policy === 'hold' ? fails : warns).push(`spam word: "${h.phrase}" in ${h.field} at ${h.index} ("…${h.snippet}…")`);
   const footer = [String(from || '').trim(), String(addr || '').trim(), unsub ? `Unsubscribe: ${String(unsub).trim()}` : ''].filter(Boolean).join('\n');
-  return { to: d.to || '', subject: subj, words: wc, subject_chars: subj.length, ok: fails.length === 0, fails, warns, footer, next_window: d.send_at && fails.some((f) => f.startsWith('window:')) ? nextWindow(d.send_at, cfg) : null };
+  return { to: d.to || '', subject: subj, words: wc, subject_chars: subj.length, ok: fails.length === 0, fails, warns, spam_hits: spam, links: lf.links, time_zone: winTz || cfg.time_zone, footer, next_window: d.send_at && fails.some((f) => f.startsWith('window:')) && !fails.some((f) => /not a known IANA/.test(f)) ? nextWindow(d.send_at, cfg, winTz) : null };
 }
 
 export function checkBatch(drafts, opts) {

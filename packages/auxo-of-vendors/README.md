@@ -6,13 +6,19 @@ Part of [Mythos Machine](https://mythosmachines.com) domain agents: one agent, o
 
 ## What it does
 
-Give Auxo a vendor export (`vendor_id, name, legal_name, entity_type, country, tin, w9_received, w9_signed, address, email, requested_date`) and, optionally, payments (`vendor_id, date, amount, method`). For each vendor it reports:
-- a status: `ready`, `request_w9`, `fix_details` (unsigned form, missing or badly formatted TIN, LLC classification missing), `review` (form older than `refresh_years`, default 3) or `ask_preparer` (non-US vendor: a W-8 form may apply instead);
+Give Auxo a vendor export (`vendor_id, name, legal_name, entity_type, country, tin, w9_received, w9_signed, address, email, requested_date`, plus `w8_received, w8_type, w8_signed` for non-US vendors) and, optionally, payments (`vendor_id, date, amount, method`). For each vendor it reports:
+- a status: `ready`, `request_w9`, `fix_details` (unsigned form, missing TIN, TIN format or pattern problem, LLC classification missing), `review` (form older than `refresh_years`, default 3) or `ask_preparer` (non-US vendor);
 - the TIN **masked** (`•••••1234`). Full TINs are never returned, written or logged;
+- **TIN pattern rules per entity type**: EIN prefixes the IRS has never assigned (for example 00, 07–09, 17–19), SSN numbers that are never issued (area 000, 666 or 900–999, group 00, serial 0000), ITIN middle-digit ranges, placeholder numbers (all one digit, 123456789), and the wrong kind of number for the entity type (an SSN-style number for a corporation or partnership, an EIN for an individual who is not a sole proprietor). These are structure checks only: a number that passes is not verified, and Auxo does not do IRS TIN matching;
+- the expected form and a **checklist**: W-9 items for US vendors; for non-US vendors the **W-8 checklist** instead (W-8 on file, signed, still within its usual validity period — generally the end of the third calendar year after signing — and the form usually used for the entity type, W-8BEN or W-8BEN-E). Which W-8 applies is your preparer's call; Auxo only suggests the usual one;
 - payments for the year by non-card methods, with card and payment-app amounts listed separately, against a threshold. The default is 600 for payments before 2026 and 2000 for 2026. For later years the figure is inflation-adjusted, so Auxo marks it unconfirmed until you pass `threshold`;
 - a priority (high if over the threshold and not ready) and whether a first request or a reminder is due (`remind_days`, default 7).
 
-It writes `w9-tracker.csv` (blank owner and follow-up columns) and `readiness.md`, and drafts request or reminder emails marked DRAFT. The drafts ask vendors to use your secure upload link rather than email a TIN.
+It also:
+- writes a **1099 readiness summary** (`auxo_1099_readiness`): US vendors at or over the threshold and what each still lacks, non-US vendors over the threshold with their W-8 state, payees paid only by card or app, and payments with no vendor record. `1099-readiness.md` and `.csv`, TINs masked, output hash in the audit line. It is not a filing;
+- **finds duplicate vendor records** (`auxo_find_duplicates`): same TIN (compared in memory, never shown), near-identical legal names, same address or email, and pairs whose combined payments reach the threshold while each record alone does not (`split_under_threshold`). A person decides whether to merge.
+
+It writes `w9-tracker.csv` (expected form, open checklist items, blank owner and follow-up columns) and `readiness.md`, and drafts W-9 or W-8 request and reminder emails marked DRAFT. The drafts ask vendors to use your secure upload link rather than email a TIN.
 
 ## Install
 
@@ -26,13 +32,13 @@ auxo-of-vendors demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add auxo-of-vendors -- npx -y auxo-of-vendors@0.1.0 mcp --root /path/to/your/exports
+claude mcp add auxo-of-vendors -- npx -y auxo-of-vendors@0.2.0 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "auxo-of-vendors": { "command": "npx", "args": ["-y", "auxo-of-vendors@0.1.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "auxo-of-vendors": { "command": "npx", "args": ["-y", "auxo-of-vendors@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -43,12 +49,18 @@ claude mcp add auxo-of-vendors -- npx -y auxo-of-vendors@0.1.0 mcp --root /path/
 |---|---|---|
 | `auxo_check` | **allow** | Status, flags, masked TIN, payment totals and priority per vendor |
 | `auxo_write_tracker` | **allow** | Write `w9-tracker.csv` and `readiness.md` to `mythos-out/auxo` |
+| `auxo_1099_readiness` | **allow** | Write `1099-readiness.md` and `.csv`: who is over the threshold and what is missing. Not a filing |
+| `auxo_find_duplicates` | **allow** | Possible duplicate vendor records and payments split under the threshold |
 | `auxo_draft_requests` | **ask (Auto-eligible)** | Write request and reminder drafts to `mythos-out/auxo/requests` (not sent) |
 | `auxo_request_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |
 | `irs_efile` | **block** | Listed so agents see the refusal. Auxo never files with the IRS. |
 | `send_email` | **block** | Listed so agents see the refusal. Auxo never sends. |
 
 Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+
+## MCP prompt
+
+`auxo_year_end_readiness` (arguments `vendors`, `payments`, optional `year`, `threshold`) walks a host model through check, duplicates, 1099 readiness, tracker, drafts and the human send step, and tells it never to print a full TIN or give tax advice.
 
 ## Modes
 
@@ -73,8 +85,8 @@ Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments st
 ## What it is not
 
 - Not tax advice. It does not decide who is reportable, which form applies, or how card payments are treated; your preparer does.
-- Not a filing product. It never files information returns with the IRS or any agency, and it does not validate TINs with the IRS (TIN matching).
-- US W-9 focused. For non-US vendors it only says to ask your preparer.
+- Not a filing product. It never files information returns with the IRS or any agency, and it does not validate TINs with the IRS (TIN matching). Its TIN checks are structure checks: they catch numbers that cannot be right, not numbers that are wrong.
+- For non-US vendors it tracks whether a W-8 is on file, signed and recent, and suggests the usual form. It does not decide which form applies, treaty claims or withholding; your preparer does.
 - Not fully autonomous: anything risky waits for a named person.
 
 ## Data

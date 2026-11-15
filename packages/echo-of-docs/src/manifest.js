@@ -12,7 +12,7 @@ const props = {
   ignore: { type: 'array', items: str, description: 'Check ids to leave out, e.g. ["count_mismatch"]' },
   openapi: { ...str, description: 'Optional OpenAPI 3.x / Swagger 2.0 spec as JSON, relative to --root. Endpoints in the docs ("GET /notes/{id}") are compared with it' },
   require_changelog: { type: 'boolean', description: 'Flag a package with no CHANGELOG.md (an existing CHANGELOG.md is always checked against the version)' },
-  config: { ...str, description: 'Optional Echo config JSON (pack, tools, openapi, ignore, require_changelog, fail_on, baseline), checked against the echo_config schema. Arguments override it' },
+  config: { ...str, description: 'Optional Echo config JSON (pack, tools, openapi, ignore, require_changelog, fail_on, baseline), checked against the docs_config schema. Arguments override it' },
 };
 const packOrConfig = [{ required: ['pack'] }, { required: ['config'] }];
 export const CONFIG_SCHEMA = {
@@ -25,7 +25,7 @@ export const CONFIG_SCHEMA = {
 };
 const rel = (ctx, f) => relative(ctx.root, f).split('\\').join('/');
 function load(aIn, ctx) {
-  const cfg = aIn.config ? ctx.readJson(aIn.config, 'echo_config') : {};
+  const cfg = aIn.config ? ctx.readJson(aIn.config, 'docs_config') : {};
   const a = { ...cfg, ...aIn, ignore: [...new Set([...(cfg.ignore || []), ...(aIn.ignore || [])])] };
   if (!String(a.pack ?? '').trim()) throw new Error('pack is required');
   const dir = ctx.path(a.pack); if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`pack folder not found: ${a.pack}`);
@@ -125,7 +125,7 @@ export const manifest = defineManifest({
     { name: 'write_docs', kind: 'action', category: 'production_deploy', description: 'Listed so agents can see it is refused. Echo never overwrites docs in place.', inputSchema: { type: 'object', properties: {} } },
     { name: 'git_push', kind: 'action', category: 'production_deploy', description: 'Listed so agents can see it is refused. Echo never commits, pushes or publishes docs.', inputSchema: { type: 'object', properties: {} } },
   ],
-  configSchemas: { echo_config: CONFIG_SCHEMA },
+  configSchemas: { docs_config: CONFIG_SCHEMA },
   prompts: [{
     name: 'docs_drift_review', title: 'Find and fix docs drift for a package',
     description: 'Walks through checking a package\'s docs against its tool list, OpenAPI spec and package.json, drafting mechanical fixes as copies, and the one-click publish a named person approves.',

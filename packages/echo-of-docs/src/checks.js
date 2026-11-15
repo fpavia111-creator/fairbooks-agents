@@ -42,7 +42,9 @@ export function checkOpenapi(docs, spec, specLabel = 'the OpenAPI spec') {
   const findings = []; const mentioned = new Set();
   const strip = (p) => { const n = normPath(p); return base && (n === base || n.startsWith(base + '/')) ? normPath(n.slice(base.length) || '/') : n; };
   for (const d of docs) for (const e of docEndpoints(d.lines)) {
-    const p = strip(e.path); const key = `${e.method} ${p}`; const op = byKey.get(key);
+    let p = strip(e.path);
+    if (!byPath.has(p)) { const seg = p.split('/'); const hit = [...byPath.keys()].find((sp) => { const t = sp.split('/'); return t.length === seg.length && t.every((x, i) => x === seg[i] || (x === '{}' && seg[i] !== '')); }); if (hit) p = hit; }
+    const key = `${e.method} ${p}`; const op = byKey.get(key);
     if (op) {
       mentioned.add(key);
       if (op.deprecated && !/deprecat/i.test(e.text)) findings.push({ check: 'endpoint_deprecated', severity: 'advisory', file: d.rel, line: e.line, detail: `\`${e.method} ${e.path}\` is deprecated in ${specLabel}; the docs do not say so.` });

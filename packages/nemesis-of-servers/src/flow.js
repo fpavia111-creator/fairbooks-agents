@@ -111,7 +111,10 @@ export function scanFlows(text, { snippet = (s) => s.trim().slice(0, 160) } = {}
         const chain = cls.get(hit);
         const sinkName = (line.match(re) || [''])[0].replace(/\s*\($/, '');
         const flow = [...chain, { line: i + 1, code: snippet(line), label: `sink: ${sinkName}` }];
-        if (!chain.length) flow.unshift({ line: i + 1, code: snippet(line), label: `source: ${SOURCE_LABEL[hit]}` });
+        if (!chain.length) {
+          let k = i; for (let j = i; j <= st.end; j++) if (SOURCES[hit].test(lines[j] || '')) { k = j; break; }
+          flow.unshift({ line: k + 1, code: snippet(lines[k]), label: `source: ${SOURCE_LABEL[hit]}` });
+        }
         out.push({ id: f.id, line: i + 1, flow });
       }
     }

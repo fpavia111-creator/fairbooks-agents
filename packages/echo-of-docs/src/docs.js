@@ -63,6 +63,9 @@ export function check(packDir, toolsJson, { ignore = [], openapi = null, openapi
   const pj = JSON.parse(readFileSync(pjf, 'utf8'));
   const tools = toolsJson ? loadTools(toolsJson) : [];
   const names = new Set(tools.map((t) => t.name));
+  // MCP prompt names share the tool prefix but are not tools: take them from the file when it has
+  // them ({"tools":[...],"prompts":[...]}), and skip names under a heading about prompts.
+  const promptNames = new Set((toolsJson && !Array.isArray(toolsJson) ? toolsJson.prompts || toolsJson.result?.prompts || [] : []).map((p) => p && p.name).filter(Boolean));
   const prefixes = new Set(tools.map((t) => t.name.split('_')[0] + '_'));
   for (const t of tools) if (t.category) NOT_TOOLS.add(t.category);
   const looksLikeTool = (n) => !NOT_TOOLS.has(n) && n.includes('_') && [...prefixes].some((p) => n.startsWith(p));
@@ -77,7 +80,8 @@ export function check(packDir, toolsJson, { ignore = [], openapi = null, openapi
     const rel = relative(packDir, file).split(sep).join('/'); const text = readFileSync(file, 'utf8'); const d = parseDoc(text);
     parsed.push({ rel, lines: d.lines });
     // tool mentions anywhere in backticks
-    for (const [i, l] of d.lines.entries()) for (const m of l.matchAll(/`([a-z][a-z0-9_]{2,63})`/g)) { if (names.has(m[1])) mentioned.add(m[1]); else if (tools.length && looksLikeTool(m[1])) { const near = nearest(m[1]); add('tool_not_in_code', 'error', rel, i + 1, `\`${m[1]}\` is not a tool in the tool list${near ? `. Did you mean \`${near}\`?` : '.'}`, near ? { find: m[1], replace: near } : null); } }
+    const promptLine = (ln) => { const h = [...d.headings].reverse().find((x) => x.ln <= ln); return (h && /\bprompts?\b/i.test(h.text)) || /\bprompt\b/i.test(d.lines[ln - 1]); };
+    for (const [i, l] of d.lines.entries()) for (const m of l.matchAll(/`([a-z][a-z0-9_]{2,63})`/g)) { if (names.has(m[1])) mentioned.add(m[1]); else if (promptNames.has(m[1]) || promptLine(i + 1)) continue; else if (tools.length && looksLikeTool(m[1])) { const near = nearest(m[1]); add('tool_not_in_code', 'error', rel, i + 1, `\`${m[1]}\` is not a tool in the tool list${near ? `. Did you mean \`${near}\`?` : '.'}`, near ? { find: m[1], replace: near } : null); } }
     // tool tables
     for (const t of d.tables) {
       const hi = t.header.findIndex((h) => /^tool/i.test(h)); const pi = t.header.findIndex((h) => /policy|decision/i.test(h)); if (hi < 0) continue;

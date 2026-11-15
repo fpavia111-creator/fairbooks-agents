@@ -70,7 +70,7 @@ test('secret detection: known prefixes, secret-named fields, entropy; values nev
   assert.ok(SECRET_RULES.length >= 15);
   // Redaction: known formats are replaced in place, so the URL host stays readable.
   const red = JSON.stringify(redact({ url: seeds.sig, headers: [{ name: 'X-Trace', value: seeds.entropy }], k: seeds.stripe }));
-  assert.ok(!red.includes('FAKE')); assert.ok(red.includes('logs.example.com/i?<<REDACTED'));
+  assert.ok(!red.includes('FAKE')); assert.ok(red.includes('logs.example.com/i?sig=<<REDACTED'));
 });
 
 test('dependency map lists shared credentials, secrets and webhook calls without values', () => {

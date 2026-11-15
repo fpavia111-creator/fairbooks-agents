@@ -23,8 +23,8 @@ export const SECRET_RULES = Object.freeze([
   { id: 'npm_token', label: 'npm token', re: /\bnpm_[A-Za-z0-9]{36}\b/ },
   { id: 'jwt', label: 'JSON Web Token', re: /\beyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}/ },
   { id: 'private_key', label: 'private key block', re: /-----BEGIN [A-Z ]*PRIVATE KEY-----/ },
-  { id: 'url_credentials', label: 'password in a URL', re: /\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@"]+:[^\s@/"]{3,}@/i },
-  { id: 'url_signature', label: 'signed URL key (sig=, token=, api_key=, code=)', re: /[?&](?:sig|signature|token|access_token|api[_-]?key|apikey|key|code)=[A-Za-z0-9%._~+/=-]{16,}/i },
+  { id: 'url_credentials', label: 'password in a URL', re: /(\b[a-z][a-z0-9+.-]*:\/\/[^\s:/@"]+:)[^\s@/"]{3,}(@)/i, keep: true },
+  { id: 'url_signature', label: 'signed URL key (sig=, token=, api_key=, code=)', re: /([?&](?:sig|signature|token|access_token|api[_-]?key|apikey|key|code)=)[A-Za-z0-9%._~+/=-]{16,}()/i, keep: true },
 ]);
 const PREFIX_UNION = new RegExp(SECRET_RULES.map((r) => r.re.source).join('|'));
 /** Backwards-compatible union of all known-format rules. */
@@ -82,6 +82,7 @@ export function redactValue(v, keyHint = '', opts = {}) {
   const PH = '<<REDACTED: use a stored credential>>';
   if (hits[0].rule === 'secret_named_field' || hits[0].rule === 'high_entropy') return PH;
   let out = v;
-  for (const r of SECRET_RULES) out = out.replace(new RegExp(r.re.source, 'g' + r.re.flags.replace('g', '')), PH);
+  // URL rules keep the scheme, user, host and parameter name; only the secret part is replaced.
+  for (const r of SECRET_RULES) out = out.replace(new RegExp(r.re.source, 'g' + r.re.flags.replace('g', '')), r.keep ? `$1${PH}$2` : PH);
   return out;
 }

@@ -50,7 +50,7 @@ export const manifest = defineManifest({
       name: 'hesperides_write_report', kind: 'report',
       description: 'Write variance-review.md, variances.csv (blank reviewer and decision columns) and recount-sheet.csv (a blind sheet, no system quantities, for lines that need a recount or investigation) into out_dir (default mythos-out/hesperides).',
       inputSchema: { type: 'object', required: ['counts', 'on_hand'], properties: { ...props, out_dir: str } },
-      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/hesperides'); return { summary: `Variance review written for ${r.lines} line(s), with a blind recount sheet for ${r.recount_needed + r.investigate} line(s).`, files: [ctx.writeFile(out, 'variance-review.md', reportMarkdown(r)), ctx.writeFile(out, 'variances.csv', varianceCsv(r)), ctx.writeFile(out, 'recount-sheet.csv', recountCsv(r))] }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/hesperides'); const rc = recountCsv(r); const n = rc.trim().split('\n').length - 1; return { summary: `Variance review written for ${r.lines} line(s), with a blind recount sheet for ${n} line(s).`, files: [ctx.writeFile(out, 'variance-review.md', reportMarkdown(r)), ctx.writeFile(out, 'variances.csv', varianceCsv(r)), ctx.writeFile(out, 'recount-sheet.csv', rc)] }; },
     },
     {
       name: 'hesperides_count_plan', kind: 'report', title: 'Plan ABC cycle counts',

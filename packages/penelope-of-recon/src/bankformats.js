@@ -25,9 +25,9 @@ export function parseCamt053(xml) {
       if (code === 'CLBD') closing = round2(sign * amt);
     }
     for (const n of blocks(st, 'Ntry')) {
-      const amtM = /<(?:[\w.-]+:)?Amt\b[^>]*?(?:Ccy="([A-Z]{3})")?[^>]*>([^<]*)</.exec(n);
+      const amtM = /<(?:[\w.-]+:)?Amt\b([^>]*)>([^<]*)</.exec(n);
       if (!amtM) throw new Error('camt.053: an Ntry has no Amt');
-      currency = currency || amtM[1] || '';
+      currency = currency || (/Ccy="([A-Z]{3})"/.exec(amtM[1]) || [])[1] || '';
       const sign = first(n, 'CdtDbtInd') === 'DBIT' ? -1 : 1;
       const date = first(n, 'BookgDt', 'Dt') || first(n, 'BookgDt', 'DtTm').slice(0, 10) || first(n, 'ValDt', 'Dt');
       const reference = first(n, 'NtryRef') || first(n, 'NtryDtls', 'TxDtls', 'Refs', 'EndToEndId').replace(/^NOTPROVIDED$/, '');
@@ -35,7 +35,7 @@ export function parseCamt053(xml) {
       rows.push({ date, description, reference, amount: round2(sign * Number(unxml(amtM[2]))) });
     }
   }
-  return { format: 'camt.053', account_hint: mask(account), currency, opening_balance: opening, closing_balance: closing, rows };
+  return { format: 'camt053', account_hint: mask(account), currency, opening_balance: opening, closing_balance: closing, rows };
 }
 
 const yymmdd = (s) => (/^\d{6}$/.test(s) ? `20${s.slice(0, 2)}-${s.slice(2, 4)}-${s.slice(4, 6)}` : '');

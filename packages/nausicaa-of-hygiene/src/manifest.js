@@ -12,10 +12,9 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const str = { type: 'string' };
 const props = { contacts: { ...str, description: 'Contact export CSV/JSON: id, email, name, company, last_activity, bounce, consent, consent_date, consent_source, unsubscribed, status' }, suppression: { ...str, description: 'Optional suppression list CSV/JSON (email or domain column)' }, as_of: str, stale_days: { type: 'number' }, reconsent_days: { type: 'number' }, rules: { ...str, description: 'Optional hygiene rules JSON (extra role/disposable/typo lists, allowed consent sources, stale/reconsent days); validated against the hygiene_rules schema' } };
 const loadRules = (a, ctx) => (a.rules ? ctx.readJson(a.rules, 'hygiene_rules') : {});
-const run = (a, ctx, file = a.contacts, asOf = a.as_of) => {
-  const supp = a.suppression ? ctx.records(a.suppression).map((r) => String(r.email || r.domain || Object.values(r)[0] || '').trim()).filter(Boolean) : [];
-  return audit(normContacts(ctx.records(file)), { ...a, as_of: asOf, suppression: supp, rules: loadRules(a, ctx) });
-};
+const suppressionList = (a, ctx) => (a.suppression ? ctx.records(a.suppression).map((r) => String(r.email || r.domain || Object.values(r)[0] || '').trim()).filter(Boolean) : []);
+const auditOpts = (a, ctx, asOf = a.as_of) => ({ ...a, as_of: asOf, suppression: suppressionList(a, ctx), rules: loadRules(a, ctx) });
+const run = (a, ctx, file = a.contacts, asOf = a.as_of) => audit(normContacts(ctx.records(file)), auditOpts(a, ctx, asOf));
 
 export const manifest = defineManifest({
   name: 'nausicaa-of-hygiene',
@@ -58,7 +57,7 @@ export const manifest = defineManifest({
       description: 'For each group of duplicates (same canonical email): suggest a survivor and a winning value for each field, each with the rule that decided it. Opt-outs and hard bounces always carry over. Writes merge-plan.csv (blank reviewer columns) into out_dir (default mythos-out/nausicaa). Nothing is merged in your CRM.',
       inputSchema: { type: 'object', required: ['contacts'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const contacts = normContacts(ctx.records(a.contacts)); const r = audit(contacts, { ...a, rules: loadRules(a, ctx) }); const p = mergePlan(contacts, r.items);
+        const contacts = normContacts(ctx.records(a.contacts)); const r = audit(contacts, auditOpts(a, ctx)); const p = mergePlan(contacts, r.items);
         const out = ctx.outDir(a.out_dir || 'mythos-out/nausicaa');
         return { summary: `${p.groups} duplicate group(s); ${p.contacts_merged_away} record(s) would merge into a survivor.`, ...p, file: ctx.writeFile(out, 'merge-plan.csv', mergeCsv(p)) };
       },

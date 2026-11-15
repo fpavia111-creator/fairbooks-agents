@@ -108,6 +108,7 @@ export function compare(counts, onHand, txns = [], a = {}) {
         it.uom_factor = p; if (it.status !== 'investigate') it.status = 'investigate';
       }
     }
+    if (it.flags.includes('serial_qty_over_one')) it.status = 'investigate';
     if (it.flags.includes('negative_system_qty')) { it.status = 'investigate'; it.notes.push('System quantity is negative: look for unposted receipts or shipments posted before receipt.'); }
     items.push(it);
   }
