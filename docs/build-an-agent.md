@@ -31,6 +31,17 @@ Keep domain logic pure in `src/<domain>.js` and do all file access through `ctx`
 2. An `action` tool in a one-click category re-hashes the draft, refuses if it changed or still holds `[TO CONFIRM]` markers, then returns `needs_approval`.
 3. A person approves (CLI, `approvals serve` page, or a signed webhook) and the same call runs once.
 
+## 3b. Treat file contents as hostile
+
+The runtime does most of this for you (see "Untrusted data and broken arguments" in the core README). What is left to the agent:
+
+- Escape every value you put into HTML with `escapeHtml`. `htmlPage` handles the page shell, table wrapping and header scopes.
+- Build file names from data with `safeFileName(id)`. `ctx.writeFile` refuses a name that leaves its folder, but a refused write fails the whole call.
+- Write files through `ctx.writeFile`, not `writeFileSync`, so Markdown goes through `safeMarkdown` and paths are checked.
+- If you record a hash of a Markdown file, hash `safeMarkdown(text)` (it is idempotent) or the file on disk, not the text you built.
+- Give numeric arguments a `maximum`. A loop bounded by a caller's number is a hang waiting to happen.
+- Run `npm run hostile` from the repo root before you open a pull request; CI runs it too.
+
 ## 4. Fixtures, tests, evals
 
 - Fixtures are fictional: `example.com`, `.test`, `555` numbers, invalid TINs, made-up names.

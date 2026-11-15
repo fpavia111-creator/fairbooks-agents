@@ -18,6 +18,11 @@ Changed (deliberate; existing assertions updated)
 Unchanged
 - Sending stays one-click; `irs_efile` and `send_email` stay blocked. Thresholds and card/app handling are as in 0.1.0.
 
+Hardening (review pass)
+
+- Request draft file names are built with `safeFileName`, so a vendor id like `../../x` can no longer place a draft outside `requests/`.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 First release.

@@ -4,15 +4,17 @@ Date: 15 Nov 2026. Scope: `mythos-agent-core` and all 30 domain agents, 0.1.0 â†
 
 ## Verification
 
-Run on Node 22.23.4 (three packages were also run on Node 24; Node 20 was not available in the build container, so the Node 20/22/24 matrix in `.github/workflows/test.yml` still has to run before release).
+Run on Node 20.19.5, 22.23.4 and 24.11.0 in the build container (Linux). The Windows half of the matrix in `.github/workflows/test.yml` has not run; it runs when the repo is pushed.
 
-- `npm test` across all 31 workspaces: **551 pass, 0 fail** (was 249).
-- `eval` for all 30 agents: **420 of 420 cases pass** (was 194).
+- `npm test` across all 31 workspaces: **561 pass, 0 fail** on each of Node 20, 22 and 24 (was 249 in 0.1.0; 551 before the review pass).
+- `eval` for all 30 agents: **420 of 420 cases pass** on each of Node 20, 22 and 24 (was 194).
+- `npm run hostile` (new): 0 findings over 2,100 calls with 1,748 hostile values planted in the fixtures. `npm run hostile:args`: 0 findings over 20,610 calls (the same 2,100 plus 18,510 with broken arguments to all 240 tools).
 - `demo` for all 30 agents exits 0.
 - `npm pack --dry-run` for all 31 packages: no `node_modules`, `.mythos`, `mythos-out`, `.npmrc`, `.tgz` or test files.
 - Policy check: every one of the 166 tools that existed in 0.1.0 has the same kind, category and allow/ask/block decision in 0.2.0. No write or action tool is `allow`. No one-click category is `allow`. 74 tools were added.
 - Scans: no secrets (only the documented AWS example key in Nemesis fixtures), every "compliant / certified / fully autonomous / cleared for distribution" hit is a negation, fixture email domains are reserved example domains apart from two deliberate bad-address test cases in Nausicaa (`gmial.com`, `mailinator.com`).
-- Echo of Docs run over every agent with its real tool list: 29 clean, 1 false positive (Polyhymnia's changelog names the `funder_template` config schema in backticks).
+- Echo of Docs run over every agent with its real tool list: 30 clean (the one false positive, on a config schema name, is fixed in Echo).
+- Every HTML report opened in headless Chromium at desktop, phone (390 px) and dark settings: no network requests, no console errors, no sideways page scroll.
 
 ## Tools, tests and evals per agent
 
@@ -101,12 +103,44 @@ Every agent also gained an MCP workflow prompt, a CHANGELOG and, where it reads 
 - **Echo of Docs:** GitHub Action and `ci` command with SARIF and baseline, OpenAPI drift, changelog-versus-version check.
 - **Solon of Clauses:** DOCX input, defined-terms check, playbook version and hash cited in the memo, memo redline, draft-to-draft clause comparison.
 
+## Review pass (15 Nov 2026)
+
+A second pass over the finished upgrade, looking for what tests written alongside the code would miss. Method: plant hostile values in every agent's fixtures and run every eval case; call all 240 tools with one argument at a time replaced by junk; open every HTML report in a real browser.
+
+Found and fixed:
+
+| Finding | Where | Fix |
+|---|---|---|
+| 21 CSV files across 11 agents carried a cell a spreadsheet would run as a formula (a planted `=HYPERLINK(â€¦)` in 20 of them) | core `toCsv` | Formula-like cells get a leading apostrophe; numbers, phone-style values and `@handles` are left alone |
+| A planted `<script>` and `<img onerror>` came out raw in 29 Markdown files across 7 agents | core `ctx.writeFile` | Markdown output goes through `safeMarkdown` |
+| An id of `../../../x` wrote files outside their output folder (inside `--root`) | Auxo, Polyhymnia | `ctx.writeFile` refuses such names; `safeFileName` used wherever a name comes from data (6 agents) |
+| `eucleia_plan_schedule` never returned for a very large `min_gap_minutes` | Eucleia | Bounds on the three numbers and a gap search that jumps instead of stepping; same plans for valid input |
+| "Cannot read properties of null" when a required path was an empty string | Agon, Macaria, Polyhymnia, Solon | Runtime refuses an empty required argument before the handler runs |
+| `ENOENT: no such file or directory, open '/abs/path'` returned to the model | all | Plain sentence, root-relative path, absolute root removed, long messages clipped |
+| A 200,000-character argument was echoed back whole in the error | all | Clipped at about 1,200 characters |
+| A misspelled argument (`receipt` for `receipts`) was ignored and the tool ran without that input | the 208 tools without a strict schema | Refused with "did you mean"; unrelated extras now come back in `warnings` |
+| Seven HTML reports pushed a phone-width page sideways; no header cell had a `scope`; numeric headers sat left of right-aligned numbers | core `htmlPage` | Tables wrapped, scopes added, headers aligned, inline SVG scales |
+| Board pack chart said "vs bud" and a large number could run into the bars | Urania | "budget" in full; value column sized to its longest label |
+| Echo reported a config schema name as a missing tool | Echo | Tool list file may carry `config_schemas` |
+
+Added:
+
+- **Instruction-like text in results is flagged.** A result that quotes "ignore previous instructions", fake chat markup, "do not tell the user" or hidden characters from the data carries a warning for the model and an `injection_signals` field in the audit line. On clean fixtures it fires only for Nemesis, whose fixtures hold poisoned tool descriptions on purpose. It is a heuristic and is described as one.
+- **`scripts/hostile-inputs.mjs`**, `npm run hostile` and a CI step, so the check above runs on every change and on any agent made with the scaffolder.
+- 10 new tests (8 in the core, 1 each in Eucleia and Echo).
+
+Checked and found sound: nothing was read or written outside `--root` in 18,510 broken-argument calls; no planted HTML reached an `.html` or `.svg` output; no prototype pollution; policy decisions for every tool are unchanged.
+
+Not changed, on purpose: the data in tool results is returned as it is in the files (the warning sits beside it), and no one-click category, cap or approval rule was touched.
+
 ## Not done
+
+- **Windows** has not run the suite (the CI matrix covers it once the repo is on GitHub).
+- **The injection check is a short pattern list.** It will miss paraphrased or non-English attempts. The protection that does not depend on it is that go-live, money, access, deletion, binding sends and deploys need a named person.
 
 - **Live connectors (A3)** and every per-agent item that depends on them: NetSuite saved search, Okta/Entra, Google Workspace/Slack/GitHub seats, ERP, HRIS, Stripe read-only.
 - **Shared fixture generator (A7)** and the 10k-row performance tests.
 - **Pro licence hook (A9):** waits for a pricing decision.
-- **Agon dashboard headless-Chrome zero-request check:** verified statically instead.
 - **Competitor research was shallow:** searches returned result titles, not page contents, so feature choices rest on general knowledge of the named products rather than on pages read during this work.
 - **The website** (cards, JSON-LD) was not touched; it is not in this repo.
 
@@ -115,7 +149,7 @@ Every agent also gained an MCP workflow prompt, a CHANGELOG and, where it reads 
 1. **Auxo demo shows no "ready" vendor.** The new TIN rules correctly flag the fictional placeholder TINs. Either accept it or allow a small set of documented placeholder TINs to pass in fixtures.
 2. **Aeolus does live DNS lookups by default** when no records file is given, including in review mode. This is unchanged from 0.1.0 but sits awkwardly with "network is opt-in". Recommend making it opt-in in 0.2.1.
 3. **Nemesis ships a small advisory snapshot naming real public CVEs.** Someone must own refreshing it, or drop it.
-4. **Stricter inputs are a behaviour change.** Several tools now reject unknown arguments and configs reject unknown keys. Hosts that passed extras get "invalid arguments".
+4. **Stricter inputs are a behaviour change.** Configs reject unknown keys. For tool arguments the rule is now the same everywhere: a near miss of a real argument name is refused with the right name; an unrelated extra is refused by the tools that declare `additionalProperties: false` (32 of 240) and ignored with a warning by the rest. Say if you want all 240 strict.
 5. **Default changes:** Augeas threshold is 0.92 on a new score (was 0.88 on a different one); Eirene with `public_keys` requires every log in the call to be signed; several CSV outputs gained columns (listed in each CHANGELOG under changed behaviour).
 6. **Approvals that can go on Auto:** `tiresias_approve_baseline` and `penelope_accept_rule` are plain `ask`. Say if they should never be Auto.
 7. **`britomartis-capture`** makes real requests unless run with `--offline`. Confirm it should ship.
@@ -123,4 +157,4 @@ Every agent also gained an MCP workflow prompt, a CHANGELOG and, where it reads 
 
 ## Before release
 
-Run the CI matrix on Node 20/22/24, re-run evals, `npm pack --dry-run`, a secret scan, then publish core first and agents after (they depend on `mythos-agent-core ^0.2.0`). Update the site cards after publish.
+Run the CI matrix on Node 20/22/24 on Linux and Windows, re-run evals and `npm run hostile`, `npm pack --dry-run`, a secret scan, then publish core first and agents after (they depend on `mythos-agent-core ^0.2.0`). Update the site cards after publish.

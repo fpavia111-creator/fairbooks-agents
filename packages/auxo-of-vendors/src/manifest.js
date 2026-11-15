@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, safeMarkdown, safeFileName } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { check, trackerCsv, readinessMarkdown, requestDraft, slug, readiness1099, readiness1099Markdown, readinessCsv, findDuplicates } from './vendors.js';
@@ -35,7 +35,7 @@ export const manifest = defineManifest({
       name: 'auxo_write_tracker', kind: 'report',
       description: 'Write w9-tracker.csv (blank owner and follow-up columns) and readiness.md into out_dir (default mythos-out/auxo). TINs stay masked.',
       inputSchema: { type: 'object', required: ['vendors'], properties: { ...props, out_dir: str } },
-      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/auxo'); const t = trackerCsv(r), m = readinessMarkdown(r); return { summary: `Tracker written for ${r.vendors} vendor(s).`, files: [ctx.writeFile(out, 'w9-tracker.csv', t), ctx.writeFile(out, 'readiness.md', m)], output_sha256: sha256(`w9-tracker.csv:${sha256(t)}\nreadiness.md:${sha256(m)}`) }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/auxo'); const t = trackerCsv(r), m = safeMarkdown(readinessMarkdown(r)); return { summary: `Tracker written for ${r.vendors} vendor(s).`, files: [ctx.writeFile(out, 'w9-tracker.csv', t), ctx.writeFile(out, 'readiness.md', m)], output_sha256: sha256(`w9-tracker.csv:${sha256(t)}\nreadiness.md:${sha256(m)}`) }; },
     },
     {
       name: 'auxo_1099_readiness', kind: 'report', title: '1099 readiness summary',
@@ -44,7 +44,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const vendors = ctx.records(a.vendors); const payments = ctx.records(a.payments);
         const x = readiness1099(check(vendors, payments, a), null, payments);
-        const md = readiness1099Markdown(x); const csv = readinessCsv(x); const out = ctx.outDir(a.out_dir || 'mythos-out/auxo');
+        const md = safeMarkdown(readiness1099Markdown(x)); const csv = readinessCsv(x); const out = ctx.outDir(a.out_dir || 'mythos-out/auxo');
         const files = [ctx.writeFile(out, '1099-readiness.md', md), ctx.writeFile(out, '1099-readiness.csv', csv)];
         return { summary: `${x.year}: ${x.over_threshold} US vendor(s) at or over ${x.threshold}: ${x.ready} ready, ${x.missing_data} missing data; ${x.foreign_over_threshold.length} non-US; ${x.payments_without_vendor_record.length} payee(s) with no vendor record. Not a filing; nothing was sent to the IRS.`, ...x, files, output_sha256: sha256(`1099-readiness.md:${sha256(md)}\n1099-readiness.csv:${sha256(csv)}`) };
       },
@@ -65,7 +65,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/auxo'), 'requests'); mkdirSync(dir, { recursive: true });
         const todo = r.items.filter((i) => ['first_request', 'reminder'].includes(i.request));
-        const files = todo.map((i) => ctx.writeFile(dir, `${i.vendor_id}-${slug(i.name)}.md`, requestDraft(i)));
+        const files = todo.map((i) => ctx.writeFile(dir, `${safeFileName(i.vendor_id)}-${slug(i.name)}.md`, requestDraft(i)));
         return { summary: `${files.length} draft(s) written (${todo.filter((i) => i.request === 'reminder').length} reminder(s)); ${r.items.filter((i) => i.request === 'requested_recently').length} skipped as requested recently. Nothing was sent.`, files };
       },
     },

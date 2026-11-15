@@ -11,6 +11,11 @@
 - MCP prompt `drift_review`; tool titles; stricter input schemas (non-empty paths, `keys` must be an array).
 - Unchanged: applying a fix stays one-click (`production_deploy`) even in Auto; `production_push_config` stays blocked.
 
+Hardening (review pass)
+
+- Report hash is taken from the text as written.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 - First release: config and schema diff with risk levels, timeline, report, revert plan, one-click fix request.

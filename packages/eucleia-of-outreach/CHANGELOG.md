@@ -16,3 +16,9 @@
 
 ### Unchanged
 - Releasing a batch is `binding_send`: one named human click, even in Auto. Sending stays blocked. All existing tests and evals pass unchanged.
+
+### Hardening (review pass)
+
+- `eucleia_plan_schedule` refuses `min_gap_minutes` over 1440, `max_per_day` over 100000 and `horizon_days` over 366, and no longer steps minute by minute through a gap. Before this a very large gap never returned. Plans for valid inputs are unchanged (96 configurations compared).
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

@@ -1,4 +1,4 @@
-import { defineManifest, sha256 } from 'mythos-agent-core';
+import { defineManifest, sha256, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { loadSnapshot, diff, timeline, revertPlan, reportMarkdown } from './drift.js';
@@ -51,7 +51,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['before', 'after'], properties: { before, after, ignore, approved, out_dir: str, title: str } },
       handler: async (a, ctx) => {
         const { b, af } = snaps(a, ctx); const d = diff(b, af, opts(a, ctx)); const plan = revertPlan(d, a.before); const out = ctx.outDir(a.out_dir || DEFAULT_OUT);
-        const md = reportMarkdown(d, a.title || `Drift: ${a.before} → ${a.after}`, new Date().toISOString());
+        const md = safeMarkdown(reportMarkdown(d, a.title || `Drift: ${a.before} → ${a.after}`, new Date().toISOString()));
         const sarif = JSON.stringify(driftSarif(d, { afterPath: a.after, afterText: af.text, version: pkg.version }), null, 2);
         const files = [ctx.writeFile(out, 'drift-report.md', md), ctx.writeFile(out, 'drift.json', JSON.stringify(d, null, 2)), ctx.writeFile(out, 'drift.sarif', sarif), ctx.writeFile(out, 'revert-plan.json', JSON.stringify({ proposal: true, back_to: a.before, steps: plan }, null, 2))];
         return { summary: `Drift report written: ${counts(d)}; revert plan with ${plan.length} step(s) (proposal only).`, files, plan_sha256: sha256(JSON.stringify(plan)), sarif_sha256: sha256(sarif), output_sha256: sha256(md) };

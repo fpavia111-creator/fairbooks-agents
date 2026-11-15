@@ -18,3 +18,8 @@
 - Default `threshold` is now 0.92 on the new name score (was 0.88 on character-bigram Dice). The `dice` and `normName` exports are kept.
 - Suggested survivor order can be set in the rules file.
 - All existing tests and evals pass unchanged.
+
+### Hardening (review pass)
+
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

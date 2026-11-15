@@ -12,3 +12,9 @@
 - Receipt amount checks now also read decimal-comma and "amount due"/"grand total" receipts. Results for the 0.1.0 fixtures are unchanged.
 - Line results carry two new fields, `days` and `location`.
 - Unchanged: reimbursing (`move_money`) is one human click even in Auto; paying and ledger posting stay blocked.
+
+Hardening (review pass)
+
+- A misspelled argument such as `receipt` for `receipts` is now refused with the right name instead of running without receipt checks.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

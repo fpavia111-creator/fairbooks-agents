@@ -13,3 +13,9 @@
 - Status rows for offboarding task ids (`remove-…`, `return-…`, template offboarding tasks) are no longer reported as unknown. Results for the 0.1.0 fixtures are otherwise unchanged.
 - Not in this version: the read-only HRIS connector (needs the shared connector work).
 - Unchanged: granting (`go_live`) and removing (`revoke_access`) access are one human click even in Auto; identity-provider writes and email stay blocked.
+
+Hardening (review pass)
+
+- Access-request and offboarding draft file names are built with `safeFileName` from the person and task ids.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

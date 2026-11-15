@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, canonical } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, canonical, safeMarkdown, safeFileName } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, writeFileSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { variances, varianceTable, draftCommentary, checkClaims, citationsCsv, comparePrior } from './flux.js';
@@ -83,7 +83,7 @@ export const manifest = defineManifest({
         L.push(`## ${docs.length + 2}. Figure sources`, '', ...v.map((x) => `- [${x.id}] ${x.metric}: ${x.source || '(no source given)'}`), '', `## ${docs.length + 3}. Claims check`, '');
         if (!c.issues) L.push('Every sentence with a number cites a figure and matches it.', '');
         for (const x of c.claims.filter((y) => y.status !== 'ok')) L.push(`- **${x.status}** — ${x.doc}:${x.line}: "${x.text}"${x.unmatched.length ? ` (no match for ${x.unmatched.join(', ')})` : ''}${x.unknown_refs.length ? ` (unknown ${x.unknown_refs.join(', ')})` : ''}`);
-        const pack = L.join('\n') + '\n'; const packFile = ctx.writeFile(out, 'board-pack.md', pack);
+        const pack = safeMarkdown(L.join('\n') + '\n'); const packFile = ctx.writeFile(out, 'board-pack.md', pack);
         const man = { title, period: a.period || '', pack: relative(ctx.root, packFile).split('\\').join('/'), pack_sha256: sha256(pack), figures: a.figures, figures_sha256: l.locked_sha256, docs: docs.map((d) => ({ path: d.path, sha256: sha256(d.text) })), claims_checked: c.claims_checked, claims_issues: c.issues, open_markers: (pack.match(/\[TO WRITE[^\]]*\]/g) || []).length };
         const files = [packFile, ctx.writeFile(out, 'citations.csv', citationsCsv(c))];
         if (a.html) {
@@ -104,8 +104,8 @@ export const manifest = defineManifest({
         const l = requireLock(a, ctx); const v = variances(ctx.records(a.figures), a);
         const charts = buildCharts(v, a.charts, `${a.figures} (locked, sha256 ${l.locked_sha256.slice(0, 12)}…)`, a.ids);
         const out = ctx.outDir(join(OUT(a), 'charts'));
-        const files = charts.map((c) => ctx.writeFile(out, `${c.chart}.svg`, c.svg));
-        const index = { figures: a.figures, figures_sha256: l.locked_sha256, charts: charts.map((c) => ({ chart: c.chart, file: `${c.chart}.svg`, sha256: sha256(c.svg), points: c.points })) };
+        const files = charts.map((c) => ctx.writeFile(out, `${safeFileName(c.chart)}.svg`, c.svg));
+        const index = { figures: a.figures, figures_sha256: l.locked_sha256, charts: charts.map((c) => ({ chart: c.chart, file: `${safeFileName(c.chart)}.svg`, sha256: sha256(c.svg), points: c.points })) };
         files.push(ctx.writeFile(out, 'charts.json', JSON.stringify(index, null, 2) + '\n'));
         const points = charts.reduce((n, c) => n + c.points.length, 0);
         return { summary: `${charts.length} chart(s), ${points} point(s), each traced to a figure id.`, charts: charts.map((c) => ({ chart: c.chart, points: c.points })), files, output_sha256: sha256(canonical(index)) };

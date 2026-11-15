@@ -13,3 +13,9 @@ Not legal advice. Solon checks text against your own playbook and does not repla
 - `solon_write_report` returns `output_sha256` (recorded in the audit log).
 - MCP prompt `contract_playbook_review`.
 - Unchanged: `e_sign` and `send_email` stay blocked; `solon_request_send` stays one click after a named reviewer, in every mode.
+
+Hardening (review pass)
+
+- `draft_sha256` is the hash of the memo as written. A blank `reviewed_by` on `solon_request_send` is refused before anyone is asked to approve.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

@@ -17,6 +17,8 @@ Files over 400 rows use blocking (only records that share a name-word prefix, ta
 
 Before a merge, **`augeas_merge_preview`** shows every column: each record's value, the winner, which record it came from, the survivorship rule and any conflict. Merges are applied **one at a time to a copy** (`<name>.merged.csv`, with a `merged_into` column; with `fill_survivor: true` the previewed winners are written into the survivor row). Every merge appends to `<name>.merged.csv.undo.jsonl`, and **`augeas_undo_merge`** restores the copy byte-for-byte to its state before the last merge (it checks hashes and refuses if the copy was edited since). The input file is never modified. Bank and payment columns are never changed by a merge.
 
+CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
+
 ### Survivorship rules file
 
 Optional `augeas-rules` JSON (unknown keys, wrong types and unknown rule names are refused with a JSON-pointer error; check one with `augeas-of-masters validate-config augeas-rules <file>`):

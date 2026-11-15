@@ -11,6 +11,10 @@
 - MCP prompt `ap_exception_review`; tool titles; stricter input schemas (tolerances must be numbers >= 0, posting fields non-empty).
 - Unchanged: posting stays one-click (`move_money`) even in Auto; `erp_post_invoice` stays blocked. No ERP connector yet (needs the shared connector work).
 
+Hardening (review pass)
+
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 - First release: three-way match, explanations, worklist, one-click posting request.

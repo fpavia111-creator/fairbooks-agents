@@ -91,3 +91,29 @@ export function maskValue(v, keep = 4) {
   if (s.length <= keep) return '•'.repeat(s.length);
   return '•'.repeat(Math.min(8, s.length - keep)) + s.slice(-keep);
 }
+
+// ---------------------------------------------------------------------------
+// Text in data that reads like instructions to an AI
+// ---------------------------------------------------------------------------
+
+const INJECTION_SIGNALS = [
+  ['override_instructions', /\b(ignore|disregard|forget|override)\b[^.\n]{0,40}\b(previous|prior|above|earlier|all|your|system)\b[^.\n]{0,30}\b(instructions?|prompts?|rules|guidelines|directions)\b/i],
+  ['role_change', /\byou are now\b|\bact as (an? |the )?(system|admin|administrator|developer)\b|\bnew instructions?\s*:/i],
+  ['system_prompt', /\b(system prompt|developer message)\b/i],
+  ['hide_from_person', /\b(do not|don't|never) (tell|inform|alert|notify|show|mention (this |it )?to) the (user|human|operator|reviewer|person)\b/i],
+  ['chat_markup', /<\/?(system|assistant|tool_result|function_calls|antml:[a-z_]+)\b|<\|im_(start|end)\|>|\[\/?INST\]/i],
+  ['tool_steering', /\b(call|invoke|run|use) (the )?(tool|function) [a-z_]{3,}|\bapprove (this|the) (request|payment|refund|transfer|change)\b[^.\n]{0,20}\b(automatically|without (asking|review|approval))/i],
+  ['hidden_characters', /[‪-‮⁦-⁩​]|[\u{E0000}-\u{E007F}]/u],
+];
+
+/**
+ * Names of the signals found in a string: phrases that try to redirect an AI
+ * model ("ignore previous instructions", fake chat markup, "do not tell the
+ * user"), and invisible or direction-flipping characters used to hide them.
+ * A heuristic with a short, high-precision list: it catches the common shapes
+ * and misses others, so it is a warning light, not a filter.
+ */
+export function injectionSignals(text) {
+  const s = String(text ?? '');
+  return INJECTION_SIGNALS.filter(([, re]) => re.test(s)).map(([name]) => name);
+}

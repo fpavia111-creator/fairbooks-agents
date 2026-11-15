@@ -13,6 +13,11 @@ Added
 Unchanged
 - `polyhymnia_review` open items and every 0.1.0 test and eval. Submitting stays one-click; `funder_portal_submit` stays blocked.
 
+Hardening (review pass)
+
+- Packet folders and evidence zips are named with `safeFileName(grant_id)`. Before this a grant id of `../../../x` wrote the packet outside `packets/` (still inside `--root`).
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 First release.

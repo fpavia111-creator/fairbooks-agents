@@ -66,6 +66,8 @@ export function check(packDir, toolsJson, { ignore = [], openapi = null, openapi
   // MCP prompt names share the tool prefix but are not tools: take them from the file when it has
   // them ({"tools":[...],"prompts":[...]}), and skip names under a heading about prompts.
   const promptNames = new Set((toolsJson && !Array.isArray(toolsJson) ? toolsJson.prompts || toolsJson.result?.prompts || [] : []).map((p) => p && p.name).filter(Boolean));
+  // Config schema names can share a tool prefix too ({"tools":[...],"config_schemas":["funder_template"]}).
+  for (const n of (toolsJson && !Array.isArray(toolsJson) ? toolsJson.config_schemas || toolsJson.result?.config_schemas || [] : [])) if (typeof n === 'string') promptNames.add(n); else if (n && n.name) promptNames.add(n.name);
   const prefixes = new Set(tools.map((t) => t.name.split('_')[0] + '_'));
   for (const t of tools) if (t.category) NOT_TOOLS.add(t.category);
   const looksLikeTool = (n) => !NOT_TOOLS.has(n) && n.includes('_') && [...prefixes].some((p) => n.startsWith(p));

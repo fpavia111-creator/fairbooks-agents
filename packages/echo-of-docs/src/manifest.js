@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { check, applyFixes } from './docs.js';
@@ -8,7 +8,7 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const str = { type: 'string' };
 const props = {
   pack: { ...str, description: 'Package folder with package.json and README.md (docs/, skills/ and SKILL.md are read too), relative to --root. Required unless the config file names it' },
-  tools: { ...str, description: 'Tool list as JSON: an MCP tools/list result, mythos_info output, or a plain array. Without it only package.json and link checks run' },
+  tools: { ...str, description: 'Tool list as JSON: an MCP tools/list result, mythos_info output, or a plain array. An object may also carry "prompts" and "config_schemas" (names that are not tools). Without it only package.json and link checks run' },
   ignore: { type: 'array', items: str, description: 'Check ids to leave out, e.g. ["count_mismatch"]' },
   openapi: { ...str, description: 'Optional OpenAPI 3.x / Swagger 2.0 spec as JSON, relative to --root. Endpoints in the docs ("GET /notes/{id}") are compared with it' },
   require_changelog: { type: 'boolean', description: 'Flag a package with no CHANGELOG.md (an existing CHANGELOG.md is always checked against the version)' },
@@ -63,7 +63,7 @@ export const manifest = defineManifest({
         const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/echo');
         const L = [`# Docs drift: ${r.package}@${r.version}`, '', line(r), '', '| Severity | Check | Where | Detail |', '|---|---|---|---|', ...r.findings.map((f) => `| ${f.severity} | ${f.check} | ${f.file}${f.line ? ':' + f.line : ''} | ${f.detail.replace(/\|/g, '\\|')} |`), ...(r.findings.length ? [] : ['| | none | | |']), '', '## Limits', '', r.limits, ''];
         const csv = toCsv(r.findings.map((f) => ({ severity: f.severity, check: f.check, file: f.file, line: f.line ?? '', detail: f.detail, owner: '', status: '' })), ['severity', 'check', 'file', 'line', 'detail', 'owner', 'status']);
-        const md = L.join('\n');
+        const md = safeMarkdown(L.join('\n'));
         return { summary: `Report written. ${line(r)}`, files: [ctx.writeFile(out, 'docs-drift.md', md), ctx.writeFile(out, 'drift.csv', csv)], output_sha256: sha256(md) };
       },
     },
@@ -93,7 +93,7 @@ export const manifest = defineManifest({
         const { a: aa, dir, r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/echo');
         const fx = applyFixes(dir, r.fixes, { maxFixes: a.max_fixes || 20, maxPerFile: a.max_per_file || 10 });
         const files = [];
-        for (const f of fx.files) { const dest = join(out, 'proposed', f.file); mkdirSync(dirname(dest), { recursive: true }); ctx.writeFile(dirname(dest), f.file.split('/').pop(), f.after); files.push({ file: f.file, proposed: `proposed/${f.file}`, applied: f.applied, sha256_before: sha256(f.before), sha256_after: sha256(f.after) }); }
+        for (const f of fx.files) { const dest = join(out, 'proposed', f.file); mkdirSync(dirname(dest), { recursive: true }); ctx.writeFile(dirname(dest), f.file.split('/').pop(), f.after, { raw: true }); files.push({ file: f.file, proposed: `proposed/${f.file}`, applied: f.applied, sha256_before: sha256(f.before), sha256_after: sha256(f.after) }); }
         const fixedKeys = new Set(fx.files.flatMap((f) => f.applied.map((x) => `${f.file}:${x.line}:${x.check}`)));
         const person = r.findings.filter((f) => !fixedKeys.has(`${f.file}:${f.line}:${f.check}`));
         const L = ['# Proposed docs changes (not published)', '', `Pack: ${r.package}@${r.version}`, '', '## Mechanical fixes in proposed/', '', ...(files.length ? files.flatMap((f) => f.applied.map((x) => `- ${f.file}:${x.line} ${x.check}: \`${x.from}\` → \`${x.to}\``)) : ['- none']), '', `## Skipped by the caps (${fx.skipped.length})`, '', ...fx.skipped.map((s) => `- ${s.file}:${s.line} ${s.check}: ${s.why}`), '', `## Needs a person (${person.length})`, '', 'Echo does not rewrite prose, tables or examples.', '', ...person.map((f) => `- [ ] ${f.file}${f.line ? ':' + f.line : ''} ${f.check}: ${f.detail}`), ''];

@@ -11,7 +11,9 @@ export const CHARTS = Object.freeze({
 });
 
 const W = 680, LABEL = 190, VALUE = 110, ROW = 30, TOP = 56, BOTTOM = 34;
-const PLOT = W - LABEL - VALUE - 16;
+// The value column is as wide as its longest label (about 7px a character at 12px),
+// so a large number never runs into the bars; the plot takes what is left.
+const layout = (labels) => { const value = Math.min(260, Math.max(VALUE, ...labels.map((l) => Math.ceil(l.length * 7) + 8))); return { value, plot: W - LABEL - value - 16 }; };
 const COLORS = { pos: '#2563eb', neg: '#c2410c', actual: '#2563eb', basis: '#94a3b8', axis: '#64748b', text: '#1f2937', mut: '#6b7280' };
 const fmtN = (n) => Math.round(n).toLocaleString('en-US');
 const sgn = (n) => (n > 0 ? '+' : n < 0 ? '−' : '');
@@ -42,7 +44,9 @@ function varianceChart(vs, pct, source) {
   const rows = vs.filter((v) => v.basis && (pct ? (v.basis === 'budget' ? v.var_budget_pct : v.var_prior_pct) !== null : true));
   const field = (v) => (v.basis === 'budget' ? (pct ? 'var_budget_pct' : 'var_budget') : pct ? 'var_prior_pct' : 'var_prior');
   const max = Math.max(1e-9, ...rows.map((v) => Math.abs(v[field(v)])));
-  const zero = LABEL + PLOT / 2; const half = PLOT / 2 - 4;
+  const right = (v) => `${fmtSigned(v[field(v)], pct)} vs ${v.basis === 'budget' ? 'budget' : 'prior'}${v.material ? ' *' : ''}`;
+  const { plot } = layout(rows.map(right));
+  const zero = LABEL + plot / 2; const half = plot / 2 - 4;
   const height = TOP + rows.length * ROW + BOTTOM;
   const body = [`<line x1="${zero}" y1="${TOP - 6}" x2="${zero}" y2="${TOP + rows.length * ROW}" stroke="${COLORS.axis}" stroke-width="1"/>`];
   rows.forEach((v, i) => {
@@ -51,7 +55,7 @@ function varianceChart(vs, pct, source) {
     const label = `${v.id} ${v.metric}: vs ${v.basis} ${fmtSigned(val, pct)}${v.material ? ' (material)' : ''}`;
     body.push(`<text x="12" y="${y + 18}" fill="${COLORS.text}">${escapeHtml(`${v.id} · ${v.metric}`.slice(0, 30))}</text>`);
     body.push(point({ id: v.id, field: field(v), value: val, x, y: y + 6, w, h: ROW - 12, fill: val >= 0 ? COLORS.pos : COLORS.neg, label }));
-    body.push(`<text x="${W - 12}" y="${y + 18}" text-anchor="end" fill="${COLORS.text}">${escapeHtml(fmtSigned(val, pct))} vs ${v.basis === 'budget' ? 'bud' : 'prior'}${v.material ? ' *' : ''}</text>`);
+    body.push(`<text x="${W - 12}" y="${y + 18}" text-anchor="end" fill="${COLORS.text}">${escapeHtml(right(v))}</text>`);
   });
   body.push(`<text x="12" y="${height - 12}" fill="${COLORS.mut}">${escapeHtml(`* material. Bars right of the line: actual above basis. Source: ${source}`)}</text>`);
   return { height, body, rows };
@@ -63,6 +67,8 @@ function actualVsBasisChart(vs, source) {
   const basisField = (v) => (v.basis === 'budget' ? 'budget' : 'prior');
   const max = Math.max(1e-9, ...rows.flatMap((v) => [Math.abs(v.actual), Math.abs(v[basisField(v)])]));
   const RH = 40; const height = TOP + rows.length * RH + BOTTOM;
+  const basisLabel = (v) => `${fmtN(v[basisField(v)])} ${basisField(v) === 'budget' ? 'budget' : 'prior'}`;
+  const { plot: PLOT } = layout(rows.flatMap((v) => [fmtN(v.actual), basisLabel(v)]));
   const body = [`<line x1="${LABEL}" y1="${TOP - 6}" x2="${LABEL}" y2="${TOP + rows.length * RH}" stroke="${COLORS.axis}" stroke-width="1"/>`];
   rows.forEach((v, i) => {
     const y = TOP + i * RH; const bf = basisField(v);
@@ -70,7 +76,7 @@ function actualVsBasisChart(vs, source) {
     body.push(point({ id: v.id, field: 'actual', value: v.actual, x: LABEL, y: y + 4, w: (Math.abs(v.actual) / max) * PLOT, h: 14, fill: COLORS.actual, label: `${v.id} ${v.metric}: actual ${fmtN(v.actual)}` }));
     body.push(point({ id: v.id, field: bf, value: v[bf], x: LABEL, y: y + 20, w: (Math.abs(v[bf]) / max) * PLOT, h: 14, fill: COLORS.basis, label: `${v.id} ${v.metric}: ${bf} ${fmtN(v[bf])}` }));
     body.push(`<text x="${W - 12}" y="${y + 15}" text-anchor="end" fill="${COLORS.text}">${fmtN(v.actual)}</text>`);
-    body.push(`<text x="${W - 12}" y="${y + 31}" text-anchor="end" fill="${COLORS.mut}">${fmtN(v[bf])} ${bf === 'budget' ? 'bud' : 'prior'}</text>`);
+    body.push(`<text x="${W - 12}" y="${y + 31}" text-anchor="end" fill="${COLORS.mut}">${escapeHtml(basisLabel(v))}</text>`);
   });
   body.push(`<text x="12" y="${height - 12}" fill="${COLORS.mut}">${escapeHtml(`Blue: actual. Grey: budget, or prior period when there is no budget. Shared scale. Source: ${source}`)}</text>`);
   return { height, body, rows };

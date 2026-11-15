@@ -23,6 +23,8 @@ jobs:
         run: |
           for p in packages/*/; do n=$(basename "$p"); [ "$n" = mythos-agent-core ] && continue
             (cd "$p" && node "bin/$n.js" eval) || exit 1; done
+      - name: Hostile inputs (planted formulas, HTML, path tricks and AI-directed text in every agent's data)
+        run: npm run hostile
       - name: Pack contents stay clean
         shell: bash
         run: |

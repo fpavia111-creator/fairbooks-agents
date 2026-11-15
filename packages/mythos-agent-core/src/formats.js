@@ -180,10 +180,70 @@ export function applyUnifiedDiff(text, patch) {
 export const escapeHtml = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 /**
+ * Two fixes every report table needs, applied once here so no agent can forget
+ * them: a table that is not already inside <div class="wrap"> gets one, so a wide
+ * table scrolls inside the page on a phone instead of pushing the page sideways;
+ * and header cells get scope="col" (in <thead>, or in a row of only headers) or
+ * scope="row", which is what screen readers use to announce a cell with its headers.
+ */
+export function accessibleTables(html) {
+  let out = ''; let i = 0; let depth = 0; const wrapped = [];
+  const re = /<table\b|<\/table\s*>/gi; let m;
+  while ((m = re.exec(html))) {
+    if (m[0][1] !== '/') {
+      const inWrap = /<div class="wrap"[^>]*>\s*$/.test(html.slice(Math.max(0, m.index - 120), m.index));
+      const wrap = depth === 0 && !inWrap;
+      wrapped.push(wrap); depth++;
+      if (wrap) { out += html.slice(i, m.index) + '<div class="wrap">'; i = m.index; }
+    } else if (depth > 0) {
+      depth--; const wrap = wrapped.pop(); const end = m.index + m[0].length;
+      if (wrap) { out += html.slice(i, end) + '</div>'; i = end; }
+    }
+  }
+  out += html.slice(i);
+  return out.replace(/<table\b[\s\S]*?<\/table\s*>/gi, tidyTable);
+}
+
+const CELL = /<(td|th)(?![a-z])([^>]*)>/gi;
+const addScope = (row, kind, firstOnly = false) => { let n = 0; return row.replace(/<th(?![a-z])(?![^>]*\bscope=)/gi, (m) => (firstOnly && n++ > 0 ? m : `<th scope="${kind}"`)); };
+const addNum = (attrs) => (/\bclass="/.test(attrs) ? (/\bclass="[^"]*\bnum\b/.test(attrs) ? attrs : attrs.replace(/\bclass="/, 'class="num ')) : `${attrs} class="num"`);
+
+function tidyTable(t) {
+  const nested = (t.match(/<table\b/gi) || []).length > 1;
+  const theadEnd = t.search(/<\/thead\s*>/i);
+  const rows = [...t.matchAll(/<tr\b[^>]*>[\s\S]*?<\/tr\s*>/gi)].map((m, n) => {
+    const cells = [...m[0].matchAll(CELL)].map((c) => ({ tag: c[1].toLowerCase(), attrs: c[2] }));
+    const allTh = cells.length > 0 && cells.every((c) => c.tag === 'th');
+    return { text: m[0], at: m.index, cells, head: (theadEnd >= 0 && m.index < theadEnd) || (theadEnd < 0 && n === 0 && allTh), allTh };
+  });
+  // Header cells over a column of right-aligned numbers are right-aligned too.
+  const numCols = new Set();
+  if (!nested && !/\b(col|row)span=/i.test(t)) {
+    const body = rows.filter((r) => !r.head && r.cells.some((c) => c.tag === 'td'));
+    const width = Math.max(0, ...rows.map((r) => r.cells.length));
+    for (let j = 0; j < width; j++) {
+      const col = body.map((r) => r.cells[j]).filter(Boolean);
+      if (col.length && col.every((c) => c.tag === 'td' && /\bclass="[^"]*\bnum\b/.test(c.attrs))) numCols.add(j);
+    }
+  }
+  let out = ''; let i = 0;
+  for (const r of rows) {
+    let row = r.text;
+    if (r.head) {
+      if (numCols.size) { let j = -1; row = row.replace(CELL, (m, tag, attrs) => { j++; return tag.toLowerCase() === 'th' && numCols.has(j) ? `<${tag}${addNum(attrs)}>` : m; }); }
+      row = addScope(row, 'col');
+    } else row = r.allTh ? addScope(row, 'row', true) : addScope(row, 'row');
+    out += t.slice(i, r.at) + row; i = r.at + r.text.length;
+  }
+  return out + t.slice(i);
+}
+
+/**
  * A self-contained HTML page: inline CSS only, no scripts, no fonts, no network.
  * CSP: default-src 'none'; style-src 'unsafe-inline'. bodyHtml must already be escaped.
  */
 export function htmlPage({ title, bodyHtml, footer = '' }) {
+  bodyHtml = accessibleTables(String(bodyHtml ?? ''));
   return `<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
@@ -198,13 +258,95 @@ h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 8px}
 .mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}
 table{border-collapse:collapse;width:100%;background:var(--card);font-size:14px}
 th,td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
-th{font-weight:600}td.num{text-align:right;font-variant-numeric:tabular-nums}
+th{font-weight:600}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .tiles{display:flex;gap:12px;flex-wrap:wrap}.tile{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 14px;min-width:120px}
-.tile b{display:block;font-size:22px}code{font-size:13px}
-.wrap{overflow-x:auto}
+.tile b{display:block;font-size:22px}code{font-size:13px;overflow-wrap:anywhere}pre{overflow-x:auto}
+.wrap{overflow-x:auto;max-width:100%}svg,img{max-width:100%;height:auto}figure{margin:16px 0}p,li,h1,h2,h3{overflow-wrap:break-word}
 </style></head><body><main>
 ${bodyHtml}
 <p class="mut" style="margin-top:32px">${escapeHtml(footer)}</p>
 </main></body></html>
 `;
+}
+
+// ---------------------------------------------------------------------------
+// Untrusted text in file names and Markdown
+// ---------------------------------------------------------------------------
+
+const WIN_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
+
+/**
+ * Turn untrusted text (a vendor id, a contact name, a ticket number) into one
+ * safe file-name segment: no slashes, no "..", no control characters, no
+ * leading dot, no Windows-reserved name. Keeps letters, digits, dot, dash and
+ * underscore; everything else becomes a dash.
+ */
+export function safeFileName(s, { fallback = 'item', max = 80 } = {}) {
+  let t = String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '');
+  t = t.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/\.{2,}/g, '.').replace(/-{2,}/g, '-').replace(/^[.-]+|[.-]+$/g, '');
+  if (t.length > max) t = t.slice(0, max).replace(/[.-]+$/, '');
+  if (!t) t = fallback;
+  if (WIN_RESERVED.test(t.split('.')[0])) t = '_' + t;
+  return t;
+}
+
+function escapeMdSegment(seg) {
+  // Raw HTML: "<" that could open a tag, comment or declaration becomes "\<",
+  // which every CommonMark renderer shows as a literal "<". Plain autolinks
+  // (<https://…>, <mailto:…>, <name@host>) are left alone.
+  let out = seg.replace(/<(?=[A-Za-z/!?])/g, (m, i) => {
+    let b = 0; while (i - 1 - b >= 0 && seg[i - 1 - b] === '\\') b++;
+    if (b % 2 === 1) return m;
+    const rest = seg.slice(i);
+    if (/^<(?:https?:\/\/|mailto:)[^\s<>]*>/i.test(rest)) return m;
+    if (/^<[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}>/.test(rest)) return m;
+    return '\\<';
+  });
+  // Inline images that would be fetched from the network when the file is previewed.
+  out = out.replace(/!\[(?=[^\]\n]*\]\(\s*<?\s*(?:https?:)?\/\/)/gi, '!\\[');
+  // Reference-style images (![alt][ref]) resolve to a URL defined elsewhere, so they are turned into text too.
+  out = out.replace(/!\[(?=[^\]\n]*\]\s?\[[^\]\n]*\])/g, '!\\[');
+  return out;
+}
+
+function mapOutsideCodeSpans(line, fn) {
+  let out = ''; let i = 0; let text = '';
+  while (i < line.length) {
+    if (line[i] !== '`') { text += line[i++]; continue; }
+    let n = 0; while (line[i + n] === '`') n++;
+    // find a closing run of exactly n backticks on the same line
+    let j = i + n; let close = -1;
+    while (j < line.length) {
+      if (line[j] !== '`') { j++; continue; }
+      let k = 0; while (line[j + k] === '`') k++;
+      if (k === n) { close = j; break; }
+      j += k;
+    }
+    if (close < 0) { text += line.slice(i, i + n); i += n; continue; }
+    out += fn(text) + line.slice(i, close + n); text = ''; i = close + n;
+  }
+  return out + fn(text);
+}
+
+/**
+ * Neutralise markup in Markdown built from untrusted data. Outside fenced code
+ * and inline code, raw HTML becomes literal text ("<script>" becomes
+ * "\<script>"), and remote or reference-style images become plain text, so a
+ * Markdown viewer shows what a spreadsheet cell contained instead of rendering
+ * it or fetching an image for it. A whole-line, closed HTML comment is kept
+ * (agents use it for "draft only" banners). Links are left as they are.
+ * Idempotent.
+ */
+export function safeMarkdown(text) {
+  let fence = null;
+  return String(text ?? '').split('\n').map((line) => {
+    const m = /^ {0,3}(`{3,}|~{3,})/.exec(line);
+    if (fence) {
+      if (m && m[1][0] === fence[0] && m[1].length >= fence.length && !line.slice(m[0].length).trim()) fence = null;
+      return line;
+    }
+    if (m && !(m[1][0] === '`' && line.slice(m[0].length).includes('`'))) { fence = m[1]; return line; }
+    if (/^\s*<!--(?:(?!-->).)*-->\s*$/.test(line)) return line;
+    return mapOutsideCodeSpans(line, escapeMdSegment);
+  }).join('\n');
 }

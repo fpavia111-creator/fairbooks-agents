@@ -55,6 +55,8 @@ claude mcp add hesperides-of-inventory -- npx -y hesperides-of-inventory@0.2.0 m
 | `hesperides_request_post` | **ask · one-click** | After a named human approves, record the adjustment (bound to its hash; every line needs a reason code) for whoever posts |
 | `erp_post_adjustment` | **block** | Listed so agents see the refusal. Hesperides never writes to an ERP. |
 
+CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
+
 Any other tool name is blocked. MCP hosts also get the prompt `cycle_count_review`, which walks a model through the whole count review and stops for the human click. `mythos_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes

@@ -14,3 +14,9 @@
 
 ### Changed
 - A sentence that matched every number but states the wrong direction is now an issue (`direction_mismatch`); before 0.2.0 it passed. Existing fixtures and evals are unchanged.
+
+### Hardening (review pass)
+
+- Chart labels say "budget" in full and the value column is sized to its longest label, so large numbers cannot run into the bars. Board pack numbers are right-aligned. Chart file names use `safeFileName`. `pack_sha256` is the hash of the file as written.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

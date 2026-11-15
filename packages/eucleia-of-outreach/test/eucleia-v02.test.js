@@ -174,3 +174,20 @@ test('plan and release write hashes to the audit log; release stays one-click; p
   const t = manifest.prompts[0].text;
   for (const k of ['eucleia_import_suppression', 'eucleia_check_batch', 'eucleia_plan_schedule', 'eucleia_prepare_outbox', 'eucleia_release_batch', '{{drafts}}', '{{config}}', 'one named human click', 'not legal advice']) assert.ok(t.includes(k), k);
 });
+
+test('schedule: absurd gap, cap or horizon is refused at once; a full-day gap on a large batch still finishes quickly', async () => {
+  const good = recs('drafts.csv')[0];
+  const opts = { config: cfg, start_from: '2026-11-16T03:07:00Z' };
+  for (const bad of [{ min_gap_minutes: 1e308 }, { min_gap_minutes: 0 }, { min_gap_minutes: 1.5 }, { min_gap_minutes: 1441 }, { max_per_day: 1e308 }, { max_per_day: 0 }, { horizon_days: 1e9 }]) {
+    const t0 = Date.now(); assert.throws(() => planSchedule([good], { ...opts, ...bad }), /must be/, JSON.stringify(bad)); assert.ok(Date.now() - t0 < 500);
+  }
+  const root = sandbox(); const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
+  const r = await rt.call('eucleia_plan_schedule', { drafts: 'drafts-checks.csv', config: 'eucleia.json', suppression: 'suppression.csv', start_from: '2026-11-16T00:00:00Z', min_gap_minutes: 1e308 });
+  assert.equal(r.status, 'error'); assert.match(r.reason, /min_gap_minutes must be <= 1440/);
+  const many = Array.from({ length: 400 }, (_, i) => ({ ...good, to: `person${i}@example.com` }));
+  const t0 = Date.now(); const p = planSchedule(many, { ...opts, min_gap_minutes: 1440, max_per_day: 100000 });
+  assert.ok(Date.now() - t0 < 5000, `took ${Date.now() - t0} ms`);
+  assert.equal(p.scheduled + p.unplaced + p.held, 400); assert.ok(p.scheduled >= 1);
+  const at = p.slots.map((s) => Date.parse(s.send_at)).sort((a, b) => a - b);
+  for (let i = 1; i < at.length; i++) assert.ok(at[i] - at[i - 1] >= 1440 * 60000, 'slots are at least a day apart');
+});

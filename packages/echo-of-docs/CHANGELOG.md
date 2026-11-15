@@ -10,3 +10,9 @@
 - `echo_write_report` returns `output_sha256`.
 - MCP prompt `docs_drift_review` for the end-to-end workflow.
 - MCP prompt names are no longer reported as missing tools: names in the tool file's `prompts` list, or under a heading about prompts, are skipped.
+
+Hardening (review pass)
+
+- The tool list file may carry `config_schemas` (names that are not tools), so a schema name that shares a tool prefix is no longer reported as a missing tool. Proposed doc copies are written byte for byte (`raw`).
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

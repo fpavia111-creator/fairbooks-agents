@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, toSarif, validateSarif, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, toSarif, validateSarif, sha256, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, statSync } from 'node:fs';
 import { inventory, analyse, estimateEffort, dependencyGraph, progress, sarifFindings, testPlanMarkdown, API_MAP, SARIF_RULES, DEFAULT_WEIGHTS } from './scan.js';
 import { estimateConfigSchema } from './schemas.js';
@@ -66,7 +66,7 @@ export const manifest = defineManifest({
         const orderOf = new Map(graph.order.map((o) => [o.file, o.n]));
         const out = ctx.outDir(a.out_dir || 'mythos-out/epimetheus');
         const rows = inv.items.map((i) => ({ file: i.file, version: i.version, script_type: i.script_type || '', risk: i.risk, score: i.score, loc: i.loc, api_calls: i.call_count, effort_hours: i.effort.hours, conversion_order: orderOf.get(i.file), depends_on: i.custom_dependencies.join(' '), writes: i.writes.join(' '), external: i.external.join(' '), reasons: i.reasons.join('; '), owner: '', reviewer: '', target_release: '' }));
-        const csv = toCsv(rows); const md = testPlanMarkdown(inv, new Date().toISOString(), graph);
+        const csv = toCsv(rows); const md = safeMarkdown(testPlanMarkdown(inv, new Date().toISOString(), graph));
         const f1 = ctx.writeFile(out, 'inventory.csv', csv);
         const f2 = ctx.writeFile(out, 'conversion-test-plan.md', md);
         return { summary: `Wrote inventory (${inv.files} files, ${inv.effort_hours} h rough effort) and a draft test plan.`, files: [f1, f2], output_sha256: sha256(csv + '\n' + md) };

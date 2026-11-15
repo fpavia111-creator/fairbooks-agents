@@ -19,3 +19,9 @@
 - `fix-list.csv` has a new `selector` column after `line`.
 - The limits note now says contrast is computed from static CSS only (before 0.2.0 it said contrast was not checked).
 - Results on the original `site/` fixture are unchanged (25 issues).
+
+### Hardening (review pass)
+
+- Markdown report hashes are taken from the text as written; fix hints such as `<button>` now show as text in a Markdown preview.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, unifiedDiff } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, unifiedDiff, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { checkContract, readContractFile, issuesMemo, compareDrafts, compareMarkdown, MARK, DISCLAIMER } from './clauses.js';
@@ -70,7 +70,7 @@ export const manifest = defineManifest({
         const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/solon');
         const L = [`# Clause check: ${r.file}`, '', DISCLAIMER, '', line(r), '', '| Status | Clause | Where | Issues |', '|---|---|---|---|', ...r.clauses.map((c) => `| ${c.status} | ${c.title} | ${c.citations.map((x) => `${x.section}, line ${x.line}`).join('; ')} | ${c.issues.join(' ').replace(/\|/g, '\\|')} |`), '', '## Document checks', '', ...(r.document_findings.length ? r.document_findings.map((d) => `- Line ${d.line} ${d.check}: ${d.detail}`) : ['- none']), '', '## Defined terms', '', `Playbook version: ${r.playbook_version || 'not stated'}.`, '', ...termLines(r), ''];
         const csv = toCsv(r.clauses.map((c) => ({ clause: c.id, title: c.title, status: c.status, where: c.citations.map((x) => `${x.section} L${x.line}`).join('; '), issues: c.issues.join(' '), owner: '', status_note: '' })), ['clause', 'title', 'status', 'where', 'issues', 'owner', 'status_note']);
-        const md = L.join('\n'); const files = [ctx.writeFile(out, 'clause-gaps.md', md), ctx.writeFile(out, 'clause-gaps.csv', csv)];
+        const md = safeMarkdown(L.join('\n')); const files = [ctx.writeFile(out, 'clause-gaps.md', md), ctx.writeFile(out, 'clause-gaps.csv', csv)];
         if (compare) {
           const prevText = loadText(a.previous_contract, ctx); const curText = loadText(a.contract, ctx);
           files.push(ctx.writeFile(out, 'draft-changes.md', compareMarkdown(compare)), ctx.writeFile(out, 'contract.diff', unifiedDiff(prevText, curText, { oldPath: `a/${a.previous_contract}`, newPath: `b/${a.contract}` })));
@@ -91,7 +91,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/solon');
         let old = null; if (a.previous_draft) { if (!ctx.exists(a.previous_draft)) throw new Error(`previous_draft not found: ${a.previous_draft}`); old = ctx.readText(a.previous_draft); }
-        const text = issuesMemo(r, { compare });
+        const text = safeMarkdown(issuesMemo(r, { compare }));
         const f = ctx.writeFile(out, 'issues-for-counsel.md', text); const files = [f]; let redline = null;
         if (old !== null) { const d = unifiedDiff(old, text, { oldPath: `a/${a.previous_draft}`, newPath: 'b/issues-for-counsel.md' }); files.push(ctx.writeFile(out, 'issues-for-counsel.diff', d)); redline = { added: (d.match(/^\+(?!\+\+)/gm) || []).length, removed: (d.match(/^-(?!--)/gm) || []).length }; }
         return { summary: `Issues list drafted for ${r.gaps} gap(s) and ${r.document_findings.length} document finding(s), marked [COUNSEL REVIEW], citing playbook version ${r.playbook_version || 'not stated'}.${redline ? ` Redline against the previous memo: ${redline.added} line(s) added, ${redline.removed} removed.` : ''} Nothing was sent. Not legal advice.`, draft: rel(ctx, f), draft_sha256: sha256(text), playbook_version: r.playbook_version, playbook_sha256: r.playbook_sha256, ...(redline ? { redline } : {}), files };

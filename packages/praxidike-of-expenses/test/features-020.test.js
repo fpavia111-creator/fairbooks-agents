@@ -109,8 +109,12 @@ test('policy config schema: typos, wrong types and missing source fail with JSON
     const r = await rt.call('praxidike_review', { expenses: 'expenses.csv', policy: f });
     assert.equal(r.status, 'error', f); assert.match(r.reason, re, f); assert.match(r.reason, /is not a valid policy/);
   }
+  // A near miss of a real argument is refused with the right name: running without the receipts folder would skip the receipt checks silently.
   const typo = await rt.call('praxidike_review', { expenses: 'expenses.csv', policy: 'policy.json', receipt: 'receipts' });
-  assert.equal(typo.status, 'executed', 'tool args stay open for older hosts');
+  assert.equal(typo.status, 'error'); assert.match(typo.reason, /\/receipt is not an argument of praxidike_review \(did you mean "receipts"\?\)/);
+  // An unrelated extra argument from an older host still runs, and the result says it was ignored.
+  const extra = await rt.call('praxidike_review', { expenses: 'expenses.csv', policy: 'policy.json', client_trace_id: 'abc' });
+  assert.equal(extra.status, 'executed'); assert.match(extra.warnings[0], /"client_trace_id" is not an argument of praxidike_review and was ignored/);
 });
 
 test('evidence pack: hashed inputs, self-contained HTML, output_sha256 in the audit log', async () => {

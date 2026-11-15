@@ -10,3 +10,9 @@
 - Config schema `retention_rules` (`validate-config retention_rules <file>`); rules files are validated with JSON-pointer errors.
 - MCP prompt `erasure_request_workflow`.
 - Deleting personal data is unchanged: one named human click, even in Auto; direct deletion stays blocked.
+
+Hardening (review pass)
+
+- Evidence pack file names are built with `safeFileName` from the request key.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

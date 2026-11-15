@@ -60,6 +60,8 @@ claude mcp add nausicaa-of-hygiene -- npx -y nausicaa-of-hygiene@0.2.0 mcp --roo
 | `nausicaa_request_bulk_delete` | **ask · one-click** | After a named human approves, record a delete list for the CRM admin |
 | `crm_delete_contacts` | **block** | Listed so agents see the refusal. Nausicaa never deletes CRM records. |
 
+CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
+
 Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
 
 ### MX check (opt-in, off by default)

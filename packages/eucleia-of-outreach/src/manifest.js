@@ -27,7 +27,7 @@ export const CONFIG_SCHEMA = {
     max_links: { type: 'integer', minimum: 0 },
     spam_words: { type: 'array', items: { type: 'string', minLength: 1 }, description: 'Extra phrases to flag, on top of the built-in list' },
     spam_policy: { enum: ['warn', 'hold'], description: 'warn (default) or hold drafts with spam phrases' },
-    max_per_day: { type: 'integer', minimum: 1 }, min_gap_minutes: { type: 'integer', minimum: 1 },
+    max_per_day: { type: 'integer', minimum: 1, maximum: 100000 }, min_gap_minutes: { type: 'integer', minimum: 1, maximum: 1440 },
   },
 };
 
@@ -126,7 +126,7 @@ Passing these checks does not make a campaign lawful under CAN-SPAM, GDPR, CASL 
     {
       name: 'eucleia_plan_schedule', kind: 'report', title: 'Plan send slots',
       description: 'For drafts that pass every check, plan send slots from start_from: inside the window in each recipient\'s time zone (or the config\'s), at most max_per_day per day, at least min_gap_minutes apart, skipping blackout dates. Writes schedule.csv and schedule.ics (one all-day entry per sending day, no addresses) into out_dir (default mythos-out/eucleia). Nothing is sent.',
-      inputSchema: { type: 'object', required: ['drafts', 'start_from'], additionalProperties: false, properties: { drafts: str, start_from: { type: 'string', format: 'date-time' }, max_per_day: { type: 'integer', minimum: 1 }, min_gap_minutes: { type: 'integer', minimum: 1 }, out_dir: str, ...cfgProps } },
+      inputSchema: { type: 'object', required: ['drafts', 'start_from'], additionalProperties: false, properties: { drafts: str, start_from: { type: 'string', format: 'date-time' }, max_per_day: { type: 'integer', minimum: 1, maximum: 100000 }, min_gap_minutes: { type: 'integer', minimum: 1, maximum: 1440 }, out_dir: str, ...cfgProps } },
       handler: async (a, ctx) => {
         const o = load(a, ctx);
         const p = planSchedule(ctx.records(a.drafts), { ...o, start_from: a.start_from, max_per_day: a.max_per_day, min_gap_minutes: a.min_gap_minutes });

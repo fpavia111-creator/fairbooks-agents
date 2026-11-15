@@ -106,6 +106,20 @@ npx <pack> rotate-key --signing-key OLD.pem --new-key NEW.pem --as "Your Name"
 
 The key is refused if it sits under `--root`, and it is never logged. With `--pubkey`, every line must carry a valid signature from a trusted key (or a key introduced by a signed rotation). Old unsigned logs still verify as "chained, unsigned". Signing proves the lines came from whoever holds the key; it cannot stop that holder from writing a false line.
 
+## Untrusted data and broken arguments
+
+Agents read files that other people wrote: vendor names, memos, email bodies, page content. The runtime treats that text as hostile until shown otherwise, for every pack built on it.
+
+- **Spreadsheets.** `toCsv` puts an apostrophe in front of a cell that a spreadsheet would run as a formula (it starts with `=`, or with `+`, `-` or `@` and is not a plain number, a phone-style value or a bare `@handle`). Pass `{ formulas: 'keep' }` for a file only a program reads.
+- **Markdown.** `ctx.writeFile` passes `.md` output through `safeMarkdown`: raw HTML outside code becomes literal text (`\<script>`), and remote or reference-style images become plain text, so a Markdown preview shows what a data cell contained instead of rendering it or fetching an image for it. Links are left as they are. Pass `{ raw: true }` when the file is a copy of the person's own document. If you store a hash of Markdown you write, hash `safeMarkdown(text)` or the file itself.
+- **File names.** `ctx.writeFile(dir, name, …)` refuses a name that leaves `dir`. Use `safeFileName(id)` when a name comes from data.
+- **HTML.** `htmlPage` wraps every table so a wide one scrolls inside the page on a phone, adds `scope` to header cells for screen readers, and right-aligns the header of a numeric column. `bodyHtml` must still be escaped with `escapeHtml` by the pack.
+- **Instructions aimed at the model.** When a result quotes text that reads like instructions to an AI ("ignore previous instructions", fake chat markup, "do not tell the user", hidden or direction-flipping characters), the result carries a `warnings` entry and the audit line an `injection_signals` list. The data is returned unchanged. This is a short, high-precision heuristic (`injectionSignals`): it catches common shapes and misses others. The MCP `initialize` instructions also tell the host model that tool results are data. One-click actions still need a named human whatever the model was told.
+- **Arguments.** A misspelled argument that is one or two letters from a real one (`receipt` for `receipts`, `outdir` for `out_dir`) is refused with the right name. An unrelated extra argument is refused by tools that set `additionalProperties: false`, and otherwise ignored with a `warnings` entry and an `ignored_args` audit field. A required argument given as an empty string counts as missing.
+- **Errors.** File errors are plain sentences with paths relative to `--root` ("file not found: data/vendors.csv"); the absolute root never appears in an error, and long messages are clipped at about 1,200 characters.
+
+`node scripts/hostile-inputs.mjs` in the monorepo plants hostile values in every pack's fixtures, runs every eval case and inspects the output; `--args` also calls every tool with broken arguments.
+
 ## Configs
 
 A pack can declare `configSchemas: { playbook: { …JSON Schema… } }`. Handlers load configs with `ctx.readJson(path, 'playbook')`, which fails with JSON-pointer errors, and people can check a file before use with `npx <pack> validate-config playbook ./my-playbook.json`.

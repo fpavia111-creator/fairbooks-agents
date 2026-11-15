@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, safeFileName } from 'mythos-agent-core';
 import { readFileSync, readdirSync, statSync, existsSync, appendFileSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';
 import { mapData, findSubject, checklist, checklistCsv, requestMarkdown, dueDate, maskEmail } from './erasure.js';
@@ -96,7 +96,7 @@ export const manifest = defineManifest({
         const p = evidencePack({ requestKey: key, found: f, retention: rules ? applyRetention(fl, f, rules, at) : null, deletions, log, asOf: at, sourceHashes: hashes });
         const d = ctx.outDir(out);
         return { summary: `Evidence pack for ${key}: ${f.rows_found} row(s) in ${f.files_with_data} file(s), ${deletions.length} approved deletion request(s), ${p.pack.kept.length} kept under rules or holds, ${p.pack.open_items.length} open item(s).`, request_key: key, kept: p.pack.kept, open_items: p.pack.open_items, output_sha256: p.output_sha256,
-          files: [ctx.writeFile(d, `evidence-${key}.json`, p.json), ctx.writeFile(d, `evidence-${key}.html`, evidenceHtml(p.pack, p.output_sha256))] };
+          files: [ctx.writeFile(d, `evidence-${safeFileName(key)}.json`, p.json), ctx.writeFile(d, `evidence-${safeFileName(key)}.html`, evidenceHtml(p.pack, p.output_sha256))] };
       },
     },
     {

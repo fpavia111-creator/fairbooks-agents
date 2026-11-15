@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, toIcs } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, toIcs, safeMarkdown, safeFileName } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { reviewLog, rfiCsv, subCsv, logMarkdown, draftRfi, MARKERS, ballInCourt, bicCsv, bicMarkdown, diffLogs, diffMarkdown, dueEvents, parseTitleBlock, indexFromTitleBlocks, INDEX_COLUMNS, draftTransmittal, PURPOSES } from './rfis.js';
@@ -91,8 +91,8 @@ export const manifest = defineManifest({
         if (!String(a.documents ?? '').trim()) throw new Error('documents is required');
         const d = draftRfi(a, ctx.records(a.documents), a.rfis ? ctx.records(a.rfis) : [], ctx.root);
         const dir = join(ctx.outDir(a.out_dir || 'mythos-out/epeius'), 'drafts'); mkdirSync(dir, { recursive: true });
-        const f = ctx.writeFile(dir, `RFI-${d.rfi_no}.md`, d.text);
-        return { summary: `RFI ${d.rfi_no} drafted with ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: relative(ctx.root, f).split('\\').join('/'), draft_sha256: sha256(d.text), rfi_no: d.rfi_no, open_markers: d.open_markers, markers: d.markers, file: f };
+        const f = ctx.writeFile(dir, `RFI-${safeFileName(d.rfi_no)}.md`, d.text);
+        return { summary: `RFI ${d.rfi_no} drafted with ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: relative(ctx.root, f).split('\\').join('/'), draft_sha256: sha256(safeMarkdown(d.text)), rfi_no: d.rfi_no, open_markers: d.open_markers, markers: d.markers, file: f };
       },
     },
     {
@@ -102,8 +102,8 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const dir = join(ctx.outDir(a.out_dir || 'mythos-out/epeius'), 'drafts'); mkdirSync(dir, { recursive: true });
         const d = draftTransmittal({ ...a, transmittal_no: a.transmittal_no || nextTransmittalNo(dir) }, ctx.records(a.documents), ctx.root, sha256);
-        const f = ctx.writeFile(dir, `${d.transmittal_no}.md`, d.text);
-        return { summary: `Transmittal ${d.transmittal_no} drafted with ${d.documents.length} indexed document(s) and ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: rel(ctx, f), draft_sha256: sha256(d.text), transmittal_no: d.transmittal_no, documents: d.documents, open_markers: d.open_markers, markers: d.markers, file: f };
+        const f = ctx.writeFile(dir, `${safeFileName(d.transmittal_no)}.md`, d.text);
+        return { summary: `Transmittal ${d.transmittal_no} drafted with ${d.documents.length} indexed document(s) and ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: rel(ctx, f), draft_sha256: sha256(safeMarkdown(d.text)), transmittal_no: d.transmittal_no, documents: d.documents, open_markers: d.open_markers, markers: d.markers, file: f };
       },
     },
     {

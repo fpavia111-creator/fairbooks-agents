@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, safeFileName } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { status, trackerCsv, summaryMarkdown, accessDraft, parseDate } from './onboarding.js';
@@ -93,8 +93,8 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/eos'), 'access-requests'); mkdirSync(dir, { recursive: true }); const files = [];
         for (const p of r.items) for (const t of p.tasks) {
-          if (t.ready_to_request) files.push(ctx.writeFile(dir, `${p.person_id}-${t.task_id}-grant.md`, accessDraft(p, t, 'grant')));
-          if (t.revoke_due) files.push(ctx.writeFile(dir, `${p.person_id}-${t.task_id}-remove.md`, accessDraft(p, t, 'remove')));
+          if (t.ready_to_request) files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.task_id)}-grant.md`, accessDraft(p, t, 'grant')));
+          if (t.revoke_due) files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.task_id)}-remove.md`, accessDraft(p, t, 'remove')));
         }
         return { summary: `${files.length} access draft(s) written (${r.access_ready} grant, ${r.revoke_due} removal). Nothing was submitted or changed.`, files };
       },
@@ -107,9 +107,9 @@ export const manifest = defineManifest({
         const r = runOff(a, ctx); const st = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/eos'), 'offboarding'); mkdirSync(dir, { recursive: true }); const files = []; let drafts = 0;
         const asOf = parseDate(r.as_of);
         for (const p of r.items) {
-          files.push(ctx.writeFile(dir, `${p.person_id}-offboarding.md`, offboardingMarkdown(p)));
+          files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-offboarding.md`, offboardingMarkdown(p)));
           const person = st.items.find((x) => x.person_id === p.person_id);
-          for (const t of p.tasks) if (t.kind === 'access_removal' && t.state !== 'done') { const orig = person.tasks.find((x) => x.task_id === t.mirrors); files.push(ctx.writeFile(dir, `${p.person_id}-${t.mirrors}-remove.md`, accessDraft(person, orig, 'remove', asOf))); drafts++; }
+          for (const t of p.tasks) if (t.kind === 'access_removal' && t.state !== 'done') { const orig = person.tasks.find((x) => x.task_id === t.mirrors); files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.mirrors)}-remove.md`, accessDraft(person, orig, 'remove', asOf))); drafts++; }
         }
         return { summary: `${r.people} offboarding checklist(s) and ${drafts} removal draft(s) written. Nothing was submitted or changed.`, files };
       },

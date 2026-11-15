@@ -18,6 +18,10 @@
 - Tool inputs reject unknown arguments.
 - `eval-results.json` gains `rubric` and `gate` keys and `compare.stats`; the Markdown report gains statistics, gate, tag and rubric sections.
 
+### Hardening (review pass)
+
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 - First release.

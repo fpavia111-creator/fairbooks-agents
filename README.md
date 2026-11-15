@@ -44,12 +44,14 @@ Version 0.2.0: see [UPGRADE-0.2.0.md](UPGRADE-0.2.0.md) for what changed and [do
 - **Auto** is off by default and opt-in per action, with step/spend caps and a kill switch.
 - Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a named person's click, even in Auto.
 - Every decision goes to a hash-chained JSONL audit log.
+- Text from your files is treated as data. Spreadsheet formulas, raw HTML and `../` in ids are neutralised on the way out, and a result that quotes text aimed at an AI model ("ignore previous instructions") is flagged. The flag is a heuristic, not a filter.
 
 ## Develop
 
 ```bash
 npm install      # links the workspaces
 npm test         # node --test in every package
+npm run hostile  # plant hostile values in every pack's fixtures, run every eval case, inspect the output
 ```
 
 MIT © 2026 Kurt Francisco · <https://mythosmachines.com>

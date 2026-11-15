@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, htmlPage, escapeHtml } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, htmlPage, escapeHtml, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { audit, readHar, reportMarkdown, draftTable, VENDOR_LIST, snapshot, diffInventory, diffMarkdown, reportHtml } from './consent.js';
@@ -86,7 +86,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const { r, declared } = load(a, ctx); const d = draftTable(r, declared); const out = ctx.outDir(a.out_dir || 'mythos-out/britomartis');
         const L = ['# Proposed cookie table (draft, not published)', '', `Based on: ${r.captures.join(', ') || 'HTML only'}${r.declared_source ? `; compared with ${r.declared_source}` : ''}. A person confirms every row before it goes on the site.`, '', '| Cookie | Provider | Purpose | Duration | Status |', '|---|---|---|---|---|', ...d.rows.map((x) => `| ${x.name} | ${x.provider} | ${x.purpose} | ${x.duration} | ${x.status} |`), '', '## Third parties', '', '| Host | Vendor | Purpose | Status |', '|---|---|---|---|', ...d.hosts.map((x) => `| ${x.host} | ${x.vendor} | ${x.purpose} | ${x.status} |`), '', `## Needs a person (${d.needs_person.length})`, '', 'Britomartis does not edit scripts, the banner or the policy text.', '', ...d.needs_person.map((x) => `- [ ] ${x}`), ''];
-        const table = L.join('\n'); const proposedDecl = JSON.stringify({ source: declared?.source || '[TO CONFIRM policy name and date]', cookies: d.rows.map(({ name, provider, purpose, duration }) => ({ name, provider, purpose, duration })), third_parties: d.hosts.map(({ host, vendor, purpose }) => ({ host, name: vendor, purpose })) }, null, 2) + '\n';
+        const table = safeMarkdown(L.join('\n')); const proposedDecl = JSON.stringify({ source: declared?.source || '[TO CONFIRM policy name and date]', cookies: d.rows.map(({ name, provider, purpose, duration }) => ({ name, provider, purpose, duration })), third_parties: d.hosts.map(({ host, vendor, purpose }) => ({ host, name: vendor, purpose })) }, null, 2) + '\n';
         const f1 = ctx.writeFile(out, 'cookie-table.md', table); const f2 = ctx.writeFile(out, 'declared.proposed.json', proposedDecl);
         const proposal = { created_at: new Date().toISOString(), files: [{ file: 'cookie-table.md', sha256: sha256(table) }, { file: 'declared.proposed.json', sha256: sha256(proposedDecl) }], open_markers: ((table + proposedDecl).match(/\[TO CONFIRM/g) || []).length, needs_person: d.needs_person.length, note: 'Draft only. A person publishes the policy or banner change.' };
         const pText = JSON.stringify(proposal, null, 2) + '\n'; const pf = ctx.writeFile(out, 'proposal.json', pText);

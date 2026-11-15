@@ -30,7 +30,7 @@ export function packHtml({ title, period, figures, lockedSha, vs, docs, claims, 
   B.push('<p class="warn"><strong>DRAFT — not for distribution until a controller signs.</strong></p>');
   B.push(`<p class="mut">Figures: <code>${escapeHtml(figures)}</code> (locked, sha256 ${escapeHtml(lockedSha.slice(0, 12))}…). Claims check: ${claims.ok}/${claims.claims_checked} ok, ${claims.issues} issue(s).</p>`);
   B.push('<h2>Variances</h2><table><thead><tr><th>Id</th><th>Metric</th><th>Actual</th><th>Budget</th><th>vs budget</th><th>Prior</th><th>vs prior</th><th>Material</th></tr></thead><tbody>');
-  for (const v of vs) B.push(`<tr><td>${escapeHtml(v.id)}</td><td>${escapeHtml(v.metric)}</td><td>${fmt(v.actual)}</td><td>${fmt(v.budget)}</td><td>${v.var_budget === null ? '—' : `${fmt(v.var_budget)} (${pctS(v.var_budget_pct)})`}</td><td>${fmt(v.prior)}</td><td>${v.var_prior === null ? '—' : `${fmt(v.var_prior)} (${pctS(v.var_prior_pct)})`}</td><td>${v.material ? 'yes' : ''}</td></tr>`);
+  for (const v of vs) B.push(`<tr><td>${escapeHtml(v.id)}</td><td>${escapeHtml(v.metric)}</td><td class="num">${fmt(v.actual)}</td><td class="num">${fmt(v.budget)}</td><td class="num">${v.var_budget === null ? '—' : `${fmt(v.var_budget)} (${pctS(v.var_budget_pct)})`}</td><td class="num">${fmt(v.prior)}</td><td class="num">${v.var_prior === null ? '—' : `${fmt(v.var_prior)} (${pctS(v.var_prior_pct)})`}</td><td>${v.material ? 'yes' : ''}</td></tr>`);
   B.push('</tbody></table>');
   if (charts.length) {
     B.push('<h2>Charts</h2><p class="mut">Drawn only from the locked figures. Each bar names its figure id.</p>');

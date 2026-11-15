@@ -15,3 +15,9 @@
 
 ### Changed
 - Secret findings now say which rule matched. A token-like, high-entropy value in a field without a secret-like name is reported as `possible_secret`; before 0.2.0 it was not reported. Existing fixtures, tests and evals give the same results as before.
+
+### Hardening (review pass)
+
+- Markdown report hashes are taken from the text as written.
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+

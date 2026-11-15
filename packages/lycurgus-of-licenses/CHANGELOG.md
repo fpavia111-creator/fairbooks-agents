@@ -16,6 +16,10 @@
 - A policy file that is not a valid policy now fails with schema errors and JSON pointers (`/source is required`) instead of `policy.source is required`. Unknown keys in the policy are now errors; before they were ignored.
 - A package with no declared license that ships a standard license file may now be `allow` or `review` instead of `unknown`. Use `detect_text: false` for the 0.1.0 behaviour.
 
+### Hardening (review pass)
+
+- Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
+
 ## 0.1.0
 
 - First release: npm lockfile check, report, CycloneDX SBOM, SARIF, exception stubs, one-click release request.

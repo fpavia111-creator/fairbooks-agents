@@ -34,7 +34,37 @@ function esc(v) {
   return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
 }
 
-export function toCsv(rows, columns) {
+const PLAIN_NUMBER = /^[+-]?(\d[\d,]*)?(\.\d+)?(e[+-]?\d+)?%?$/i;
+// A sign followed only by digits and phone punctuation: "+1 (555) 010-0100", "-12.50".
+const SIGNED_DIGITS = /^[+-][\d\s().,\-]*%?$/;
+
+/**
+ * Stop a spreadsheet running a cell as a formula. Excel, Sheets and LibreOffice run
+ * a cell that starts with = + - or @ as a formula, so text from an untrusted
+ * source can call out to the network, start a program through DDE, or change
+ * what the reader sees. Such a cell gets a leading apostrophe, which the
+ * spreadsheet shows as plain text.
+ *
+ * Left alone, because they cannot call anything: plain numbers (-12.50, +3,
+ * -1e5, -4%), phone-style values made only of a sign, digits and punctuation
+ * (+1 555 010 0100), and @handles or @scope/package names with no "(", "|" or "!".
+ */
+export function neutraliseFormula(v) {
+  if (typeof v !== 'string' || !v) return v;
+  const c = v[0];
+  if (c === '=' || c === '\t' || c === '\r') return "'" + v;
+  if (c === '+' || c === '-') return PLAIN_NUMBER.test(v) || SIGNED_DIGITS.test(v) ? v : "'" + v;
+  if (c === '@') return /[(|!]/.test(v) ? "'" + v : v;
+  return v;
+}
+
+/**
+ * Write CSV. Formula-looking cells are neutralised by default (see
+ * neutraliseFormula); pass { formulas: 'keep' } (or { raw: true }) when the
+ * file is read back by a program and must round-trip byte for byte.
+ */
+export function toCsv(rows, columns, { formulas = 'escape', raw = false } = {}) {
   const cols = columns || [...new Set(rows.flatMap((r) => Object.keys(r)))];
-  return [cols.map(esc).join(','), ...rows.map((r) => cols.map((c) => esc(r[c])).join(','))].join('\n') + '\n';
+  const cell = raw || formulas === 'keep' ? esc : (v) => esc(typeof v === 'string' ? neutraliseFormula(v) : v);
+  return [cols.map(esc).join(','), ...rows.map((r) => cols.map((c) => cell(r[c])).join(','))].join('\n') + '\n';
 }

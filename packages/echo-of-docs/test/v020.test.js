@@ -142,3 +142,12 @@ test('MCP prompt names are not reported as missing tools', () => {
   const r = check(d, tools);
   assert.deepEqual(r.findings.map((f) => `${f.check}:${f.line}`), ['tool_not_in_code:11'], 'only the real typo is flagged');
 });
+
+test('config schema names that share a tool prefix are not reported as missing tools', () => {
+  const d = mkdtempSync(join(tmpdir(), 'echo-schema-'));
+  writeFileSync(join(d, 'package.json'), JSON.stringify({ name: 'p', version: '1.0.0' }));
+  writeFileSync(join(d, 'README.md'), '# P\n\nUse `p_read`. Check your file against the `p_template` schema.\n\nAlso `p_raed`.\n');
+  const tools = [{ name: 'p_read', decision: 'allow' }];
+  assert.deepEqual(check(d, { tools }).findings.map((f) => `${f.check}:${f.line}`), ['tool_not_in_code:3', 'tool_not_in_code:5']);
+  assert.deepEqual(check(d, { tools, config_schemas: ['p_template'] }).findings.map((f) => `${f.check}:${f.line}`), ['tool_not_in_code:5'], 'only the real typo is flagged');
+});

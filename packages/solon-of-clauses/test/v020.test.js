@@ -110,7 +110,8 @@ test('e-signing stays blocked and sending stays one-click after a named reviewer
   const a = await rt.call('solon_request_send', req); assert.equal(a.status, 'needs_approval'); assert.match(a.reason, /binding_send stays one-click/);
   new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Jo');
   const ok = await rt.call('solon_request_send', req); assert.equal(ok.status, 'executed'); assert.equal(ok.approved_by, 'Jo');
-  assert.match((await rt.call('solon_request_send', { ...req, reviewed_by: '' })).status, /needs_approval/, 'a different request needs its own click');
+  assert.match((await rt.call('solon_request_send', { ...req, reviewed_by: 'Robin Counsel (fictional)' })).status, /needs_approval/, 'a different request needs its own click');
+  assert.equal((await rt.call('solon_request_send', { ...req, reviewed_by: '' })).status, 'error', 'a blank reviewer is refused before any click');
 });
 
 test('README still says near the top: not legal advice, does not replace a lawyer, no accuracy guarantee', () => {

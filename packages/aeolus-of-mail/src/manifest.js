@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, toIcs, htmlPage, escapeHtml } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, toIcs, htmlPage, escapeHtml, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, statSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { audit, draftChanges, reportMarkdown, recordsResolver, dohResolver, hasMarkers } from './mail.js';
@@ -72,7 +72,7 @@ export const manifest = defineManifest({
         if (s) md += ['', `## Senders in DMARC reports (${s.period.from} to ${s.period.to})`, '', `${s.messages} message(s) in ${s.reports} report(s); ${s.pass_rate ?? 'n/a'}% pass DMARC. ${s.readiness.reason}`, '', '| Source IP | Status | Messages | Pass % | What to do |', '|---|---|---|---|---|', ...s.sources.map((x) => `| ${x.source_ip} | ${x.status} | ${x.messages} | ${x.pass_rate} | ${x.why.join(' ').replace(/\|/g, '\\|')} |`), ''].join('\n');
         const files = [ctx.writeFile(out, 'mail-dns-audit.md', md), ctx.writeFile(out, 'mail-dns-audit.html', auditHtml(r, s)), ctx.writeFile(out, 'findings.csv', csv)];
         if (s) files.push(ctx.writeFile(out, 'dmarc-sources.csv', sourcesCsv(s)));
-        return { summary: `Report written for ${r.domain}: ${r.issues} issue(s)${s ? `; ${s.sources.length} sending source(s) from ${s.reports} DMARC report(s)` : ''}.`, files, output_sha256: sha256(md) };
+        return { summary: `Report written for ${r.domain}: ${r.issues} issue(s)${s ? `; ${s.sources.length} sending source(s) from ${s.reports} DMARC report(s)` : ''}.`, files, output_sha256: sha256(safeMarkdown(md)) };
       },
     },
     {
@@ -102,7 +102,7 @@ export const manifest = defineManifest({
         const s = a.reports ? loadReports(a.reports, ctx, { domain: r.domain, threshold }) : null;
         const p = planRollout(r, { start_date: a.start_date, config: { ...config, pass_threshold: threshold }, readiness: s ? s.readiness : null, rua: a.rua || '' });
         const out = ctx.outDir(a.out_dir || 'mythos-out/aeolus');
-        const md = rolloutMarkdown(p);
+        const md = safeMarkdown(rolloutMarkdown(p));
         const ics = toIcs(p.stages.map((st) => ({ uid: `${r.domain}-dmarc-step-${st.step}@aeolus.local`, date: st.earliest_date, summary: `DMARC step ${st.step} for ${r.domain}: ${st.policy}${st.pct < 100 ? ` pct=${st.pct}` : ''}`, description: `${st.gate} Proposed: ${st.record}. A person approves the change (aeolus_request_dns_change).`, reminders: p.reminder_days, categories: ['DMARC'] })), { calName: `DMARC rollout ${r.domain}`, prodId: '-//Mythos Machine//aeolus-of-mail//EN' });
         const files = [ctx.writeFile(out, 'dmarc-rollout.md', md), ctx.writeFile(out, 'dmarc-rollout.json', JSON.stringify(p, null, 2) + '\n'), ctx.writeFile(out, 'dmarc-rollout.ics', ics)];
         let change = null; let changeSha = null;
@@ -112,7 +112,7 @@ export const manifest = defineManifest({
           const text = JSON.stringify(proposal, null, 2) + '\n'; const pf = ctx.writeFile(out, 'dmarc-next-stage.json', text); files.push(pf);
           change = relative(ctx.root, pf).split('\\').join('/'); changeSha = sha256(text);
         }
-        return { summary: p.done ? `${r.domain} is already at p=reject for all mail; nothing to stage.` : `${p.stages.length} stage(s) planned for ${r.domain} from ${a.start_date} (next: ${p.stages[0].policy}${p.stages[0].pct < 100 ? ` pct=${p.stages[0].pct}` : ''}); ${s ? s.readiness.reason : 'no reports given, so the next enforcing stage waits for them.'} DNS was not changed.`, plan: p, change, change_sha256: changeSha, files, output_sha256: sha256(md) };
+        return { summary: p.done ? `${r.domain} is already at p=reject for all mail; nothing to stage.` : `${p.stages.length} stage(s) planned for ${r.domain} from ${a.start_date} (next: ${p.stages[0].policy}${p.stages[0].pct < 100 ? ` pct=${p.stages[0].pct}` : ''}); ${s ? s.readiness.reason : 'no reports given, so the next enforcing stage waits for them.'} DNS was not changed.`, plan: p, change, change_sha256: changeSha, files, output_sha256: sha256(safeMarkdown(md)) };
       },
     },
     {

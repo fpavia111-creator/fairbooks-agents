@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, unifiedDiff } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, unifiedDiff, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync, statSync } from 'node:fs';
 import { join, dirname, relative } from 'node:path';
 import { audit, fixListCsv, reportMarkdown, reportHtml, mechanicalFixes, MECHANICAL } from './pages.js';
@@ -49,7 +49,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['site'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/daphne');
-        const md = reportMarkdown(r, a.site); const html = reportHtml(r, a.site); const csv = fixListCsv(r);
+        const md = safeMarkdown(reportMarkdown(r, a.site)); const html = reportHtml(r, a.site); const csv = fixListCsv(r);
         return { summary: `Report written: ${r.issues} issue(s) across ${r.pages} page(s).`, files: [ctx.writeFile(out, 'page-audit.md', md), ctx.writeFile(out, 'fix-list.csv', csv), ctx.writeFile(out, 'page-audit.html', html)], output_sha256: sha256(md + csv + html) };
       },
     },

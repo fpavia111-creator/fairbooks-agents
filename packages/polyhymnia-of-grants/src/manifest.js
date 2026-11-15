@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, writeZip, validateIcs } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, writeZip, validateIcs, safeFileName } from 'mythos-agent-core';
 import { readFileSync, existsSync, statSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { review, deadlines, packetFiles } from './grants.js';
@@ -97,7 +97,7 @@ export const manifest = defineManifest({
         if (a.grant_id && !pick.length) throw new Error(`grant ${a.grant_id} not found`);
         const files = []; const templateGaps = {};
         for (const g of pick) {
-          const dir = join(base, g.grant_id); mkdirSync(dir, { recursive: true });
+          const dir = join(base, safeFileName(g.grant_id)); mkdirSync(dir, { recursive: true });
           const v = varianceReview(g, linesOf(blines, g.grant_id), vargs(a, t));
           const tc = t ? templateCheck(t, g, v, (p) => fileExists(ctx, join(dirname(a.outcomes || '.'), p))) : null;
           if (tc) templateGaps[g.grant_id] = tc.gaps.length;
@@ -114,7 +114,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const r = run(a, ctx); const g = r.items.find((x) => x.grant_id === a.grant_id);
         if (!g) throw new Error(`grant ${a.grant_id} not found`);
-        const pdir = join(ctx.outDir(a.out_dir || 'mythos-out/polyhymnia'), 'packets', g.grant_id);
+        const pdir = join(ctx.outDir(a.out_dir || 'mythos-out/polyhymnia'), 'packets', safeFileName(g.grant_id));
         const files = {}; const missing = [];
         for (const n of ['report-draft.md', 'checklist.md', 'evidence-index.csv']) { const f = join(pdir, n); if (existsSync(f)) files[`packet/${n}`] = readFileSync(f); else missing.push(`packet/${n}`); }
         if (!Object.keys(files).length) throw new Error(`no packet for ${g.grant_id}: run polyhymnia_build_packet first`);
@@ -122,7 +122,7 @@ export const manifest = defineManifest({
         for (const o of g.outcomes) { if (!o.evidence) continue; if (o.flags.includes('evidence_not_found')) { missing.push(`evidence/${o.evidence}`); continue; } files[`evidence/${o.evidence.replace(/^\.?\/+/, '')}`] = readFileSync(evPath(a, ctx, o.evidence)); }
         const manifest = { ...evidenceManifest(g, files, { as_of: r.as_of }), missing };
         files['manifest.json'] = JSON.stringify(manifest, null, 2) + '\n';
-        const zip = writeZip(files); const file = ctx.writeFile(join(ctx.outDir(a.out_dir || 'mythos-out/polyhymnia'), 'packets'), `${g.grant_id}-evidence-pack.zip`, zip);
+        const zip = writeZip(files); const file = ctx.writeFile(join(ctx.outDir(a.out_dir || 'mythos-out/polyhymnia'), 'packets'), `${safeFileName(g.grant_id)}-evidence-pack.zip`, zip);
         return { summary: `Evidence pack for ${g.grant_id}: ${Object.keys(files).length} file(s)${missing.length ? `, ${missing.length} cited file(s) missing` : ''}. Nothing was sent.`, file, files: manifest.files, missing, output_sha256: sha256(zip) };
       },
     },

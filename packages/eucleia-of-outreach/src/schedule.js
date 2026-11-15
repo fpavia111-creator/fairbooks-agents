@@ -12,6 +12,9 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
   const perDay = Number(max_per_day ?? cfg.max_per_day), gap = Number(min_gap_minutes ?? cfg.min_gap_minutes);
   const start = Date.parse(start_from);
   if (!Number.isFinite(start)) throw new Error('start_from must be an ISO date-time');
+  if (!Number.isInteger(gap) || gap < 1 || gap > 1440) throw new Error('min_gap_minutes must be a whole number from 1 to 1440 (one day)');
+  if (!Number.isInteger(perDay) || perDay < 1 || perDay > 100000) throw new Error('max_per_day must be a whole number from 1 to 100000');
+  if (!Number.isFinite(horizon_days) || horizon_days < 1 || horizon_days > 366) throw new Error('horizon_days must be from 1 to 366');
   const seen = new Set();
   const checked = drafts.map((d, i) => {
     const { send_at, ...rest } = d;
@@ -23,8 +26,9 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
   });
   const step = Math.max(1, gap) * 60000;
   const counts = new Map(); const slots = []; const unplaced = [];
-  const used = new Set(); // minute indexes already taken
-  const free = (u) => { const m = u / 60000; for (let k = -(gap - 1); k <= gap - 1; k++) if (used.has(m + k)) return false; return true; };
+  const used = []; // minute indexes already taken
+  // The latest taken minute closer than the gap to minute m, or null when m is free.
+  const blocker = (m) => { let b = null; for (const x of used) if (Math.abs(x - m) < gap && (b === null || x > b)) b = x; return b; };
   const startMin = Math.ceil(start / 60000) * 60000; const end = start + horizon_days * 86400000;
   const pointer = new Map(); // per time zone: where the next search starts
   for (const c of checked.filter((x) => x.r.ok)) {
@@ -33,10 +37,11 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
     for (let u = pointer.get(tz) ?? startMin; u <= end; u += 60000) {
       const w = inWindow(new Date(u).toISOString(), cfg, tz);
       if (!w.ok) { u += 14 * 60000 - ((u / 60000) % 15) * 60000; continue; } // windows open on the quarter hour
-      if (!free(u)) continue;
+      const b = blocker(u / 60000);
+      if (b !== null) { u = (b + gap - 1) * 60000; continue; } // jump past the gap instead of stepping minute by minute
       const day = localParts(new Date(u).toISOString(), cfg.time_zone).date;
       if ((counts.get(day) || 0) >= perDay) continue;
-      counts.set(day, (counts.get(day) || 0) + 1); used.add(u / 60000);
+      counts.set(day, (counts.get(day) || 0) + 1); used.push(u / 60000);
       slots.push({ row: c.row, to: c.d.to, subject: c.d.subject, send_at: new Date(u).toISOString(), local: w.local, sender_day: day });
       pointer.set(tz, u + step); placed = true; break;
     }

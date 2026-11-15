@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, canonical } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, canonical, safeMarkdown } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, basename, extname } from 'node:path';
 import { normalise, audit, findingsCsv, reportMarkdown, proposals, redact, compareBaseline } from './flows.js';
@@ -49,7 +49,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['exports'], properties: { ...props, out_dir: str, baseline: { ...str, description: 'Optional earlier findings.csv' } } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/arethusa');
-        const md = reportMarkdown(r); const csv = findingsCsv(r); const sarif = JSON.stringify(findingsSarif(r, pkg.version), null, 2) + '\n';
+        const md = safeMarkdown(reportMarkdown(r)); const csv = findingsCsv(r); const sarif = JSON.stringify(findingsSarif(r, pkg.version), null, 2) + '\n';
         return { summary: `Report written: ${r.findings} finding(s) across ${r.flows} flow(s).`, files: [ctx.writeFile(out, 'flow-audit.md', md), ctx.writeFile(out, 'findings.csv', csv), ctx.writeFile(out, 'findings.sarif', sarif)], output_sha256: sha256(md + csv + sarif) };
       },
     },
@@ -59,7 +59,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['exports'], properties: { exports: props.exports, policy: props.policy, out_dir: str } },
       handler: async (a, ctx) => {
         const p = loadPolicy(a, ctx); const m = dependencyMap(flowsOf(a, ctx), { entropy: p.entropy });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/arethusa'); const md = dependencyMarkdown(m); const csv = dependencyCsv(m);
+        const out = ctx.outDir(a.out_dir || 'mythos-out/arethusa'); const md = safeMarkdown(dependencyMarkdown(m)); const csv = dependencyCsv(m);
         return { summary: `${m.flows} flow(s): ${m.shared} shared resource(s), ${m.calls.length} flow-to-flow call(s), ${m.rotation_plan.length} secret(s) to rotate.`, ...m, files: [ctx.writeFile(out, 'dependency-map.md', md), ctx.writeFile(out, 'dependency-map.csv', csv)], output_sha256: sha256(canonical(m)) };
       },
     },
