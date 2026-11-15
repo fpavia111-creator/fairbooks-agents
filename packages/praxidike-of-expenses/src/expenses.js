@@ -41,11 +41,12 @@ const sec = (p, k) => (p.sections && p.sections[k]) || k;
 export function review(lines, policy, a = {}) {
   const p = validatePolicy(policy); const cur = (p.currency || 'USD').toUpperCase();
   const receiptsDir = a.receiptsDir; const seen = new Map(); const receiptUse = new Map();
+  const aliases = new Map(Object.entries(p.category_aliases || {}).map(([k, v]) => [k.trim().toLowerCase(), String(v).trim().toLowerCase()]));
   const items = lines.map((l, i) => {
     const line = {
       report_id: pick(l, 'report_id', 'report'), line_id: pick(l, 'line_id', 'line', 'id') || `L${i + 1}`, employee: pick(l, 'employee', 'employee_name', 'submitter'),
       date: pick(l, 'date', 'expense_date', 'spent_on'), submitted_on: pick(l, 'submitted_on', 'submitted', 'report_date'),
-      category: pick(l, 'category', 'type').toLowerCase(), merchant: pick(l, 'merchant', 'vendor'), amount: money(toNumber(pick(l, 'amount', 'total'))),
+      category: ((c) => aliases.get(c) || c)(pick(l, 'category', 'type').trim().toLowerCase()), merchant: pick(l, 'merchant', 'vendor'), amount: money(toNumber(pick(l, 'amount', 'total'))),
       currency: (pick(l, 'currency') || cur).toUpperCase(), receipt: pick(l, 'receipt', 'receipt_file'), purpose: maskNumbers(pick(l, 'purpose', 'business_purpose', 'description')),
       attendees: Number(pick(l, 'attendees')) || 0, nights: Number(pick(l, 'nights')) || 0, miles: toNumber(pick(l, 'miles')) || 0, days: Number(pick(l, 'days')) || 0, location: pick(l, 'location', 'city', 'destination'), preapproved_by: pick(l, 'preapproved_by', 'pre_approval'),
     };

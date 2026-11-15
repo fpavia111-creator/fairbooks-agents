@@ -2,6 +2,7 @@ import { defineManifest, toCsv, sha256, safeMarkdown, safeFileName } from 'mytho
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { check, trackerCsv, readinessMarkdown, requestDraft, slug, readiness1099, readiness1099Markdown, readinessCsv, findDuplicates } from './vendors.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
@@ -19,6 +20,7 @@ function appendRow(dir, file, row, cols) {
 }
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'auxo-of-vendors',
   version: pkg.version,
   description: 'Vendor W-9 and W-8 readiness from CSV exports: missing, unsigned or expired forms, TIN format and pattern per entity type (always masked; no IRS matching), duplicate vendor records, a 1099 readiness summary, missing name, address or LLC classification, old forms, non-US vendors, and payment totals against a threshold you set. Writes a tracker and drafts request and reminder emails. Sending is one human click. It never files with the IRS and gives no tax advice.',

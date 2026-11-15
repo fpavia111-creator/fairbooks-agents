@@ -6,13 +6,15 @@ import { classifyDispute, CHECKLISTS } from './reasons.js';
 import { disputeEvidence, evidenceIndex, evidencePackHtml, disputeIcs } from './evidence.js';
 import { REFUND_POLICY_SCHEMA } from './schemas.js';
 import { PROMPTS } from './prompts.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }, num = { type: 'number' };
 const files = { requests: { ...str, description: 'Refund/chargeback requests CSV/JSON: request_id, type, order_id, customer, amount, reason, requested_at, returned' }, orders: { ...str, description: 'Orders CSV/JSON: order_id, customer, amount, refunded, order_date, delivered_date, tracking, status' }, policy: { ...str, description: 'Policy JSON: window_days, window_from (delivered|ordered), review_over, max_refunds_per_customer_90d, chargeback_response_days, return_required_over, no_refund_reasons, reason_code_overrides (validated against the refund_policy schema)' } };
-const run = (a, ctx) => { const orders = normOrders(ctx.records(a.orders)); const requests = normRequests(ctx.records(a.requests)); const policy = a.policy ? ctx.readJson(a.policy, 'refund_policy') : {}; return { orders, requests, policy, r: triage(requests, orders, policy) }; };
+const run = (a, ctx) => { const orders = normOrders(ctx.records(a.orders, 'orders')); const requests = normRequests(ctx.records(a.requests, 'requests')); const policy = a.policy ? ctx.readJson(a.policy, 'refund_policy') : {}; return { orders, requests, policy, r: triage(requests, orders, policy) }; };
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'soteria-of-refunds',
   version: pkg.version,
   description: 'Triages refund requests and chargebacks from CSV/JSON exports against your written policy: window, refundable balance, duplicates, repeat requests, returns, review thresholds, dispute deadlines. Drafts dispute evidence packs. Issuing money is blocked; a refund request is one human click and only records a request.',

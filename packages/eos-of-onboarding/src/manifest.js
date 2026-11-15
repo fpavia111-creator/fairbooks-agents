@@ -5,6 +5,7 @@ import { status, trackerCsv, summaryMarkdown, accessDraft, parseDate } from './o
 import { offboarding, offboardingMarkdown, ownerActions, actionsCsv, trackerIcs, readiness, readinessHtml } from './offboarding.js';
 import { TEMPLATE_SCHEMA } from './schema.js';
 import { PROMPT } from './prompt.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
@@ -36,6 +37,7 @@ function appendRow(dir, file, row, cols) {
 const COLS = ['requested_at', 'action', 'person_id', 'name', 'task_id', 'system', 'access_level', 'end_date', 'reason', 'status'];
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'eos-of-onboarding',
   version: pkg.version,
   description: 'Tracks onboarding checklists for new employees, contractors or customers from a people CSV, a JSON template and a status CSV: due dates from the start date, overdue and waiting tasks, readiness for day one, access granted before its prerequisites, contractor access with no end date, and access still marked granted after an engagement ended. Per-role templates (role tasks added or removed, unknown roles flagged). An offboarding mirror checklist from the end date, a prioritised action list per owner, a day-one readiness report with its hash in the audit log, and a calendar file. Drafts access requests once prerequisites are done, and removal drafts for offboarding. Granting and removing access are each one human click; Eos never touches an identity system.',

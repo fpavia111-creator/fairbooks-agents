@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
-import { readFileSync, existsSync, statSync, realpathSync } from 'node:fs';
-import { resolve, relative, isAbsolute, extname, dirname, basename, join } from 'node:path';
-import { parseCsv } from './csv.js';
+import { readFileSync, realpathSync } from 'node:fs';
+import { resolve, relative, isAbsolute, dirname, basename, join } from 'node:path';
+import { rowsToRecords } from './csv.js';
+import { readTable } from './tables.js';
 
 export function sha256(s) { return createHash('sha256').update(s).digest('hex'); }
 
@@ -44,24 +45,13 @@ export function safePath(root, p) {
   return abs;
 }
 
-/** Read a CSV, JSON array, or JSONL file into an array of plain objects. */
-export function readRecords(file) {
-  if (!existsSync(file) || !statSync(file).isFile()) throw new Error(`file not found: ${file}`);
-  const text = readFileSync(file, 'utf8');
-  const ext = extname(file).toLowerCase();
-  if (ext === '.csv') return parseCsv(text);
-  if (ext === '.jsonl' || ext === '.ndjson') {
-    return text.split(/\r?\n/).filter((l) => l.trim()).map((l, i) => {
-      try { return JSON.parse(l); } catch { throw new Error(`${file}: line ${i + 1} is not valid JSON`); }
-    });
-  }
-  if (ext === '.json') {
-    const data = JSON.parse(text);
-    if (Array.isArray(data)) return data;
-    for (const k of ['records', 'rows', 'data', 'items']) if (Array.isArray(data[k])) return data[k];
-    throw new Error(`${file}: expected a JSON array (or {records: [...]})`);
-  }
-  throw new Error(`${file}: unsupported file type ${ext || '(none)'}; use .csv, .json or .jsonl`);
+/**
+ * Read a CSV, TSV, Excel .xlsx, JSON array or JSONL file into an array of plain
+ * objects (the first row is the header). No column mapping: see adaptRecords.
+ */
+export function readRecords(file, opts) {
+  const t = readTable(file, opts);
+  return t.records || rowsToRecords(t.matrix);
 }
 
 export function toNumber(v) {

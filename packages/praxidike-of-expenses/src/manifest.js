@@ -6,6 +6,7 @@ import { normalizeReceipt, receiptView } from './receipts.js';
 import { findDuplicates, auditQueue, queueCsv, evidenceHtml } from './audit.js';
 import { POLICY_SCHEMA } from './schema.js';
 import { PROMPT } from './prompt.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -47,6 +48,7 @@ function appendRows(dir, file, rows, cols) {
 }
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'praxidike-of-expenses',
   version: pkg.version,
   description: 'Compares expense lines and receipt text with your written expense policy: receipts, limits per item, person or night, mileage (rates by date), per diem by location and date, disallowed categories, business purpose, attendees, pre-approval, late submission, currency and possible duplicates (also against earlier reports, by receipt hash and fuzzy match). Normalises receipt text, ranks reports for review with stated reasons and writes a hashed evidence pack. Cites the policy section for every finding and recommends approve, approve with changes, needs info or reject. Pre-stages a reimbursement batch; reimbursing is one human click and paying is blocked. Not fraud detection.',
@@ -114,7 +116,10 @@ export const manifest = defineManifest({
       description: 'Pre-stage a reimbursement batch: staged-reimbursements.csv and batch.json (with hashes) for reports recommended approve or approve with changes, at the recommended amounts. Nothing is paid. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['expenses', 'policy'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/praxidike');
+        const r = run(a, ctx);
+        const card = ctx.sourceReports().find((s) => s.profile === 'ramp_transactions');
+        if (card) throw new Error(`${card.file} is a company card export (${card.system}): the company already paid these, so there is nothing to reimburse. Review and duplicate checks still work on it.`);
+        const out = ctx.outDir(a.out_dir || 'mythos-out/praxidike');
         const csv = batchCsv(r); const cf = ctx.writeFile(out, 'staged-reimbursements.csv', csv);
         const staged = r.report_summaries.filter((s) => s.recommended > 0);
         const batch = { created_at: new Date().toISOString(), policy_source: r.policy_source, currency: r.currency, reports: staged.map((s) => ({ report_id: s.report_id, employee: s.employee, amount: s.recommended, recommendation: s.recommendation })), total: Math.round(staged.reduce((t, s) => t + s.recommended, 0) * 100) / 100, csv: 'staged-reimbursements.csv', csv_sha256: sha256(csv), held: r.report_summaries.filter((s) => s.recommended === 0).map((s) => `${s.report_id} (${s.recommendation})`), status: 'staged - not paid' };

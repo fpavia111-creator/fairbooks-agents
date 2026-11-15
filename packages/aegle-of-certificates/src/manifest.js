@@ -5,6 +5,7 @@ import { scan, reportMarkdown, reportHtml, calendarIcs, chaseDraft, expiryCsv, s
 import { extractCoiText, EXTRACT_COLUMNS } from './coi-text.js';
 import { liveTlsCheck, liveCsv, parseTarget, MAX_HOSTS, HOST_RE } from './live-tls.js';
 import { COI_REQUIREMENTS_SCHEMA } from './schemas.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
@@ -27,6 +28,7 @@ function appendRow(dir, file, row, cols) {
 }
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'aegle-of-certificates',
   version: pkg.version,
   description: 'Expiry tracking for TLS certificates, domains, licences and vendor certificates of insurance (COIs) from CSV inventories. Flags weak or self-signed certificates, auto-renew and registrar-lock gaps, and COI gaps against your written requirements. Writes a report and a calendar file and drafts chase emails. Paid renewals, production changes and sends are each one human click; it never buys, deploys or sends.',

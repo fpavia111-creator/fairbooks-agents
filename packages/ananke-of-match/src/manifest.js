@@ -3,6 +3,7 @@ import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normPOs, normReceipts, normInvoices, match, explain, worklistCsv, poStatus, poStatusCsv, reportHtml } from './match.js';
 import { TOLERANCE_SCHEMA, PROMPTS } from './config.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }, num = { type: 'number' };
@@ -18,6 +19,7 @@ const load = (a, ctx) => {
 const run = (a, ctx) => load(a, ctx).r;
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'ananke-of-match',
   version: pkg.version,
   description: 'Investigates AP three-way-match exceptions (PO, receipt, invoice) from CSV/JSON exports: no PO, missing line, over-billing across partial receipts and several invoices, price variance with optional per-vendor tolerances, exact and near-duplicate invoices, vendor mismatch. Reports PO line status with a GRNI estimate and writes a worklist and an HTML report. Posting is always one human click and only records a request; Ananke never posts to an ERP or pays.',

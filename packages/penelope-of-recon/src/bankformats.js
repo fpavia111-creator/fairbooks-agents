@@ -90,13 +90,17 @@ export function parseOfx(text) {
 /** Show only the last 4 characters of an account identifier. */
 function mask(acct) { const s = String(acct || ''); return s ? (s.length > 4 ? '••••' + s.slice(-4) : '••••') : ''; }
 
-export const BANK_FORMATS = ['csv', 'json', 'camt053', 'bai2', 'ofx'];
+export const BANK_FORMATS = ['csv', 'tsv', 'xlsx', 'json', 'camt053', 'bai2', 'ofx'];
+/** Formats read as a table of rows (through the core reader and the export profiles). */
+export const TABLE_FORMATS = ['csv', 'tsv', 'xlsx', 'json'];
 /** Pick a format from the extension, then from the content. */
 export function detectFormat(file, text) {
   const ext = extname(file).toLowerCase();
   if (ext === '.ofx' || ext === '.qfx') return 'ofx';
   if (ext === '.bai' || ext === '.bai2') return 'bai2';
   if (ext === '.csv') return 'csv';
+  if (ext === '.tsv' || ext === '.tab') return 'tsv';
+  if (ext === '.xlsx' || ext === '.xlsm') return 'xlsx';
   if (ext === '.json' || ext === '.jsonl' || ext === '.ndjson') return 'json';
   const head = String(text || '').slice(0, 4096);
   if (/BkToCstmrStmt|camt\.053/.test(head)) return 'camt053';

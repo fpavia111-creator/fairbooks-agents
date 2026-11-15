@@ -3,6 +3,7 @@ import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeSeats, findWaste, sheetCsv, summaryMarkdown } from './seats.js';
 import { POLICY_SCHEMA, contractTerms, applyContracts, actionList, renewalIcs, confirmationDrafts, draftIndexCsv, compareReviews } from './renewals.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -49,6 +50,7 @@ const PROMPT = `You are running a SaaS seat review with Helios of Seats. Helios 
 6. Remind the user: savings are estimates from their export and contract terms; an admin makes every change in the app.`;
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'helios-of-seats',
   version: pkg.version,
   description: 'Finds unused, idle, duplicate, leaver and over-tiered SaaS seats (including AI tools) in CSV/JSON exports and estimates the saving, timed to each contract renewal and notice window. Writes a review sheet, a renewal calendar and owner confirmation drafts, and compares two exports. Revocations are always one human click; Helios never changes any app itself.',

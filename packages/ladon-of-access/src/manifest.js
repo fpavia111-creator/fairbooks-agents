@@ -2,6 +2,7 @@ import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeAccess, normalizeRoster, reviewAccess, sheetCsv, summaryMarkdown, effectiveOptions, campaignStatus, accessDiff, evidencePack } from './access.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -54,6 +55,7 @@ const PROMPT = `You are running an access recertification with the ladon-of-acce
 Never claim the review makes anyone compliant or certified.`;
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'ladon-of-access',
   version: pkg.version,
   description: 'Reads access-list exports (people, agents and service accounts), flags leavers, stale, privileged, ownerless and unrotated accounts and segregation-of-duties conflicts, writes a recertification sheet with reviewers and due dates, tracks campaign progress and writes an evidence pack. Never revokes access by itself.',

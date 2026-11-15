@@ -22,6 +22,7 @@ export const POLICY_SCHEMA = {
     late_decision: { enum: ['needs_info', 'reject'] },
     sections: { type: 'object', additionalProperties: { type: 'string' } },
     categories: { type: 'object', additionalProperties: { $ref: '#/$defs/category' } },
+    category_aliases: { type: 'object', additionalProperties: { type: 'string', minLength: 1 }, description: 'Category names used by your expense or card system, mapped to the policy category they fall under, e.g. { "Restaurants": "meals" }. Letter case is ignored.' },
     disallowed: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['category'], properties: { category: { type: 'string', minLength: 1 }, section: { type: 'string' }, note: { type: 'string' } } } },
     per_diem: {
       type: 'object', additionalProperties: false, required: ['rates'],

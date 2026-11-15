@@ -7,6 +7,7 @@ import { compareAudits } from './compare.js';
 import { checkDomains, dohResolver, recordsResolver, RESOLVERS } from './mx.js';
 import { HYGIENE_RULES_SCHEMA } from './schemas.js';
 import { PROMPTS } from './prompts.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -17,6 +18,7 @@ const auditOpts = (a, ctx, asOf = a.as_of) => ({ ...a, as_of: asOf, suppression:
 const run = (a, ctx, file = a.contacts, asOf = a.as_of) => audit(normContacts(ctx.records(file)), auditOpts(a, ctx, asOf));
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'nausicaa-of-hygiene',
   version: pkg.version,
   description: 'CRM and contact-list hygiene from exports: invalid and typo emails, hard bounces, role and disposable addresses, duplicates, stale records, missing or conflicting consent. Writes a review sheet and a do-not-email copy. Bulk deletes are always one human click and only record a request.',

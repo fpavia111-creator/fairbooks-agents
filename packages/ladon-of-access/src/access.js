@@ -11,6 +11,7 @@ function colKey(row, names) {
   return null;
 }
 function col(row, names) { const k = colKey(row, names); return k ? row[k] : ''; }
+const LOGIN_COLS = ['lastlogin', 'lastlogon', 'lastused', 'lastactive', 'lastseen'];
 const ROTATION_COLS = ['lastrotated', 'credentialrotated', 'keyrotated', 'rotatedat', 'lastrotation', 'secretrotated', 'credentiallastrotated'];
 
 export function normalizeAccess(rows) {
@@ -22,7 +23,8 @@ export function normalizeAccess(rows) {
     account_type: low(col(r, ['accounttype', 'type', 'kind'])) || 'human',
     role: n(col(r, ['role', 'roles', 'permission', 'permissions', 'group', 'access'])),
     owner: n(col(r, ['owner', 'manager', 'accountowner', 'sponsor'])),
-    last_login: n(col(r, ['lastlogin', 'lastlogon', 'lastused', 'lastactive', 'lastseen'])),
+    // null when the export has no last-login column at all (staleness then cannot be checked).
+    last_login: colKey(r, LOGIN_COLS) ? n(col(r, LOGIN_COLS)) : null,
     status: low(col(r, ['status', 'state'])) || 'active',
     mfa: low(col(r, ['mfa', '2fa', 'mfaenabled', 'twofactor'])),
     // null when the export has no rotation column at all (rotation then cannot be checked).
@@ -106,7 +108,8 @@ export function reviewAccess(rows, roster, opts = {}) {
       if (!r.last_rotated || /^never$/i.test(r.last_rotated)) { flags.push('non_human_without_rotation_date'); score += 20; }
       else { const d = days(r.last_rotated, asOf); if (d === null) { flags.push('rotation_date_unreadable'); score += 10; } else if (d > rotationMax) { flags.push(`credential_not_rotated_${d}_days`); score += 20; } }
     }
-    if (!r.last_login || /^never$/i.test(r.last_login)) { flags.push('never_logged_in'); score += 15; }
+    if (r.last_login === null) flags.push('last_login_not_in_export');
+    else if (!r.last_login || /^never$/i.test(r.last_login)) { flags.push('never_logged_in'); score += 15; }
     else { const d = days(r.last_login, asOf); if (d === null) { flags.push('last_login_unreadable'); score += 5; } else if (d > stale) { flags.push(`stale_${d}_days`); score += 20; } }
     if (isPriv && r.mfa && /^(no|false|0|off|disabled)$/.test(r.mfa)) { flags.push('privileged_without_mfa'); score += 30; }
     if (SHARED.test(r.email || r.user)) { flags.push('shared_or_generic_account'); score += 15; }
@@ -145,6 +148,7 @@ const FLAG_TEXT = {
   rotation_date_unreadable: 'Credential rotation date could not be read.',
   never_logged_in: 'Account has never been used.',
   last_login_unreadable: 'Last login date could not be read.',
+  last_login_not_in_export: 'This export has no last-login column, so stale and never-used accounts could not be checked.',
   privileged_without_mfa: 'Privileged account without MFA.',
   shared_or_generic_account: 'Looks like a shared or generic account.',
 };

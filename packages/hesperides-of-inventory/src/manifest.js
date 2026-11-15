@@ -5,6 +5,7 @@ import { compare, varianceCsv, reportMarkdown, adjustmentRows, recountCsv, lineI
 import { countPlan, planCsv, abcCsv, planIcs, accuracy, abcClasses } from './plan.js';
 import { UOM_TABLE_SCHEMA, COUNT_POLICY_SCHEMA } from './schema.js';
 import { PROMPT } from './prompt.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
@@ -32,6 +33,7 @@ function appendRows(dir, file, rows, cols) {
 }
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'hesperides-of-inventory',
   version: pkg.version,
   description: 'Compares cycle counts with an on-hand export: ranks variances by value, separates timing differences (movements after the count), compares per lot or serial (and flags lot mix-ups that net to zero), converts counts with your unit-of-measure table and explains case-vs-each errors with the factor, flags negative stock, items not in the system and items not counted, and says which lines need a recount (with a blind recount sheet). Plans ABC-ranked count schedules (CSV and .ics) and reports record accuracy by location, counter and class. Drafts adjustment entries only for lines within tolerance or confirmed by a recount. Posting is one human click; it never writes to your ERP.',

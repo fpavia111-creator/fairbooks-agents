@@ -3,6 +3,7 @@
 export const KINDS = ['read', 'report', 'write', 'action'];
 export const DECISIONS = ['allow', 'ask', 'block'];
 export const MODES = ['review', 'assist', 'auto'];
+const SOURCE_FIELD_TYPES = ['text', 'date', 'datetime', 'money', 'number', 'bool', 'email'];
 
 /**
  * Categories that always need a named human, even in Auto mode.
@@ -68,6 +69,25 @@ export function defineManifest(m) {
     if (!p.description || !p.text) errs.push(`prompt ${p.name}: description and text are required`);
   }
   if (m.configSchemas && (typeof m.configSchemas !== 'object' || Array.isArray(m.configSchemas))) errs.push('configSchemas must be an object of JSON Schemas');
+  if (m.sources !== undefined) {
+    if (!m.sources || typeof m.sources !== 'object' || Array.isArray(m.sources)) errs.push('sources must be an object keyed by source kind');
+    else {
+      const argNames = new Set((m.tools || []).flatMap((t) => Object.keys((t.inputSchema && t.inputSchema.properties) || {}).flatMap((a) => [a, `${t.name}.${a}`])));
+      for (const [kind, def] of Object.entries(m.sources)) {
+        if (!def || typeof def !== 'object' || !def.fields || typeof def.fields !== 'object' || !Object.keys(def.fields).length) { errs.push(`source ${kind}: fields (the agent's own columns) are required`); continue; }
+        for (const a of def.args || [kind]) if (!argNames.has(a)) errs.push(`source ${kind}: "${a}" is not an argument of any tool`);
+        for (const [f, fd] of Object.entries(def.fields)) if (fd && fd.type && !SOURCE_FIELD_TYPES.includes(fd.type)) errs.push(`source ${kind}: field ${f} has unknown type "${fd.type}"`);
+        const ids = new Set();
+        for (const p of def.profiles || []) {
+          if (!p || !p.id || !/^[a-z][a-z0-9_]*$/.test(p.id)) { errs.push(`source ${kind}: every profile needs an id (lowercase letters, digits, _)`); continue; }
+          if (ids.has(p.id)) errs.push(`source ${kind}: duplicate profile ${p.id}`); ids.add(p.id);
+          if (!p.system) errs.push(`source ${kind}: profile ${p.id} needs "system" (the product the export comes from)`);
+          if (p.headerless ? !Array.isArray(p.headerless) || typeof p.detect !== 'function' : !Array.isArray(p.signature) || !p.signature.length) errs.push(`source ${kind}: profile ${p.id} needs "signature" (column names that identify the export)`);
+          for (const f of Object.keys(p.map || {})) if (!(f in def.fields)) errs.push(`source ${kind}: profile ${p.id} maps "${f}", which is not one of the fields`);
+        }
+      }
+    }
+  }
   if (errs.length) throw new ManifestError('Invalid pack manifest:\n- ' + errs.join('\n- '));
   return Object.freeze({
     description: '',

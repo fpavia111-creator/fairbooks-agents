@@ -3,6 +3,7 @@ import { readFileSync, existsSync, appendFileSync, mkdirSync, readdirSync, statS
 import { join, relative } from 'node:path';
 import { reviewLog, rfiCsv, subCsv, logMarkdown, draftRfi, MARKERS, ballInCourt, bicCsv, bicMarkdown, diffLogs, diffMarkdown, dueEvents, parseTitleBlock, indexFromTitleBlocks, INDEX_COLUMNS, draftTransmittal, PURPOSES } from './rfis.js';
 import { prompts } from './prompts.js';
+import { SOURCES } from './sources.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
@@ -33,6 +34,7 @@ function appendRow(dir, file, row, cols) {
 }
 
 export const manifest = defineManifest({
+  sources: SOURCES,
   name: 'epeius-of-rfis',
   version: pkg.version,
   description: 'Reviews a construction RFI and submittal log against your drawing and spec index: overdue RFIs and submittals, reviews past their period, resubmittals pending, references that are missing, not in the index or on a superseded revision, unstated cost or schedule impact and possible duplicate questions. Shows ball-in-court aging with a chase list, compares log exports week over week, builds a drawing index from title-block text and writes a calendar of due dates. Drafts RFIs from your question and document transmittals that cite only the documents and text extracts you provide, with open items marked. Sending to the architect or GC is one human click. Not design or engineering advice.',

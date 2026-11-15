@@ -7,6 +7,8 @@ function col(row, names) {
   for (const want of names) { const k = keys.find((x) => x.toLowerCase().replace(/[^a-z0-9]/g, '') === want); if (k !== undefined) return row[k]; }
   return '';
 }
+const ACTIVE_COLS = ['lastactive', 'lastlogin', 'lastseen', 'lastused', 'lastactivity'];
+const hasCol = (row, names) => Object.keys(row).some((x) => names.includes(x.toLowerCase().replace(/[^a-z0-9]/g, '')));
 
 export function normalizeSeats(rows) {
   return rows.map((r, i) => ({
@@ -16,7 +18,8 @@ export function normalizeSeats(rows) {
     email: low(col(r, ['email', 'useremail', 'mail'])),
     tier: n(col(r, ['tier', 'plan', 'license', 'licensetype', 'seattype', 'edition'])),
     monthly_cost: toNumber(col(r, ['monthlycost', 'costpermonth', 'cost', 'price', 'monthlyprice'])),
-    last_active: n(col(r, ['lastactive', 'lastlogin', 'lastseen', 'lastused', 'lastactivity'])),
+    // null when the export has no last-active column at all (idle seats then cannot be found).
+    last_active: hasCol(r, ACTIVE_COLS) ? n(col(r, ACTIVE_COLS)) : null,
     premium_used: low(col(r, ['premiumfeaturesused', 'premiumused', 'usespremium', 'advancedfeaturesused'])),
     status: low(col(r, ['status', 'state'])) || 'active',
   }));
@@ -42,7 +45,8 @@ export function findWaste(rows, opts = {}) {
     const app = opts.perApp?.get(low(r.app)) || {};
     const idleFor = Number(app.idle_days ?? idle); const ratio = Number(app.downgrade_ratio ?? downgradeRatio);
     const d = !r.last_active || /^never$/i.test(r.last_active) ? null : days(r.last_active, asOf);
-    if (!r.last_active || /^never$/i.test(r.last_active)) flags.push('never_used');
+    if (r.last_active === null) flags.push('last_active_not_in_export');
+    else if (!r.last_active || /^never$/i.test(r.last_active)) flags.push('never_used');
     else if (d === null) flags.push('last_active_unreadable');
     else if (d > idleFor) flags.push(`idle_${d}_days`);
     const key = `${low(r.app)}|${r.email || low(r.user)}`;

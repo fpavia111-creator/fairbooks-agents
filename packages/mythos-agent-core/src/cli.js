@@ -10,6 +10,8 @@ import { generateSigningKey, loadSigner, loadPublicKeys } from './signing.js';
 import { AuditLog, readAudit, verifyChain } from './audit.js';
 import { validate } from './schema.js';
 import { readFileSync } from 'node:fs';
+import { describeSources, SOURCES_FILE } from './sources.js';
+import { EXPORTS_BASIS_NOTE } from './exports.js';
 
 export function parseFlags(argv) {
   const flags = {}; const pos = [];
@@ -66,6 +68,8 @@ Usage:
   ${bin} rotate-key --signing-key OLD --new-key NEW --as "Name"   Signed key rotation
   ${bin} verify-log [file] [--pubkey public.pem]   Verify the audit chain (and signatures)
   ${bin} validate-config <schema> <file>   Check a config file (schemas: see "tools --configs")
+  ${bin} sources                  List the export files this pack reads directly, by system
+  ${bin} inspect <file> [--as KIND]   Show how a file would be read: export recognised, columns mapped
   ${bin} kill | unkill            Engage or clear the kill switch (.mythos/KILL)
 
 Options:
@@ -157,6 +161,42 @@ export async function runCli(manifest, argv, opts = {}) {
     const v = validate(schemas[pos[1]], JSON.parse(readFileSync(resolve(pos[2]), 'utf8')));
     out(v.ok ? `${pos[2]} is a valid ${pos[1]}.` : `${pos[2]} is not a valid ${pos[1]}:\n` + v.errors.map((e) => `  ${e.path} ${e.message}`).join('\n'));
     return v.ok ? 0 : 1;
+  }
+  if (cmd === 'sources') {
+    const list = describeSources(manifest);
+    if (flags.json) { out(list); return 0; }
+    if (!list.length) { out(`${manifest.name} has no table inputs with column mapping. Any tool that takes a table reads CSV, TSV, Excel .xlsx, JSON and JSONL.`); return 0; }
+    out(`${manifest.name} reads CSV, TSV, Excel .xlsx, JSON and JSONL. A file in its own column layout is read as it is.\nExports from these systems are recognised by their column names and mapped for you:\n`);
+    for (const k of list) {
+      out(`${k.kind}  (${k.label}; argument${k.args.length > 1 ? 's' : ''}: ${k.args.join(', ')})`);
+      out(`  own columns: ${k.columns.map((c) => c.name + (c.required ? '*' : '')).join(', ')}`);
+      for (const e of k.exports) out(`  - ${e.system}: ${e.label || e.id}  [${e.id}]${e.layout_checked === 'no' ? '' : `  (layout checked ${e.layout_checked})`}`);
+      if (!k.exports.length) out('  - no named exports; other column names are matched by the "also called" list');
+      out('');
+    }
+    out(`Column names differ? Run "${bin} inspect <file>", then name your columns in ${SOURCES_FILE} in the root.\n${EXPORTS_BASIS_NOTE}`);
+    return 0;
+  }
+  if (cmd === 'inspect') {
+    if (!pos[1]) { out(`Usage: ${bin} inspect <file> [--as KIND] [--sheet NAME] [--root DIR]`); return 2; }
+    const rt = runtimeFromFlags(manifest, flags);
+    const r = rt.inspect({ path: pos[1], ...(flags.as ? { as: String(flags.as) } : {}), ...(flags.sheet !== undefined ? { sheet: /^\d+$/.test(String(flags.sheet)) ? Number(flags.sheet) : String(flags.sheet) } : {}) });
+    if (flags.json || r.status !== 'executed') { out(r); return r.status === 'executed' ? 0 : 1; }
+    const x = r.result;
+    out(x.summary);
+    out(`format: ${x.format}${x.sheet ? `, sheet "${x.sheet}" of ${x.sheets.join(', ')}` : ''}; ${x.rows} row(s)${x.header_row ? `; header on line ${x.header_row}` : ''}`);
+    out('columns:'); for (const c of x.columns) out(`  ${c.name.padEnd(34)} ${c.looks_like}`);
+    for (const k of x.readings) {
+      if (k.error) { out(`as ${k.kind}: ${k.error}`); continue; }
+      out(`as ${k.kind}: ${k.profile ? `${k.system}: ${k.export || k.profile}` : k.adapted ? 'matched by column name' : 'read as it is'}`);
+      for (const [f, h] of Object.entries(k.mapped)) out(`  ${f.padEnd(24)} <- ${h}`);
+      if (k.missing.length) out(`  missing: ${k.missing.join(', ')}`);
+      if (k.unmapped.length) out(`  not used: ${k.unmapped.join(', ')}`);
+      if (k.note) out(`  note: ${k.note}`);
+      for (const w of k.warnings) out(`  warning: ${w}`);
+    }
+    out(x.how_to_override);
+    return 0;
   }
   if (cmd === 'kill' || cmd === 'unkill') {
     const dir = resolve(flags['state-dir'] || join(flags.root || process.cwd(), '.mythos'));
