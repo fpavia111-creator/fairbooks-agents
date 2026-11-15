@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-15)
 
+- Real exports: Reads Microsoft 365 active user detail, Google Workspace, GitHub Copilot seat and Atlassian user exports, and BambooHR or Google Workspace rosters, directly. When an export has no last-activity column, `last_active` is empty and the flag `last_active_not_in_export` replaces an inactivity finding. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 ### Added
 - Renewal-aware savings: contract terms per app (`helios-policy.json` or a contracts CSV) give act-by dates (renewal minus notice days), `est_saving_next_12m` pro-rated by day from the next renewal you can still give notice for, `notice_window_passed` and `contract_minimum_N` flags, recommended seats at renewal, and an "Act first" list in deadline order.
 - Per-app `idle_days` and `downgrade_ratio` overrides.

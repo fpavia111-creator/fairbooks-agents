@@ -20,6 +20,40 @@ What is left is listed by side: bank fees and interest (with a draft adjusting e
 
 **Month-end roll-forward.** `penelope_roll_forward` takes last period's `reconciliation.csv` and this period's bank and GL files. Outstanding checks and deposits in transit are carried in, cleared against this period's bank lines (same amount, a matching reference wins, a different check number never clears), and the rest stay open with their age; items older than `stale_days` (default 60) are flagged. It shows opening − cleared + new = closing outstanding and, with both balances, the adjusted-balance tie-out. Last period's bank-only items are listed so you can confirm an entry was posted.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**Bank statement (table files)** (argument `bank`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| Chase | Checking or savings account activity (CSV) | no |
+| Chase | Credit card activity (CSV) | no |
+| Bank of America | Checking account activity (CSV, with its summary block) | no |
+| Wells Fargo | Account activity download (CSV with no header row) | no |
+| Capital One | 360 account transactions (CSV) | no |
+| Mercury | Transactions export (CSV) | no |
+| Xero | Bank statement CSV (Xero import layout) | no |
+
+**GL cash-account detail** (argument `gl`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| NetSuite | Transaction saved search (default column labels) | no |
+| QuickBooks Online | Transaction Detail by Account / General Ledger report | no |
+| Xero | Account Transactions report (Excel or CSV) | no |
+
+Columns named differently? Run `npx penelope-of-recon inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

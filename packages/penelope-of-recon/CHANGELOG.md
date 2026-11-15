@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-15)
 
+- Real exports: Bank statements in table form now go through the core reader: TSV and Excel are accepted (`bank_format` gains `tsv` and `xlsx`), and Chase (checking and card), Bank of America (summary block skipped), Wells Fargo (no header row), Capital One 360 (sign from the transaction type), Mercury (failed rows skipped) and Xero statement downloads are recognised. GL detail from NetSuite, QuickBooks Online (Transaction Detail by Account) and Xero (Account Transactions) is recognised, with headings, balances and totals skipped. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Bank file formats: CAMT.053 (XML), BAI2 and OFX/QFX through small built-in parsers (no dependencies). Format is detected from the extension, then the content, or set with `bank_format`. The file's closing balance is used for the tie-out when `bank_balance` is left out. Account numbers are masked to the last 4.
 - New tool `penelope_read_statement`: show the parsed lines and check opening + lines = closing.
 - Learned match rules: `penelope_suggest_rules` (read) proposes rules from accepted matches; `penelope_accept_rule` (ask) records an accepted rule in `match-rules.json` (config schema `match_rules`). Rules apply only when passed as `rules`.

@@ -35,6 +35,39 @@ Unknown keys, wrong types and a missing `vendors` object fail with JSON-pointer 
 
 **Vendor scorecard and HTML report.** `ananke_match` returns `by_vendor` (lines, exception rate, $ at issue, top codes). `ananke_write_report` writes `ap-report.html` (self-contained, no scripts or network) and `ap-po-status.csv`; the HTML's sha256 is returned as `output_sha256` and recorded in the audit line (signed when the audit log is signed).
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**Purchase order lines** (argument `pos`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| NetSuite | Transaction saved search (default column labels) | no |
+
+**Goods receipt lines** (argument `receipts`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| NetSuite | Transaction saved search (default column labels) | no |
+
+**Vendor invoice (bill) lines** (argument `invoices`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| NetSuite | Transaction saved search (default column labels) | no |
+| Xero | Bills > Export (CSV) | no |
+
+Columns named differently? Run `npx ananke-of-match inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

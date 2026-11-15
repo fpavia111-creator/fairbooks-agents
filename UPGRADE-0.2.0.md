@@ -133,14 +133,27 @@ Checked and found sound: nothing was read or written outside `--root` in 18,510 
 
 Not changed, on purpose: the data in tool results is returned as it is in the files (the warning sits beside it), and no one-click category, cap or approval rule was touched.
 
+## Real exports, licence keys and release check (15 Nov 2026, second pass)
+
+Still 0.2.0 and still unpublished. Verified on Node 20.19.5, 22.23.4 and 24.11.0 (Linux): **666 tests pass, 0 fail** (561 before this pass) and **420 of 420 evals pass** on each. `npm run hostile:args`: 0 findings over 20,670 calls, now including every sample export with planted headers and cells and a broken Excel file. `npm run release:check` passes. No tool's kind, category or allow/ask/block decision changed.
+
+**Real exports.** Twelve agents read 39 named exports directly, with no hand mapping: Ladon (Okta, Entra ID, Microsoft 365, Google Workspace, Slack, GitHub, AWS IAM credential report, Atlassian; BambooHR roster), Helios (Microsoft 365 active users, Google Workspace, GitHub Copilot, Atlassian), Auxo (NetSuite, QuickBooks Online including its grouped report, Xero), Ananke (NetSuite POs, receipts and bills; Xero bills), Soteria (Stripe, Shopify), Nausicaa (HubSpot, Salesforce report and Data Loader, Mailchimp), Eos (BambooHR), Epeius (Procore RFIs), Hesperides (NetSuite, Shopify inventory), Praxidike (Ramp, Expensify), Penelope (Chase checking and card, Bank of America, Wells Fargo, Capital One 360, Mercury, Xero statement; NetSuite, QuickBooks and Xero GL reports) and Aegle (AWS Certificate Manager, crt.sh). Every table input in every agent also takes TSV, semicolon/pipe text and Excel `.xlsx`. `inspect <file>` shows how a file is read (names and shapes, never values); `mythos-sources.json` fixes a mismatch without code. Each result says which export was recognised and what it lacks.
+- How far to trust the layouts: Procore RFIs and Ramp transactions were compared with vendor documentation on 2026-11-15. The other 37 were written from knowledge of the exports and not checked; web pages for GitHub, Stripe, HubSpot and Expensify could not be read to confirm. **None was tested against a live account.** A real export that differs shows up as a "No column found" warning, not as wrong numbers.
+- Behaviour changes: Ladon and Helios report "last login / last active not in export" instead of "never logged in" when an export has no such column; a file with none of an agent's required column now warns; dates written with dots are read day-first (with a warning when ambiguous); Praxidike gains `category_aliases` and refuses to stage reimbursements from a company card export; Penelope's `bank_format` gains `tsv` and `xlsx`.
+- Agents that already read the real formats of their domain (Lycurgus, Arethusa, Nemesis, Daphne, Echo, Solon, Epimetheus, Eirene, Eucleia, Aeolus, Britomartis, Tiresias, Macaria, Olympus) and the four on their own layouts (Agon, Polyhymnia, Urania, Augeas) got no profiles.
+
+**Licence keys (mechanism only).** Ed25519-signed offline keys, `tier: 'pro'` per tool, `needs_license` results, `license status|install|remove` in every agent and a seller tool `mythos-license keygen|issue|verify`. The trusted key list is empty and **no tool is marked paid**: both wait for your tier list and your own key pair, generated on your computer. The gate runs after the policy and cannot unblock, auto-approve or bypass a one-click category. It is not copy protection (MIT source).
+
+**Release command.** `npm run release:check` checks npm names and versions (all 31 names are on npm under `kurtfrancisco` at 0.1.0, and 0.2.0 is higher), metadata and changelogs, git state, `.npmrc`, secrets in tracked and packed files, banned claims, one-click policy, tests, evals, the hostile run and pack contents, then prints the publish commands in order with a throwaway userconfig reading `NPM_TOKEN`. It never publishes. Writing it caught one bug in itself: Node 24 prints its test summary differently, which would have read as zero tests.
+
 ## Not done
 
 - **Windows** has not run the suite (the CI matrix covers it once the repo is on GitHub).
 - **The injection check is a short pattern list.** It will miss paraphrased or non-English attempts. The protection that does not depend on it is that go-live, money, access, deletion, binding sends and deploys need a named person.
 
-- **Live connectors (A3)** and every per-agent item that depends on them: NetSuite saved search, Okta/Entra, Google Workspace/Slack/GitHub seats, ERP, HRIS, Stripe read-only.
+- **Live connectors (A3):** agents read exported files, not live APIs. The export profiles cover the same systems offline; none was tested against a real account.
 - **Shared fixture generator (A7)** and the 10k-row performance tests.
-- **Pro licence hook (A9):** waits for a pricing decision.
+- **Paid tier:** the licence mechanism is built; which tools are paid, and the trusted key, wait for you.
 - **Competitor research was shallow:** searches returned result titles, not page contents, so feature choices rest on general knowledge of the named products rather than on pages read during this work.
 - **The website** (cards, JSON-LD) was not touched; it is not in this repo.
 
@@ -157,4 +170,4 @@ Not changed, on purpose: the data in tool results is returned as it is in the fi
 
 ## Before release
 
-Run the CI matrix on Node 20/22/24 on Linux and Windows, re-run evals and `npm run hostile`, `npm pack --dry-run`, a secret scan, then publish core first and agents after (they depend on `mythos-agent-core ^0.2.0`). Update the site cards after publish.
+Run `npm run release:check` and the CI matrix (Linux and Windows), then publish core first and agents after (they depend on `mythos-agent-core ^0.2.0`). Update the site cards after publish.

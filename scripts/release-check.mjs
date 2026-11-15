@@ -127,7 +127,7 @@ if (paid.length && !LICENSE_PUBLIC_KEYS.length) add('licence keys', 'fail', 'too
 if (QUICK) add('tests', 'skip', 'skipped (--quick)');
 else {
   let pass = 0, fail = 0; const failed = [];
-  for (const p of pkgs) { const r = run(process.execPath, ['scripts/run-tests.cjs'], { cwd: p.dir }); const pa = +((/^# pass (\d+)/m.exec(r.out) || [])[1] || 0), fa = +((/^# fail (\d+)/m.exec(r.out) || [])[1] || 0); pass += pa; fail += fa; if (r.code !== 0 || fa) failed.push(`${p.json.name}: ${fa} failing`); }
+  for (const p of pkgs) { const r = run(process.execPath, ['scripts/run-tests.cjs'], { cwd: p.dir }); const pa = +((/^(?:#|ℹ) pass (\d+)/m.exec(r.out) || [])[1] || 0), fa = +((/^(?:#|ℹ) fail (\d+)/m.exec(r.out) || [])[1] || 0); pass += pa; fail += fa; if (r.code !== 0 || fa || !pa) failed.push(`${p.json.name}: ${fa} failing${pa ? '' : ' (no test count found in the output)'}`); }
   failed.length ? add('tests', 'fail', `${pass} passed, ${fail} failed on Node ${process.version}`, failed) : add('tests', 'pass', `${pass} passed on Node ${process.version}`);
   let ep = 0, et = 0; const efail = [];
   for (const p of pkgs.filter((x) => x !== core)) { const r = run(process.execPath, [`bin/${p.json.name}.js`, 'eval'], { cwd: p.dir }); const m = /(\d+)\/(\d+)\s*$/.exec(r.out.trim().split('\n').pop() || '') || /(\d+)\/(\d+)/.exec(r.out.trim().split('\n').pop() || ''); if (!m) { efail.push(`${p.json.name}: no eval result`); continue; } ep += +m[1]; et += +m[2]; if (m[1] !== m[2] || r.code !== 0) efail.push(`${p.json.name}: ${m[1]}/${m[2]}`); }

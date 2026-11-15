@@ -46,12 +46,18 @@ Version 0.2.0: see [UPGRADE-0.2.0.md](UPGRADE-0.2.0.md) for what changed and [do
 - Every decision goes to a hash-chained JSONL audit log.
 - Text from your files is treated as data. Spreadsheet formulas, raw HTML and `../` in ids are neutralised on the way out, and a result that quotes text aimed at an AI model ("ignore previous instructions") is flagged. The flag is a heuristic, not a filter.
 
+## Real exports, paid tier, release check
+
+Twelve agents read named exports from real systems directly (Okta, Entra ID, Google Workspace, Slack, GitHub, AWS, NetSuite, QuickBooks Online, Xero, Stripe, Shopify, HubSpot, Salesforce, Mailchimp, Procore, Ramp, Expensify, BambooHR, five US banks, AWS Certificate Manager, crt.sh and more): see each README's "Exports it reads". Two layouts were checked against vendor documentation; the rest were written from knowledge of the exports and none was tested against a live account. Every table input also takes TSV and Excel. The core has offline licence keys for a paid tier (no tool is marked paid yet) and `npm run release:check` runs the whole pre-publish checklist as a dry run.
+
 ## Develop
 
 ```bash
 npm install      # links the workspaces
 npm test         # node --test in every package
 npm run hostile  # plant hostile values in every pack's fixtures, run every eval case, inspect the output
+npm run release:check   # pre-publish dry run (never publishes)
+node scripts/sources-doc.mjs   # regenerate the "Exports it reads" README sections
 ```
 
 MIT © 2026 Kurt Francisco · <https://mythosmachines.com>

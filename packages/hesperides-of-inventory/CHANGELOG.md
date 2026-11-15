@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-15)
 
+- Real exports: Reads NetSuite inventory searches and Shopify inventory exports directly; count sheets map common scanner column names. Shopify exports carry no unit cost, so variance values are reported as unknown. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Lot and serial tracking: counts, on-hand and movements are matched per `lot` (or `serial`); variance per lot; `lot_mixup` when per-lot variances at one item and location net to zero; `serial_qty_over_one` when a serial is counted more than once (always investigate).
 - Unit-of-measure table (`uom_table`): counts in another unit are converted with the stated factor (`uom_converted`), and case-vs-each errors are explained with your factor and the arithmetic. A mismatch with no factor stays `uom_mismatch`.
 - New `hesperides_count_plan`: ABC classes by value and a count schedule so A items are counted most often; blind count sheets (`count-plan.csv`), `abc-classes.csv` and `count-plan.ics`.

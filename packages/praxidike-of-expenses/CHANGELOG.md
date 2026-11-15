@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-15)
 
+- Real exports: Reads Ramp transaction exports (layout checked against Ramp's documentation on 2026-11-15) and the Expensify default CSV directly. New policy field `category_aliases` maps a card or expense system's category names onto policy categories. Staging a reimbursement from a company card export is refused (the company already paid). Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - New `praxidike_read_receipts`: normalises receipt text (US, European decimal comma, month-name dates, "amount due", "grand total") into merchant, total, date, currency, tax, tip and a content hash. Receipt text is still never returned. No OCR.
 - Per diem by location and date (`per_diem.rates` with a `"*"` fallback, categories with `per_diem: "meals"` and `per: "day"`, a `days` and `location` column) and dated mileage rates (`mileage_rates`).
 - New `praxidike_find_duplicates`: possible duplicates within the export and against earlier reports (`history`) by receipt file, receipt content hash, same merchant/total/date on two receipts, and fuzzy amount/date/merchant match. Scored with reasons.

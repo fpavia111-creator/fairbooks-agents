@@ -33,6 +33,39 @@ Optional `ladon-policy` JSON (unknown keys and wrong types are refused with a JS
 
 Arguments passed to a tool override the file.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**Account and access export** (arguments `access`, `previous`, `current`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| Okta | Users API JSON (GET /api/v1/users) | no |
+| Microsoft Entra ID | Users > Download users (CSV) | no |
+| Microsoft 365 admin center | Active users > Export users (CSV) | no |
+| Google Workspace Admin | Users > Download users (CSV) | no |
+| Slack | Manage members > Export member list (CSV) | no |
+| GitHub | Organization People > Export (CSV or JSON) | no |
+| AWS IAM | Credential report (CSV) | no |
+| Atlassian Administration | Directory > Users > Export users (CSV) | no |
+
+**HR roster** (argument `roster`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| BambooHR | Employee report (CSV or Excel) | no |
+
+Columns named differently? Run `npx ladon-of-access inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

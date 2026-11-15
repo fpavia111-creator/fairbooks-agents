@@ -2,6 +2,7 @@
 
 ## 0.2.0 — 2026-11-15
 
+- Real exports: Reads Okta, Microsoft Entra ID, Microsoft 365, Google Workspace, Slack, GitHub, AWS IAM credential report and Atlassian user exports, and a BambooHR roster, directly (see "Exports it reads"). When an export has no last-login column, `last_login` is left empty and the flag `last_login_not_in_export` (no score) replaces `never_logged_in`. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 ### Added
 - `ladon_campaign_status`: reads a filled recertification sheet and reports decided / open / overdue lines, incomplete sign-offs, self-reviews, lines signed by someone other than the assigned or delegated reviewer, a per-reviewer chase list and the lines marked revoke.
 - `ladon_access_diff`: compares a previous and a current access export (added, removed, role changes, privilege gained, reactivated, deactivated, new agents/service accounts, owner changes) with a review-first list.

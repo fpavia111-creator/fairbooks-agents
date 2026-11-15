@@ -20,6 +20,31 @@ It also:
 - plans counts: ranks items A/B/C by value (annual usage × cost when the export has `annual_usage`, otherwise on-hand value) and spreads counts over your working days so A items are counted most often. It writes `abc-classes.csv`, blind count sheets (`count-plan.csv`) and a calendar (`count-plan.ics`);
 - reports inventory record accuracy (share of counted lines within tolerance) and value accuracy, overall and by location, counter and ABC class, with the change since your previous count. With approval it drafts `adjustments-draft.csv` for lines within tolerance or confirmed by a recount only. Reason codes come from the person who reviewed them; Hesperides does not choose them.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**System on-hand quantities** (argument `on_hand`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| NetSuite | Item saved search with location quantities | no |
+| Shopify | Products > Inventory > Export (CSV) | no |
+
+**Count sheet** (arguments `counts`, `previous_counts`)
+
+No named exports: other column names are matched by a list of common alternatives.
+
+Columns named differently? Run `npx hesperides-of-inventory inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

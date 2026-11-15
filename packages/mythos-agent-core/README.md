@@ -135,6 +135,54 @@ npx <pack> eval --report eval-out/          # report.json + report.html (no scri
 npx <pack> eval --report eval-new/ --baseline eval-out/report.json   # exits 1 on a regression
 ```
 
+## Reading real exports
+
+`ctx.records(path)` reads CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx` (first visible sheet unless one is named; formulas are never evaluated), JSON (an array, or an object holding one array such as `records`, `data` or `items`) and JSONL. `.xls` is refused with advice to save as `.xlsx` or CSV.
+
+A pack can declare the files it reads under `sources`: its own columns (`fields`, with a type and a list of other names each column goes by) and `profiles` for named exports from real systems, built from the shared catalogue in `src/exports.js`:
+
+```js
+import { exportProfile, fullName } from 'mythos-agent-core';
+sources: {
+  access: {
+    label: 'Access export', args: ['access', 'previous'],
+    fields: { user: { aliases: ['Display Name'], required: true }, email: { type: 'email' }, last_login: { type: 'date', aliases: ['Last Sign In'] } },
+    profiles: [exportProfile('google_workspace_users', { user: fullName('First Name [Required]', 'Last Name [Required]'), email: 'Email Address [Required]', last_login: 'Last Sign In [READ ONLY]' })],
+  },
+}
+```
+
+What happens to a file:
+- In the pack's own columns: returned untouched.
+- Otherwise: the export is recognised by its column names (or by its first row, for a headerless bank download), a title block above the header row is skipped, columns are renamed in place, other columns pass through, dates become `YYYY-MM-DD` (month-first or day-first is inferred from the values; a guess is said aloud), amounts become plain decimals (`$1,200.00`, `(45.10)`, `1.234,56 €`), yes/no columns become `yes`/`no`, emails are lowercased.
+- The tool result gets a `sources` list (export recognised, columns mapped and not used, rows skipped, the date order read, notes about what the export lacks) and its `warnings` carry anything a person should check. The audit line records a compact version with no cell values.
+- A file with none of a required column is read as it is and the result says which column was not found.
+
+`<pack> sources` lists what a pack reads. `<pack> inspect <file>` (and the MCP tool `mythos_inspect_input`) shows how one file would be read: format, sheets, header row, each column's name and shape (dates day-first, amounts, yes/no...), never a cell value. Column names that read like instructions to an AI are flagged.
+
+When a file does not match, put `mythos-sources.json` in the root (checked against a schema on every call):
+
+```json
+{
+  "sources": { "access": { "date_order": "dmy" } },
+  "files": { "exports/okta.csv": { "profile": "okta_users_api", "columns": { "email": "Work E-mail" }, "set": { "system": "Okta" }, "skip_rows": 2, "sheet": "Users", "decimal": ",", "delimiter": ";" } }
+}
+```
+
+How far to trust the layouts: two (Procore RFIs, Ramp transactions) were compared with the vendor's documentation on 2026-11-15. The others were written from knowledge of each export and not checked. None was tested against a live account. `<pack> sources` marks which is which.
+
+## Paid tier (licence keys)
+
+A tool marked `tier: 'pro'` (optionally with a `feature` name) runs only with a valid licence key. Without one it returns `status: 'needs_license'` with the reason; free tools keep working. The check runs after the policy, so a blocked tool stays blocked, an `ask` tool still asks, nothing is put on Auto and one-click categories are untouched; no approval is requested for a call that cannot run.
+
+A key is `MYTHOS1.<payload>.<Ed25519 signature>` with licensee, plan, agents (`*` or package names), features, issue and expiry dates. It is checked offline against the public keys in `src/license-keys.js` (empty in this release, so nothing can be unlocked yet). There is no environment variable or config file that adds a trusted key.
+
+- Customer: `<pack> license install key.txt` (copies it to `.mythos/license.key`), `<pack> license status`, or set `MYTHOS_LICENSE` / `MYTHOS_LICENSE_FILE`. `mythos_info` shows the plan, expiry and which tools are unlocked, never the key.
+- Seller, on their own computer: `npx -p mythos-agent-core mythos-license keygen --out ~/mythos-licence-keys`, paste the printed public key into `LICENSE_PUBLIC_KEYS`, release, then `mythos-license issue --key ~/mythos-licence-keys/private.pem --licensee "Customer" --plan pro --days 365 [--agents ladon-of-access] --out customer.key` and `mythos-license verify customer.key --pubkey ~/mythos-licence-keys/public.pem`. Withdrawn licence ids go in `LICENSE_REVOKED_IDS` and take effect from the next release.
+- `ctx.license` gives a handler `{ status, valid, plan, features, has(feature) }`.
+
+This is not copy protection: the packages are MIT-licensed source and anyone can remove the check. It draws a clear line for honest customers.
+
 ## What the model pin means
 
 The manifest declares which host model a pack's prompts and evals target. An MCP server cannot force your MCP host to use that model; the pin is reported in `initialize` and `mythos_info` so you can check it. The wave-1 packs' tools are deterministic and call no model at all.

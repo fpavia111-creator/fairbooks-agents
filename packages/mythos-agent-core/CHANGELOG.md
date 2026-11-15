@@ -2,6 +2,14 @@
 
 ## 0.2.0 (2026-11-15)
 
+Added (real exports, licence keys)
+- Table reading: TSV, semicolon- and pipe-separated text (delimiter sniffed), Excel `.xlsx` (`readXlsx`, `writeXlsx`, no dependencies, formulas never evaluated, 5,000,000-cell cap) and JSON envelopes, all through `ctx.records` and `readRecords`.
+- Source adapters: manifest `sources` (a pack's own columns with types and alternative names, plus export profiles), a catalogue of 39 named exports (`EXPORTS`, `exportProfile`, `carryGroup`, `firstRowPer`, `fullName`), date and amount normalisation with stated guesses, header rows found under title blocks, headerless downloads, `mythos-sources.json` overrides (schema-checked), `sources` on results and a compact `sources` entry in audit lines.
+- `inspect` (runtime), `mythos_inspect_input` (MCP) and `<pack> inspect <file>` / `<pack> sources` (CLI): how a file would be read, column names and shapes only, never cell values. `mythos_info` lists the exports a pack reads.
+- A file with none of a pack's required column now says so in `warnings` instead of reading every row as blank.
+- Licence keys for a paid tier: `tier: 'pro'` and `feature` on tools, Ed25519-signed offline keys (`issueLicense`, `checkLicense`), a `needs_license` result that never changes a policy decision, `ctx.license`, licence status in `mythos_info`, `<pack> license status|install|remove` and the seller tool `mythos-license keygen|issue|verify`. The trusted key list ships empty and no tool is marked paid.
+
+
 Added
 - Input validation of every tool call against its `inputSchema` (JSON Schema subset, JSON-pointer errors), before approval or execution.
 - Signed audit logs (opt-in): Ed25519 per line (`--signing-key`), `keygen`, `rotate-key` (signed rotation entry), `verify-log --pubkey`. Keys under `--root` are refused. Optional `--audit-mirror` second copy. Two writers (agent and approvals page) keep one chain.

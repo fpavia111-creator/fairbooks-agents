@@ -18,6 +18,34 @@ It writes `rfi-log-review.md` (with the ball-in-court table and chase list), `rf
 
 **Transmittals.** With approval it drafts `drafts/TR-<no>.md` listing the drawings and specs you name, each on its current revision with its issue date and the hash of its text extract. Anything not in the index is `[MISSING REFERENCE]`; an old revision is `[CHECK REVISION]`. Sending it goes through the same one-click send request as an RFI. With approval it drafts an RFI from **your** subject and question: each reference is resolved to its current revision, and lines in the text extracts that mention your search terms are quoted with file and line number. Gaps are marked `[MISSING REFERENCE]`, `[CHECK REVISION]`, `[NO CITATION]` or `[TO CONFIRM]`, and a send request is refused while they remain unless a person accepts them with a note.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**RFI log** (arguments `rfis`, `previous_rfis`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| Procore | RFIs > Export > CSV | support.procore.com "Export RFIs to CSV or PDF" on 2026-11-15 |
+
+**Submittal log** (argument `submittals`)
+
+No named exports: other column names are matched by a list of common alternatives.
+
+**Drawing and specification register** (argument `documents`)
+
+No named exports: other column names are matched by a list of common alternatives.
+
+Columns named differently? Run `npx epeius-of-rfis inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

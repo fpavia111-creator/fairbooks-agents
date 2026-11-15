@@ -67,6 +67,14 @@ The runtime does most of this for you (see "Untrusted data and broken arguments"
 
 Give the host the MCP server only, not a shell in the same folder, so approvals mean something. For stronger evidence, start the server with `--signing-key` (a key kept outside `--root`) and keep an `--audit-mirror`.
 
+## 4b. Read the exports people already have
+
+If a tool takes a table, declare it under `sources` so real exports work without hand mapping: the agent's own columns (`fields`, each with a `type` of text, date, datetime, money, number, bool or email, and `aliases`), the arguments that carry that kind of file (`args`), and `profiles` built with `exportProfile('<catalogue id>', { field: 'Their Column' })`. Read files with `ctx.records(a.arg)` (or `ctx.records(path, 'kind')` when the argument name does not say). Add the catalogue entry to `mythos-agent-core/src/exports.js` if the export is new, with `basis: 'documented'`, `source` and `checked` only when you compared its columns with the vendor's documentation; otherwise leave it `recalled`. Put a fictional sample of each export in `fixtures/exports/`, test that it gives the same result as the native fixture, and run `node scripts/sources-doc.mjs` to regenerate the README section. A profile `note` says what the export lacks (no last-login column, no unit cost): say it plainly rather than guess.
+
+## 4c. Paid tools
+
+Mark a tool `tier: 'pro'` (and optionally `feature: 'name'`) only when the owner has decided the tier list and a trusted public key is in `license-keys.js`. The licence gate never changes a policy decision; do not use it as a safety control.
+
 ## 6. Release checklist
 
-1. Name free on npm. 2. `npm test` on Node 20, 22, 24 (the CI matrix does this). 3. `eval` passes. 4. `npm pack --dry-run` shows no `node_modules`, `.mythos`, `mythos-out`, `.npmrc` or `.tgz`. 5. Secret scan. 6. Publish from CI with `npm publish --provenance`.
+Run `npm run release:check` (or `release:check:offline`). It is a dry run: name and version on npm, package metadata and changelog section, git state, no `.npmrc`, secret scan of tracked and packed files, banned-claims scan of READMEs and manifests, one-click policy, tests, evals, the hostile-input run, and `npm pack --dry-run` contents. It writes `mythos-out/release-check/release-check.md` and prints the publish commands in order (core first) with a throwaway npm userconfig that reads `NPM_TOKEN` from the environment. It never publishes. Then: tests on Node 20, 22 and 24 and on Windows (the CI matrix), back up the website deploy folder and note the Pages deployment id, and publish yourself.

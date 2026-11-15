@@ -23,6 +23,29 @@ It also:
 - **compares** this export with the previous one: health change, contacts added and removed, newly flagged (new bounces, unsubscribes, duplicates), resolved issues and action changes;
 - with your opt-in, checks that each email **domain can receive mail** (MX, A fallback, null MX). See "MX check" below.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**Contact list** (arguments `contacts`, `previous`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| HubSpot | Contacts > Export (CSV or Excel) | no |
+| Salesforce | Contacts or Leads report export | no |
+| Salesforce | Data Loader / Data Export of Contact (API field names) | no |
+| Mailchimp | Audience > Export audience (CSV) | no |
+
+Columns named differently? Run `npx nausicaa-of-hygiene inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash

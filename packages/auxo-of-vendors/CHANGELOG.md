@@ -2,6 +2,7 @@
 
 ## 0.2.0 (2026-11-15)
 
+- Real exports: Reads NetSuite vendor and transaction searches, QuickBooks Online vendor contact list and grouped "transaction list by vendor" report, and Xero contacts directly. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 Added
 - TIN pattern rules per entity type: never-assigned EIN prefixes, never-issued SSN areas/groups/serials, ITIN ranges, placeholder numbers, and the wrong kind of number for the entity type (`tin_pattern_invalid`, `tin_type_mismatch`). TINs stay masked everywhere. No IRS TIN matching.
 - W-8 tracking for non-US vendors (`w8_received`, `w8_type`, `w8_signed`): `w8_missing`, `w8_unsigned`, `w8_expired`, usual form (W-8BEN / W-8BEN-E) and a W-8 checklist instead of the W-9 one; W-8 request drafts.

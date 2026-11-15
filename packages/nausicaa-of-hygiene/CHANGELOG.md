@@ -2,6 +2,7 @@
 
 ## 0.2.0
 
+- Real exports: Reads HubSpot contacts, Salesforce report and Data Loader exports, and Mailchimp audience exports directly. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - New `nausicaa_merge_plan`: for each duplicate group, a survivor chosen by stated rules (S1-S4) and a winner per field with the rule that picked it (F1-F6). Opt-outs and hard bounces always carry over. Writes `merge-plan.csv` with blank reviewer columns.
 - New `nausicaa_consent_provenance`: flags opted-in or subscribed contacts with no consent source, no date, an unreadable or future date, or a source not on your allowed list. Exports may add a `consent_source` column.
 - New `nausicaa_compare`: period-over-period comparison of two exports (health change, added/removed, newly flagged, resolved, action changes).

@@ -20,6 +20,33 @@ For chargebacks it also:
 - gives a readiness score with its explanation (share of checkable items on file; not a prediction of the outcome);
 - writes one self-contained HTML evidence pack per dispute that cites every source row used (file and row number, plus the policy file's SHA-256), an `evidence-index.json` whose hash goes into the audit log line, and `dispute-deadlines.ics` with reminders 3 and 1 days before each respond-by date.
 
+<!-- sources:start -->
+## Exports it reads
+
+Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, JSON or JSONL. A file already in this agent's own columns is read as it is. The exports below are recognised by their column names and mapped onto those columns; dates become `YYYY-MM-DD`, amounts plain decimals (both decimal marks), and yes/no columns `yes`/`no`. Each result lists, under `sources`, which export was recognised, which columns were mapped, and any rows skipped or dates that could be read two ways.
+
+**Refund requests and chargebacks** (argument `requests`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| Stripe | Payments > Export (CSV) | no |
+
+**Orders** (argument `orders`)
+
+| System | Export | Layout checked against vendor docs |
+|---|---|---|
+| Shopify | Orders > Export (CSV) | no |
+| Stripe | Payments > Export (CSV) | no |
+
+Columns named differently? Run `npx soteria-of-refunds inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+
+```json
+{ "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
+```
+
+Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
+<!-- sources:end -->
+
 ## Install
 
 ```bash
