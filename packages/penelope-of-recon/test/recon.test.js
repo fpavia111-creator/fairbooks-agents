@@ -60,3 +60,14 @@ test('scale: 5,000 bank and 5,000 GL lines over one month reconcile in seconds, 
   const t0 = Date.now(); const r = reconcile(bank, gl, {});
   assert.equal(r.matched_groups, 5000); assert.ok(Date.now() - t0 < 15000, `took ${Date.now() - t0} ms`);
 });
+
+test('a huge or odd date window does not hang', async () => {
+  const { reconcile } = await import('../src/recon.js');
+  const bank = [{ id: 'B1', date: '2026-10-01', amount: -50, reference: '' }, { id: 'B2', date: '2026-10-09', amount: -20, reference: '' }];
+  const gl = [{ id: 'G1', date: '2026-10-08', amount: -50, reference: '' }, { id: 'G2', date: '2026-09-01', amount: -20, reference: '' }];
+  for (const date_window of [1e15, Infinity, -3, NaN]) {
+    const t = Date.now(); const r = reconcile(bank, gl, { date_window });
+    assert.ok(Date.now() - t < 2000);
+    assert.equal(r.matches.length, date_window > 0 ? 2 : 0);
+  }
+});

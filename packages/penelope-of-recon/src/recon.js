@@ -46,12 +46,21 @@ export function reconcile(bank, gl, opts = {}) {
   const dayOf = new Map([...bank, ...gl].map((x) => [x, day(x.date)]));
   const byDay = (list) => { const m = new Map(); for (const x of list) { const d = dayOf.get(x); if (d === null) continue; if (!m.has(d)) m.set(d, []); m.get(d).push(x); } return m; };
   const glByDay = byDay(gl), bankByDay = byDay(bank);
-  const within = (idx, d) => { if (d === null) return []; const out = []; for (let k = d - w; k <= d + w; k++) { const a = idx.get(k); if (a) for (const x of a) out.push(x); } return out.sort((x, y) => pos.get(x) - pos.get(y)); };
+  // The per-day lists inside the window. A very wide window (or one given as a huge
+  // number) walks the days that exist instead of every day in the range.
+  const daysNear = (idx, d) => {
+    const out = [];
+    if (!(w >= 0)) return out;
+    if (2 * w + 1 > idx.size) { for (const [k, a] of idx) if (Math.abs(k - d) <= w) out.push(a); }
+    else for (let k = d - w; k <= d + w; k++) { const a = idx.get(k); if (a) out.push(a); }
+    return out;
+  };
+  const within = (idx, d) => { if (d === null) return []; const out = []; for (const a of daysNear(idx, d)) for (const x of a) out.push(x); return out.sort((x, y) => pos.get(x) - pos.get(y)); };
   // The first `limit` lines in file order inside the window that pass `ok`, by merging
   // the per-day lists (each already in file order) instead of sorting the whole window.
   const firstWithin = (idx, d, ok, limit) => {
     if (d === null) return [];
-    const lists = []; for (let k = d - w; k <= d + w; k++) { const a = idx.get(k); if (a && a.length) lists.push(a); }
+    const lists = daysNear(idx, d).filter((a) => a.length);
     const at = lists.map(() => 0); const out = [];
     while (out.length < limit) {
       let best = -1; for (let j = 0; j < lists.length; j++) if (at[j] < lists[j].length && (best < 0 || pos.get(lists[j][at[j]]) < pos.get(lists[best][at[best]]))) best = j;
