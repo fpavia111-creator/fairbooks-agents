@@ -39,7 +39,9 @@
   "scripts": {
     "test": "npm test --workspaces",
     "hostile": "node scripts/hostile-inputs.mjs",
-    "hostile:args": "node scripts/hostile-inputs.mjs --args"
+    "hostile:args": "node scripts/hostile-inputs.mjs --args",
+    "release:check": "node scripts/release-check.mjs",
+    "release:check:offline": "node scripts/release-check.mjs --offline"
   },
   "engines": {
     "node": ">=20"

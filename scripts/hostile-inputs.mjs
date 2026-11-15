@@ -132,7 +132,37 @@ async function argsPass(n) {
   }
 }
 
-for (const n of agents) { await dataPass(n); if (withArgs) await argsPass(n); process.stderr.write(`${n} checked\n`); }
+// Export pass: every sample export under fixtures/exports, with planted text in its
+// header row and cells, and a broken Excel file. "inspect" must name columns by
+// shape only (never quote a planted cell), flag instruction-like headers, and fail
+// a broken file with a short plain message.
+async function exportsPass(n) {
+  const src = join(PK, n, 'fixtures', 'exports'); if (!existsSync(src)) return;
+  const { manifest } = await import(pathToFileURL(join(PK, n, 'src', 'index.js')).href);
+  const parent = mkdtempSync(join(tmpdir(), `hostile-x-${n}-`)); const root = join(parent, 'root'); cpSync(src, root, { recursive: true });
+  const rt = new AgentRuntime(manifest, { root, audit: false });
+  for (const f of readdirSync(root).filter((x) => /\.(csv|tsv)$/i.test(x))) {
+    const lines = readFileSync(join(root, f), 'utf8').split('\n');
+    const cell = 'Zq9 ' + PLANT.formula; const head = PLANT.inject.replace(/,/g, '');
+    // Plant in the header row the reader itself finds (report exports have a title block above it).
+    const pre = rt.inspect({ path: f }); if (pre.status !== 'executed') continue;
+    const nonBlank = lines.map((l, i) => [l, i]).filter(([l]) => l.trim()); const hi = (nonBlank[(pre.result.header_row || 1) - 1] || [])[1]; if (hi === undefined) continue;
+    lines[hi] = lines[hi] + `,"${head}"`;
+    for (let i = hi + 1; i < lines.length; i++) if (lines[i].trim()) { lines[i] = lines[i] + `,"${cell.replace(/"/g, '""')}"`; info.poisoned++; }
+    writeFileSync(join(root, f), lines.join('\n'));
+    const r = rt.inspect({ path: f }); info.calls++; const txt = JSON.stringify(r); const where = `inspect ${f}`;
+    if (r.status !== 'executed') { if (CRASH.test(r.reason || '')) add({ n, kind: 'CRASH', where, detail: String(r.reason).slice(0, 200) }); continue; }
+    if (txt.includes('Zq9')) add({ n, kind: 'CELL_VALUE_IN_INSPECT', where });
+    if (!(r.warnings || []).some((w) => /instructions to an AI/.test(w))) add({ n, kind: 'HEADER_INJECTION_NOT_FLAGGED', where }); else info.injectWarnings++;
+  }
+  writeFileSync(join(root, 'broken.xlsx'), Buffer.concat([Buffer.from('PK\x03\x04'), Buffer.alloc(64, 7)]));
+  const b = rt.inspect({ path: 'broken.xlsx' }); info.calls++;
+  if (b.status !== 'error') add({ n, kind: 'BROKEN_XLSX_ACCEPTED', where: 'inspect broken.xlsx' });
+  else if (CRASH.test(b.reason) || b.reason.length > 400 || b.reason.includes(root)) add({ n, kind: 'BAD_ERROR', where: 'inspect broken.xlsx', detail: b.reason.slice(0, 200) });
+  rmSync(parent, { recursive: true, force: true });
+}
+
+for (const n of agents) { await dataPass(n); await exportsPass(n); if (withArgs) await argsPass(n); process.stderr.write(`${n} checked\n`); }
 const by = {}; for (const f of findings) (by[f.kind] ||= []).push(f);
 for (const [k, v] of Object.entries(by)) { console.log(`\n${k} (${v.length})`); for (const f of v.slice(0, 40)) console.log(`  ${f.n} ${f.where || ''} ${f.detail || ''}`); }
 console.log(`\n${agents.length} agent(s), ${info.calls} call(s), ${info.poisoned} planted value(s), ${info.injectWarnings} result(s) flagged for instruction-like text, ${info.changed} call(s) refused or held because of the planted data. ${findings.length} finding(s).`);
