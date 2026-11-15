@@ -99,7 +99,7 @@ export function scanFlows(text, { snippet = (s) => s.trim().slice(0, 160) } = {}
     for (const [sink, re] of Object.entries(SINKS)) {
       if (!re.test(line)) continue;
       const st = statement(lines, i);
-      let s = stripCalls(st.text, new RegExp(SANITIZER.source, 'g'));
+      let s = stripCalls(st.text, new RegExp(SANITIZER.source, 'g')).replace(/\(\s*\{[^}]*\}\s*(?::\s*[\w<>{}\[\]|, ]+)?\)\s*=>/g, '() =>');
       if (sink === 'path' && /\bjoin\s*\(\s*(ROOT|root|base|BASE|this\.root|rootDir)\b/.test(s) && /startsWith\(\s*['"]\.\.['"]|relative\(/.test(text)) continue;
       const cls = classesIn(s);
       for (const f of FLOWS) {

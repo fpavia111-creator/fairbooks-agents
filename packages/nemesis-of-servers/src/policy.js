@@ -51,7 +51,7 @@ export function applyPolicy(items, policy) {
     let reason = null;
     for (const s of policy.suppress || []) {
       if (s.rule !== f.id) continue;
-      if (s.path && !(f.file && globToRe(s.path).test(f.file))) continue;
+      if (s.path && !(f.file && (globToRe(s.path).test(f.file) || globToRe(s.path).test(f.file.replace(/\.sample$/i, ''))))) continue;
       if (s.server && s.server !== f.server) continue;
       if (s.tool && s.tool !== f.tool) continue;
       reason = `${s.reason}${s.reviewer ? ` (${s.reviewer})` : ''}`; break;
@@ -66,5 +66,5 @@ export function applyPolicy(items, policy) {
 }
 
 export function ignored(policy, rel) {
-  return (policy?.ignore_paths || []).some((g) => globToRe(g).test(rel));
+  return (policy?.ignore_paths || []).some((g) => globToRe(g).test(rel) || globToRe(g).test(rel.replace(/\.sample$/i, '')));
 }

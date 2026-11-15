@@ -2,6 +2,7 @@
 // Reads files only. Never overwrites docs.
 import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve, sep } from 'node:path';
+import { checkOpenapi, checkChangelog } from './checks.js';
 
 export const LIMITS = 'Echo compares the docs with the tool list, input schemas and package.json you give it. It checks names, labels, versions, examples and links, not whether the prose is accurate or complete, and it does not run the code. Passing means "no drift found by these checks", not "the docs are complete".';
 const SEV = { error: 0, warning: 1, advisory: 2 };
@@ -57,7 +58,7 @@ function frontmatter(text) {
   return o;
 }
 
-export function check(packDir, toolsJson, { ignore = [] } = {}) {
+export function check(packDir, toolsJson, { ignore = [], openapi = null, openapiLabel = 'the OpenAPI spec', require_changelog = false } = {}) {
   const pjf = join(packDir, 'package.json'); if (!existsSync(pjf)) throw new Error('package.json not found in the pack folder');
   const pj = JSON.parse(readFileSync(pjf, 'utf8'));
   const tools = toolsJson ? loadTools(toolsJson) : [];
@@ -66,7 +67,7 @@ export function check(packDir, toolsJson, { ignore = [] } = {}) {
   for (const t of tools) if (t.category) NOT_TOOLS.add(t.category);
   const looksLikeTool = (n) => !NOT_TOOLS.has(n) && n.includes('_') && [...prefixes].some((p) => n.startsWith(p));
   const docs = listDocs(packDir); if (!docs.length) throw new Error('no README.md or other .md docs found in the pack folder');
-  const findings = []; const mentioned = new Set(); const fixes = [];
+  const findings = []; const mentioned = new Set(); const fixes = []; const parsed = [];
   const add = (check, severity, file, line, detail, fix = null) => { findings.push({ check, severity, file, line, detail }); if (fix) fixes.push({ check, file, line, ...fix }); };
   const binNames = new Set(typeof pj.bin === 'string' ? [pj.name.split('/').pop()] : Object.keys(pj.bin || {}));
   const scripts = new Set(Object.keys(pj.scripts || {}));
@@ -74,6 +75,7 @@ export function check(packDir, toolsJson, { ignore = [] } = {}) {
   const nearest = (n) => { let best = null; let bd = 3; for (const t of names) { const d = lev(n, t); if (d < bd) { bd = d; best = t; } else if (d === bd) best = null; } return bd <= 2 ? best : null; };
   for (const file of docs) {
     const rel = relative(packDir, file).split(sep).join('/'); const text = readFileSync(file, 'utf8'); const d = parseDoc(text);
+    parsed.push({ rel, lines: d.lines });
     // tool mentions anywhere in backticks
     for (const [i, l] of d.lines.entries()) for (const m of l.matchAll(/`([a-z][a-z0-9_]{2,63})`/g)) { if (names.has(m[1])) mentioned.add(m[1]); else if (tools.length && looksLikeTool(m[1])) { const near = nearest(m[1]); add('tool_not_in_code', 'error', rel, i + 1, `\`${m[1]}\` is not a tool in the tool list${near ? `. Did you mean \`${near}\`?` : '.'}`, near ? { find: m[1], replace: near } : null); } }
     // tool tables
@@ -127,11 +129,15 @@ export function check(packDir, toolsJson, { ignore = [] } = {}) {
       }
     }
   }
+  let api = null;
+  if (openapi) { const o = checkOpenapi(parsed, openapi, openapiLabel); api = { operations: o.operations, documented: o.documented }; for (const f of o.findings) add(f.check, f.severity, f.file, f.line, f.detail); }
+  const clName = readdirSync(packDir).find((n) => /^changelog\.md$/i.test(n));
+  for (const f of checkChangelog(clName ? readFileSync(join(packDir, clName), 'utf8') : null, pj.version, { require: require_changelog, rel: clName || 'CHANGELOG.md' })) add(f.check, f.severity, f.file, f.line, f.detail);
   for (const t of tools) if (!mentioned.has(t.name)) add('tool_undocumented', t.decision === 'block' ? 'advisory' : 'warning', '(tool list)', null, `\`${t.name}\`${t.decision ? ` (${t.decision}${t.category ? ', ' + t.category : ''})` : ''} is in the tool list but not in any doc.`);
   const skip = new Set(ignore);
   const out = findings.filter((f) => !skip.has(f.check)).sort((a, b) => SEV[a.severity] - SEV[b.severity] || String(a.file).localeCompare(String(b.file)) || (a.line || 0) - (b.line || 0));
   const by_severity = {}; for (const f of out) by_severity[f.severity] = (by_severity[f.severity] || 0) + 1;
-  return { package: pj.name, version: pj.version, docs: docs.map((f) => relative(packDir, f).split(sep).join('/')), tools: tools.length, tools_documented: [...mentioned].length, issues: out.length, by_severity, findings: out, fixes: fixes.filter((f) => !skip.has(f.check)), limits: LIMITS };
+  return { package: pj.name, version: pj.version, docs: docs.map((f) => relative(packDir, f).split(sep).join('/')), tools: tools.length, tools_documented: [...mentioned].length, ...(api ? { openapi: api } : {}), issues: out.length, by_severity, findings: out, fixes: fixes.filter((f) => !skip.has(f.check)), limits: LIMITS };
 }
 
 /** Apply mechanical fixes (version pins, unambiguous tool-name typos) to copies, within caps. */

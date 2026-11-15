@@ -14,6 +14,12 @@ Give Soteria a requests export (`request_id, type, order_id, customer, amount, r
 
 It suggests eligible, needs review, deny per policy, hold duplicate, or prepare dispute evidence, and writes a queue with blank decision columns plus an evidence draft for each chargeback (with a respond-by date from your policy).
 
+For chargebacks it also:
+- maps the card-network reason code (Visa `13.1`, Mastercard `4853`, Amex `C08`, Discover `UA02` and others; optional `reason_code` and `network` columns) or, without a code, the reason text, to a dispute category: fraud, not received, not as described, duplicate, credit not processed, cancelled recurring, authorization, processing error;
+- builds the evidence checklist for that category, marks what your exports already show (order, delivery date, tracking, return, earlier refund, and for fraud two or more earlier undisputed orders from the same customer 120-365 days back) and what a person must attach (AVS/CVV, messages, listing, terms);
+- gives a readiness score with its explanation (share of checkable items on file; not a prediction of the outcome);
+- writes one self-contained HTML evidence pack per dispute that cites every source row used (file and row number, plus the policy file's SHA-256), an `evidence-index.json` whose hash goes into the audit log line, and `dispute-deadlines.ics` with reminders 3 and 1 days before each respond-by date.
+
 ## Install
 
 ```bash
@@ -26,13 +32,13 @@ soteria-of-refunds demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add soteria-of-refunds -- npx -y soteria-of-refunds@0.1.0 mcp --root /path/to/your/exports
+claude mcp add soteria-of-refunds -- npx -y soteria-of-refunds@0.2.0 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "soteria-of-refunds": { "command": "npx", "args": ["-y", "soteria-of-refunds@0.1.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "soteria-of-refunds": { "command": "npx", "args": ["-y", "soteria-of-refunds@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -43,12 +49,22 @@ claude mcp add soteria-of-refunds -- npx -y soteria-of-refunds@0.1.0 mcp --root 
 |---|---|---|
 | `soteria_triage` | **allow** | Triage every request against the policy |
 | `soteria_explain` | **allow** | Explain one request's flags |
-| `soteria_write_queue` | **allow** | Write `refund-queue.csv` + dispute evidence drafts to `mythos-out/soteria` |
+| `soteria_write_queue` | **allow** | Write `refund-queue.csv` (now with `dispute_category`) + dispute evidence drafts to `mythos-out/soteria` |
+| `soteria_reason_code` | **allow** | Look up a reason code or reason text: category, label and evidence checklist |
+| `soteria_evidence_pack` | **allow** | Per-dispute HTML evidence packs with row citations, `evidence-index.json`, `dispute-deadlines.ics` |
 | `soteria_request_refund` | **ask · one-click** | After a named human approves, record a refund for a person to issue |
 | `payments_issue_refund` | **block** | Listed so agents see the refusal. Soteria never moves money. |
 | `payments_submit_dispute` | **block** | Listed so agents see the refusal. A person submits evidence. |
 
 Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+
+### Policy file
+
+The policy JSON is checked against the `refund_policy` schema: unknown keys (a typo such as `reveiw_over`), wrong types and a missing `window_days` fail with a JSON pointer. Check a file with `soteria-of-refunds validate-config refund_policy policy.json`. `reason_code_overrides` maps a code to one of the categories above when your processor uses its own codes.
+
+### MCP prompt
+
+`refund_and_dispute_workflow` walks the host model through triage, explanations, the queue, evidence packs and refund requests (each waits for a named person).
 
 ## Modes
 
@@ -75,6 +91,8 @@ Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments st
 - Not a payments, helpdesk or chargeback-management service. It connects to no processor and moves no money.
 - It applies the policy you write. It is not legal or consumer-law advice, and statutory rights can override your policy.
 - The respond-by date comes from your setting; your processor's deadline is the one that counts.
+- The reason-code map is a working guide built from public summaries, not the card networks' rulebooks, which change. It does not predict whether a dispute will be won.
+- No processor connector yet: it reads exports only.
 - Not fully autonomous: anything risky waits for a named person.
 
 ## Data

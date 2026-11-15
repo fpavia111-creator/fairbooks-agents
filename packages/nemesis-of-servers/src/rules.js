@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync, existsSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative, extname, basename } from 'node:path';
 import { RULES, enrich } from './catalog.js';
 import { scanFlows } from './flow.js';
@@ -26,7 +26,7 @@ export const SOURCE_RULES = [
   { id: 'NEM-BIND-ALL', re: /\.listen\([^)]*['"]0\.0\.0\.0['"]|\bhost\s*[=:]\s*['"]0\.0\.0\.0['"]|--host[= ]0\.0\.0\.0/ },
   { id: 'NEM-CORS-ANY', re: /Access-Control-Allow-Origin['"]?\s*[,:]\s*['"]\*['"]|\borigin\s*:\s*['"]\*['"]|\bcors\(\s*\)|allow_origins\s*=\s*\[\s*['"]\*['"]\s*\]/ },
   { id: 'NEM-UNSAFE-DESERIALIZE', re: /\bpickle\.loads?\(|\byaml\.load\((?![^)]*SafeLoader)|\bmarshal\.loads\(|\bunserialize\(/ },
-  { id: 'NEM-SQL-CONCAT', re: /`[^`]*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^`]*\$\{|\bf["'][^"']*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^"']*\{|["'][^"']*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^"']*["']\s*\+\s*[A-Za-z_]/ },
+  { id: 'NEM-SQL-CONCAT', re: /`[^`]*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^`]*\$\{|\bf"[^"]*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^"]*\{|\bf'[^']*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^']*\{|["'][^"']*\b(SELECT|INSERT INTO|UPDATE|DELETE FROM)\b[^"']*["']\s*\+\s*[A-Za-z_]/ },
 ].map((r) => ({ ...r, severity: RULES[r.id].severity, title: T(r.id), why: W(r.id) }));
 
 const DOC_RULES = new Set(['NEM-INJECTION-TEXT', 'NEM-INVISIBLE-UNICODE', 'NEM-HARDCODED-SECRET', 'NEM-PLAIN-HTTP']);
@@ -132,7 +132,7 @@ export function scanSource(dir, opts = {}) {
       }
     });
     if (!isDoc) {
-      for (const fl of scanFlows(text, { snippet: snippetOf })) findings.push({ id: fl.id, file: rel, line: fl.line, snippet: fl.flow[fl.flow.length - 1].code, flow: fl.flow, title: `${T(fl.id)}: ${fl.flow.map((s) => `line ${s.line}`).join(' -> ')}` });
+      for (const fl of scanFlows(text, { snippet: snippetOf })) findings.push({ id: fl.id, file: rel, line: fl.line, snippet: fl.flow[fl.flow.length - 1].code, flow: fl.flow, title: `${T(fl.id)}: ${[...new Set(fl.flow.map((s) => s.line))].map((n) => `line ${n}`).join(' -> ')}` });
     }
     // whole-file rules
     const usesWrite = /writeFile|rmSync|unlink|shutil\.rmtree|os\.remove/.test(text);
@@ -170,11 +170,9 @@ export function scanConfig(json, opts = {}) {
       if (pkgArg && /@latest\b/.test(pkgArg)) add('NEM-CFG-LATEST', 'medium', `Runs ${pkgArg}`, '@latest is not a pin.');
       const m = pkgArg && (/^(@[^/@]+\/[^@]+|[^@=]+)@(\d[^\s]*)$/.exec(pkgArg) || /^([^=]+)==(\d[^\s]*)$/.exec(pkgArg));
       if (m) for (const a of matchAdvisories(opts.advisories || [], /==/.test(pkgArg) || cmd === 'uvx' ? 'pypi' : 'npm', m[1], m[2])) add('NEM-CFG-ADVISORY', a.severity || 'high', `${m[1]}@${m[2]}: ${a.id}${a.fixed ? ` (fixed in ${a.fixed})` : ''}`, a.summary, { advisory: { id: a.id, url: a.url || null, fixed: a.fixed || null } });
-      if (pkgArg) {
-        const key = pkgArg.replace(/@[^@/]*$/, '').replace(/==.*$/, '');
-        if (seenRun.has(key)) add('NEM-CFG-DUPLICATE', 'medium', `Runs the same package as server "${seenRun.get(key)}" (${key})`); else seenRun.set(key, name);
-      }
     }
+    const launch = url ? `url:${url}` : cmd ? `${cmd} ${args.filter((a) => a !== '-y' && a !== '--yes').join(' ')}`.trim() : '';
+    if (launch && seenRun.has(launch)) add('NEM-CFG-DUPLICATE', 'medium', `Starts exactly the same server as "${seenRun.get(launch)}"`); else if (launch) seenRun.set(launch, name);
     if (/curl[^|]*\|\s*(ba|z)?sh|wget[^|]*\|\s*(ba|z)?sh/.test(all)) add('NEM-CFG-PIPE-SH', 'high', 'Pipes a download into a shell', 'Anything at that URL runs on your machine.');
     if (/^(bash|sh|zsh|cmd|powershell|pwsh)$/i.test(cmd) && args.some((a) => /^(-c|\/c|-Command)$/i.test(a))) add('NEM-CFG-SHELL-WRAP', 'medium', 'Starts the server through a shell string', 'Shell strings are hard to review; run the binary directly.');
     if (/\bsudo\b/.test(all)) add('NEM-CFG-SUDO', 'high', 'Runs with sudo', 'An MCP server should never need root.');
@@ -213,4 +211,3 @@ export function summarize(findings, extra, policy = null) {
 
 export { sarif } from './sarif.js';
 export { reportMarkdown } from './report.js';
-export { existsSync };

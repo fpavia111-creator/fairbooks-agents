@@ -1,7 +1,7 @@
 {
   "name": "epimetheus-of-scripts",
-  "version": "0.1.0",
-  "description": "Epimetheus of Scripts: a domain-specific MCP agent that inventories SuiteScript files from a local folder, finds SuiteScript 1.0/2.0 usage and risk-ranks what must move to 2.1 before NetSuite 2028.2. Writes a draft test plan; never deploys code.",
+  "version": "0.2.0",
+  "description": "Epimetheus of Scripts: a domain-specific MCP agent that inventories SuiteScript files from a local folder, finds SuiteScript 1.0/2.0 usage, risk-ranks and estimates what must move to 2.1 before NetSuite 2028.2, and orders the work by dependency. Writes a draft test plan and SARIF; never deploys code.",
   "type": "module",
   "license": "MIT",
   "author": "Kurt Francisco",
@@ -22,6 +22,7 @@
     "fixtures",
     "evals",
     "README.md",
+    "CHANGELOG.md",
     "LICENSE"
   ],
   "scripts": {
@@ -48,6 +49,8 @@
     "suitescript",
     "suitescript-2.1",
     "sdf",
+    "sarif",
+    "dependency-graph",
     "ai-agents",
     "mythos"
   ]

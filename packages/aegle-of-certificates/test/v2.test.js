@@ -134,7 +134,7 @@ test('live TLS check: ask in assist, blocked in review, runs against a local TLS
     new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
     const b = await rt.call('aegle_tls_live_check', args); assert.equal(b.status, 'executed', JSON.stringify(b));
     const row = b.result.rows[0];
-    assert.equal(row.not_after, '2026-12-01'); assert.equal(row.days_left, 17); assert.equal(row.status, 'warning'); assert.equal(row.key, 'EC prime256v1');
+    assert.equal(row.not_after, '2026-12-01'); assert.equal(row.days_left, 17); assert.equal(row.status, 'warning'); assert.match(row.key, /^EC (P-256|prime256v1)$/);
     for (const f of ['self_signed', 'hostname_mismatch', 'inventory_mismatch']) assert.ok(row.flags.includes(f), f);
     assert.ok(row.flags.some((f) => f.startsWith('chain_untrusted')));
     assert.equal(parseCsv(readFileSync(b.result.file, 'utf8'))[0].not_after, '2026-12-01');

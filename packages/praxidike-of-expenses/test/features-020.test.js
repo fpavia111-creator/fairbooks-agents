@@ -150,7 +150,7 @@ test('MCP prompt walks the workflow and keeps money movement with a person', asy
   for (const t of ['praxidike_review', 'praxidike_find_duplicates', 'praxidike_audit_queue', 'praxidike_write_evidence_pack', 'praxidike_stage_reimbursement', 'praxidike_request_reimbursement']) assert.ok(p.text.includes(t), t);
   assert.match(p.text, /Never approve on their behalf/); assert.match(p.text, /\{\{expenses\}\}/);
   const { createMcpHandler } = await import('mythos-agent-core');
-  const h = createMcpHandler(manifest, new AgentRuntime(manifest, { root: fixtures, audit: false }));
+  const h = createMcpHandler(new AgentRuntime(manifest, { root: fixtures, audit: false }));
   const got = await h({ jsonrpc: '2.0', id: 1, method: 'prompts/get', params: { name: 'review_expense_reports', arguments: { expenses: 'e.csv', policy: 'p.json' } } });
   assert.match(got.result.messages[0].content.text, /expenses "e\.csv"/);
 });

@@ -1,4 +1,5 @@
-import { toCsv, toNumber, round2 } from 'mythos-agent-core';
+import { toCsv, toNumber, round2, escapeHtml, htmlPage } from 'mythos-agent-core';
+import { applyRules } from './rules.js';
 
 const s = (v) => String(v ?? '').trim();
 function col(row, names) {
@@ -43,6 +44,8 @@ export function reconcile(bank, gl, opts = {}) {
     const g = gl.find((x) => !usedG.has(x.id) && x.reference && x.reference.toLowerCase() === b.reference.toLowerCase() && eq(x.amount, b.amount, tol));
     if (g) { usedB.add(b.id); usedG.add(g.id); matches.push({ type: 'reference', confidence: 'high', bank: [b.id], gl: [g.id], amount: b.amount, note: `reference ${b.reference}` }); }
   }
+  // Accepted, learned rules (only when the caller passes them).
+  for (const m of applyRules(bank, gl, opts.rules || [], { usedB, usedG, tol, day })) matches.push(m);
   for (const b of bank) {
     if (usedB.has(b.id)) continue;
     const c = gl.filter((x) => !usedG.has(x.id) && eq(x.amount, b.amount, tol) && near(x.date, b.date, w));
@@ -64,6 +67,20 @@ export function reconcile(bank, gl, opts = {}) {
     rec(0, [], 0);
     if (hit) { usedB.add(b.id); hit.forEach((g) => usedG.add(g.id)); matches.push({ type: 'group', confidence: 'medium', bank: [b.id], gl: hit.map((g) => g.id), amount: b.amount, note: `bank line equals ${hit.length} GL lines` }); }
   }
+  // One GL line = 2..max_group bank lines (e.g. one payroll entry clearing as several debits).
+  for (const g of gl) {
+    if (usedG.has(g.id) || g.amount === null) continue;
+    const pool = bank.filter((x) => !usedB.has(x.id) && x.amount !== null && Math.sign(x.amount) === Math.sign(g.amount) && near(x.date, g.date, w)).slice(0, 14);
+    let hit = null;
+    const rec = (start, pick, sum) => {
+      if (hit) return;
+      if (pick.length >= 2 && eq(sum, g.amount, tol)) { hit = [...pick]; return; }
+      if (pick.length === maxG) return;
+      for (let i = start; i < pool.length; i++) { pick.push(pool[i]); rec(i + 1, pick, sum + pool[i].amount); pick.pop(); }
+    };
+    rec(0, [], 0);
+    if (hit) { usedG.add(g.id); hit.forEach((b) => usedB.add(b.id)); matches.push({ type: 'group_bank', confidence: 'medium', bank: hit.map((b) => b.id), gl: [g.id], amount: g.amount, note: `GL line equals ${hit.length} bank lines` }); }
+  }
   const bankOnly = bank.filter((b) => !usedB.has(b.id)).map((b) => { const k = KIND.find(([re]) => re.test(b.description)); return { ...b, kind: k ? k[1] : 'not_in_gl', suggestion: k ? k[2] : 'In the bank but not the GL: find the source document before any entry.', adjusting_entry: k && k[1] !== 'returned_item' ? { amount: b.amount, account: k[1] === 'bank_fee' ? 'Bank fees expense' : 'Interest income', memo: `${b.description} ${b.date}` } : null }; });
   const glOnly = gl.filter((g) => !usedG.has(g.id)).map((g) => ({ ...g, kind: g.amount >= 0 ? 'deposit_in_transit' : 'outstanding_payment', suggestion: g.amount >= 0 ? 'Deposit in transit: should clear the bank soon.' : 'Outstanding check or payment: has not cleared the bank yet.' }));
   const sum = (a) => round2(a.reduce((t, x) => t + (x.amount || 0), 0));
@@ -73,18 +90,18 @@ export function reconcile(bank, gl, opts = {}) {
     const adjBank = round2(bb + sum(glOnly)); const adjBook = round2(gb + sum(bankOnly));
     balance = { bank_balance: bb, gl_balance: gb, adjusted_bank: adjBank, adjusted_book: adjBook, difference: round2(adjBank - adjBook), ties: Math.abs(adjBank - adjBook) < 0.005 };
   }
-  return { bank_lines: bank.length, gl_lines: gl.length, matched_groups: matches.length, by_confidence: { high: matches.filter((m) => m.confidence === 'high').length, medium: matches.filter((m) => m.confidence === 'medium').length, low: matches.filter((m) => m.confidence === 'low').length },
+  return { bank_lines: bank.length, gl_lines: gl.length, matched_groups: matches.length, rules_applied: (opts.rules || []).length, by_confidence: { high: matches.filter((m) => m.confidence === 'high').length, medium: matches.filter((m) => m.confidence === 'medium').length, low: matches.filter((m) => m.confidence === 'low').length },
     bank_only: bankOnly, gl_only: glOnly, matches, balance, settings: { date_window: w, amount_tolerance: tol, max_group: maxG },
     note: 'Proposed matches and entries only. A person accepts matches and approves any adjusting entry; Penelope never posts to the ledger.' };
 }
 
-export const WORKPAPER_COLUMNS = ['item', 'type', 'confidence', 'bank_ids', 'gl_ids', 'date', 'description', 'amount', 'suggestion', 'reviewer_decision', 'reviewer_name', 'review_date'];
+export const WORKPAPER_COLUMNS = ['item', 'type', 'confidence', 'bank_ids', 'gl_ids', 'date', 'description', 'reference', 'amount', 'suggestion', 'reviewer_decision', 'reviewer_name', 'review_date'];
 export function workpaperCsv(r, bank, gl) {
   const by = new Map([...bank, ...gl].map((x) => [x.id, x]));
   const rows = [
-    ...r.matches.map((m, i) => ({ item: `M${i + 1}`, type: `match:${m.type}`, confidence: m.confidence, bank_ids: m.bank.join(' '), gl_ids: m.gl.join(' '), date: by.get(m.bank[0]).date, description: by.get(m.bank[0]).description, amount: m.amount, suggestion: m.note })),
-    ...r.bank_only.map((b) => ({ item: b.id, type: b.kind, confidence: '', bank_ids: b.id, gl_ids: '', date: b.date, description: b.description, amount: b.amount, suggestion: b.suggestion })),
-    ...r.gl_only.map((g) => ({ item: g.id, type: g.kind, confidence: '', bank_ids: '', gl_ids: g.id, date: g.date, description: g.description, amount: g.amount, suggestion: g.suggestion })),
+    ...r.matches.map((m, i) => ({ item: `M${i + 1}`, type: `match:${m.type}`, confidence: m.confidence, bank_ids: m.bank.join(' '), gl_ids: m.gl.join(' '), date: by.get(m.bank[0]).date, description: by.get(m.bank[0]).description, reference: by.get(m.bank[0]).reference, amount: m.amount, suggestion: m.note })),
+    ...r.bank_only.map((b) => ({ item: b.id, type: b.kind, confidence: '', bank_ids: b.id, gl_ids: '', date: b.date, description: b.description, reference: b.reference, amount: b.amount, suggestion: b.suggestion })),
+    ...r.gl_only.map((g) => ({ item: g.id, type: g.kind, confidence: '', bank_ids: '', gl_ids: g.id, date: g.date, description: g.description, reference: g.reference, amount: g.amount, suggestion: g.suggestion })),
   ].map((x) => ({ ...x, reviewer_decision: '', reviewer_name: '', review_date: '' }));
   return toCsv(rows, WORKPAPER_COLUMNS);
 }
@@ -97,4 +114,22 @@ export function summaryMarkdown(r, at) {
   for (const b of r.bank_only.filter((x) => x.adjusting_entry)) L.push(`| ${b.id} | ${b.date} | ${b.description} | ${b.amount} | ${b.adjusting_entry.account} |`);
   L.push('', 'A preparer accepts each match in `reconciliation.csv`; a reviewer approves any entry, which is then posted in the ledger by a person.', '');
   return L.join('\n');
+}
+
+/** Self-contained HTML reconciliation with preparer and reviewer sign-off lines (blank). No scripts. */
+export function reconciliationHtml(r, bank, gl, { title = 'Bank reconciliation (proposed)', at = '', source = '' } = {}) {
+  const e = escapeHtml; const by = new Map([...bank, ...gl].map((x) => [x.id, x])); const money = (n) => (n === null || n === undefined ? '' : Number(n).toFixed(2));
+  const tile = (l, v, c = '') => `<div class="tile"><span class="mut">${e(l)}</span><b class="${c}">${e(v)}</b></div>`;
+  const b = r.balance;
+  const body = [`<h1>${e(title)}</h1><p class="mut">Generated ${e(at)} by penelope-of-recon${source ? ` from ${e(source)}` : ''}. Proposed matches and entries only; nothing was posted.</p>`,
+    `<div class="tiles">${tile('Bank lines', r.bank_lines)}${tile('GL lines', r.gl_lines)}${tile('Proposed matches', r.matched_groups)}${tile('Bank only', r.bank_only.length, r.bank_only.length ? 'warn' : 'ok')}${tile('GL only', r.gl_only.length, r.gl_only.length ? 'warn' : 'ok')}${b ? tile('Difference', money(b.difference), b.ties ? 'ok' : 'bad') : ''}</div>`];
+  if (b) body.push('<h2>Tie-out</h2><table>', `<tr><td>Balance per bank</td><td class="num">${money(b.bank_balance)}</td></tr>`, `<tr><td>+ GL-only items (in transit / outstanding)</td><td class="num">${money(round2(b.adjusted_bank - b.bank_balance))}</td></tr>`, `<tr><th>Adjusted bank</th><th class="num">${money(b.adjusted_bank)}</th></tr>`,
+    `<tr><td>Balance per book</td><td class="num">${money(b.gl_balance)}</td></tr>`, `<tr><td>+ Bank-only items (to be booked)</td><td class="num">${money(round2(b.adjusted_book - b.gl_balance))}</td></tr>`, `<tr><th>Adjusted book</th><th class="num">${money(b.adjusted_book)}</th></tr>`,
+    `<tr><th>Difference</th><th class="num ${b.ties ? 'ok' : 'bad'}">${money(b.difference)} (${b.ties ? 'ties' : 'does not tie'})</th></tr></table>`);
+  body.push('<h2>Proposed matches</h2><div class="wrap"><table><tr><th>Type</th><th>Confidence</th><th>Bank</th><th>GL</th><th>Description</th><th class="num">Amount</th><th>Note</th></tr>',
+    ...r.matches.map((m) => `<tr><td>${e(m.type)}</td><td>${e(m.confidence)}</td><td>${e(m.bank.join(' '))}</td><td>${e(m.gl.join(' '))}</td><td>${e((by.get(m.bank[0]) || {}).description)}</td><td class="num">${money(m.amount)}</td><td>${e(m.note)}</td></tr>`),
+    '</table></div><h2>Reconciling items</h2><div class="wrap"><table><tr><th>Item</th><th>Kind</th><th>Date</th><th>Description</th><th class="num">Amount</th><th>Suggestion</th></tr>',
+    ...[...r.bank_only, ...r.gl_only].map((x) => `<tr><td>${e(x.id)}</td><td>${e(x.kind)}</td><td>${e(x.date)}</td><td>${e(x.description)}</td><td class="num">${money(x.amount)}</td><td>${e(x.suggestion)}</td></tr>`),
+    '</table></div><h2>Sign-off</h2><table><tr><td>Prepared by</td><td>______________________</td><td>Date</td><td>__________</td></tr><tr><td>Reviewed by</td><td>______________________</td><td>Date</td><td>__________</td></tr></table>');
+  return htmlPage({ title, bodyHtml: body.join('\n'), footer: 'penelope-of-recon: proposed reconciliation for a person to review. Not accounting or audit advice. It never posts to a ledger, bank or ERP.' });
 }
