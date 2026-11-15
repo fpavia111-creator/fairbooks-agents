@@ -7,6 +7,8 @@ export { serveApprovals } from './approvals-server.js';
 export { UsageStore, capHit } from './usage.js';
 export { validate, assertValid, ValidationError } from './schema.js';
 export { generateSigningKey, loadSigner, loadPublicKeys, keyId, verifySignature } from './signing.js';
+export { issueLicense, checkLicense, parseLicense, readLicenseToken, licenseHas, licenseView, licenseKeyMap, trustedLicenseKeys, LICENSE_PREFIX, LICENSE_FILE, TIERS } from './license.js';
+export { LICENSE_PUBLIC_KEYS, LICENSE_REVOKED_IDS } from './license-keys.js';
 export { toIcs, validateIcs, toSarif, validateSarif, unifiedDiff, applyUnifiedDiff, escapeHtml, htmlPage, accessibleTables, safeFileName, safeMarkdown } from './formats.js';
 export { levenshtein, jaroWinkler, normalizeName, normalizeAddress, tokenSetSimilarity, nameSimilarity, shannonEntropy, maskValue, injectionSignals } from './text.js';
 export { readZip, writeZip, docxText } from './zip.js';

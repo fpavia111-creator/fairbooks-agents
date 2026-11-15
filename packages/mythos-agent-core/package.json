@@ -16,7 +16,8 @@
   "bin": {
     "mythos-approve": "bin/mythos-approve.js",
     "mythos-verify-log": "bin/mythos-verify-log.js",
-    "mythos-new-agent": "bin/mythos-new-agent.js"
+    "mythos-new-agent": "bin/mythos-new-agent.js",
+    "mythos-license": "bin/mythos-license.js"
   },
   "files": [
     "src",

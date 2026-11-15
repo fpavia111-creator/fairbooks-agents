@@ -42,7 +42,7 @@ export function createMcpHandler(runtime) {
     return [infoTool, inspectTool, ...runtime.listTools().map((t) => ({
       name: t.name,
       title: annotationsFor(t).title,
-      description: `[${t.decision.toUpperCase()}${t.category ? ' · ' + t.category : ''}] ${t.description}`,
+      description: `[${t.decision.toUpperCase()}${t.category ? ' · ' + t.category : ''}${t.tier === 'pro' ? ' · paid tier' : ''}] ${t.description}`,
       inputSchema: t.inputSchema,
       annotations: annotationsFor(t),
     }))];
@@ -97,14 +97,15 @@ export function createMcpHandler(runtime) {
             caps: runtime.caps, usage: runtime.usageReport(), auto_actions: [...runtime.autoActions], kill_switch: runtime.isKilled(),
             audit_signing: runtime.signer ? { key_id: runtime.signer.keyId } : 'unsigned',
             pending_approvals: runtime.approvals.pending().filter((p) => p.agent === m.name).map(({ id, tool, category, one_click, reason, ts }) => ({ id, tool, category, one_click, reason, ts })),
-            tools: runtime.listTools().map(({ name: n, kind, category, decision, reason }) => ({ name: n, kind, category, decision, reason })),
+            tools: runtime.listTools().map(({ name: n, kind, category, tier, decision, reason }) => ({ name: n, kind, category, tier, decision, reason })),
+            license: runtime.licenseReport(),
             reads_exports_from: describeSources(m).map((k) => ({ kind: k.kind, arguments: k.args, exports: k.exports.map((e) => `${e.system}: ${e.label || e.id}`) })),
           }));
         }
         if (name === 'mythos_inspect_input') { const r = runtime.inspect(params.arguments || {}); return ok(text(r, r.status === 'blocked' || r.status === 'error')); }
         if (typeof name !== 'string') return fail(-32602, 'params.name is required');
         const r = await runtime.call(name, params.arguments || {});
-        return ok(text(r, r.status === 'blocked' || r.status === 'error'));
+        return ok(text(r, r.status === 'blocked' || r.status === 'error' || r.status === 'needs_license'));
       }
       default:
         return isNote ? null : fail(-32601, `Method not found: ${method}`);

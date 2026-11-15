@@ -1,5 +1,5 @@
 import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 import { AgentRuntime } from './runtime.js';
 import { serveStdio } from './mcp.js';
 import { runEvalFile } from './evals.js';
@@ -12,6 +12,7 @@ import { validate } from './schema.js';
 import { readFileSync } from 'node:fs';
 import { describeSources, SOURCES_FILE } from './sources.js';
 import { EXPORTS_BASIS_NOTE } from './exports.js';
+import { checkLicense, licenseView, LICENSE_FILE } from './license.js';
 
 export function parseFlags(argv) {
   const flags = {}; const pos = [];
@@ -71,6 +72,9 @@ Usage:
   ${bin} sources                  List the export files this pack reads directly, by system
   ${bin} inspect <file> [--as KIND]   Show how a file would be read: export recognised, columns mapped
   ${bin} kill | unkill            Engage or clear the kill switch (.mythos/KILL)
+  ${bin} license status           Licence for the paid tier: plan, expiry, which tools it unlocks
+  ${bin} license install <file>   Check a licence key and copy it to .mythos/license.key
+  ${bin} license remove           Delete .mythos/license.key
 
 Options:
   --mode review|assist|auto       Default assist. Auto is opt-in per action:
@@ -176,6 +180,32 @@ export async function runCli(manifest, argv, opts = {}) {
     }
     out(`Column names differ? Run "${bin} inspect <file>", then name your columns in ${SOURCES_FILE} in the root.\n${EXPORTS_BASIS_NOTE}`);
     return 0;
+  }
+  if (cmd === 'license') {
+    const sub = pos[1] || 'status';
+    const rt = runtimeFromFlags(manifest, flags);
+    const f = join(rt.stateDir || stateDir(), LICENSE_FILE);
+    if (sub === 'status') {
+      const r = rt.licenseReport();
+      if (flags.json) { out(r); return 0; }
+      out(r.status === 'valid' ? `Licence valid: plan ${r.plan} for ${r.licensee}, ${r.expires === 'no end date' ? 'no end date' : `until ${r.expires} (${r.days_left} day(s) left)`}.` : `No valid licence: ${r.reason}`);
+      if (r.read_from) out(`Read from: ${r.read_from}`);
+      if (!r.paid_tools.length) out(`${manifest.name} has no paid tools in this version; everything runs without a licence.`);
+      else for (const t of r.paid_tools) out(`  ${t.unlocked ? 'unlocked' : 'locked  '}  ${t.name}${t.feature ? ` (feature ${t.feature})` : ''}`);
+      return 0;
+    }
+    if (sub === 'install') {
+      if (!pos[2]) { out(`Usage: ${bin} license install <file holding the key>`); return 2; }
+      let token; try { token = readFileSync(resolve(pos[2]), 'utf8').trim(); } catch { out(`Not installed: cannot read ${pos[2]}.`); return 1; }
+      const st = checkLicense(token, { agent: manifest.name });
+      if (!st.valid) { out(`Not installed: ${st.reason}`); return 1; }
+      mkdirSync(dirname(f), { recursive: true }); writeFileSync(f, token + '\n', { mode: 0o600 });
+      const v = licenseView(st);
+      out(`Licence installed in ${f}: plan ${v.plan} for ${v.licensee}, ${v.expires === 'no end date' ? 'no end date' : `until ${v.expires}`}.`);
+      return 0;
+    }
+    if (sub === 'remove') { if (existsSync(f)) rmSync(f); out(`Removed ${f}.`); return 0; }
+    out(`Usage: ${bin} license status | install <file> | remove`); return 2;
   }
   if (cmd === 'inspect') {
     if (!pos[1]) { out(`Usage: ${bin} inspect <file> [--as KIND] [--sheet NAME] [--root DIR]`); return 2; }

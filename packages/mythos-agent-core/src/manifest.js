@@ -54,6 +54,9 @@ export function defineManifest(m) {
     if (!KINDS.includes(t.kind)) errs.push(`tool ${t.name}: kind must be one of ${KINDS.join(', ')}`);
     if (!t.description) errs.push(`tool ${t.name}: description is required`);
     if (t.category && typeof t.category !== 'string') errs.push(`tool ${t.name}: category must be a string`);
+    if (t.tier !== undefined && !['free', 'pro'].includes(t.tier)) errs.push(`tool ${t.name}: tier must be "free" or "pro"`);
+    if (t.feature !== undefined && (typeof t.feature !== 'string' || !/^[a-z][a-z0-9_-]{0,47}$/.test(t.feature))) errs.push(`tool ${t.name}: feature must be a short lowercase name`);
+    if (t.feature !== undefined && t.tier !== 'pro') errs.push(`tool ${t.name}: feature only applies to a tier "pro" tool`);
     const rule = matchRule(rules, t);
     if (!rule) { errs.push(`tool ${t.name}: no policy rule (add an explicit allow/ask/block)`); continue; }
     if ((t.kind === 'write' || t.kind === 'action') && rule.decision === 'allow') {

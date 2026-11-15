@@ -8,6 +8,7 @@ import { ApprovalStore, signWebhook } from './approvals.js';
 import { UsageStore, capHit } from './usage.js';
 import { validate, assertValid } from './schema.js';
 import { loadSigner } from './signing.js';
+import { checkLicense, readLicenseToken, licenseHas, licenseView } from './license.js';
 import { safeMarkdown } from './formats.js';
 import { levenshtein, injectionSignals } from './text.js';
 import { readTable } from './tables.js';
@@ -67,6 +68,14 @@ export const DEFAULT_CAPS = Object.freeze({ maxSteps: 50, maxSpendUsd: 5 });
  *                   with MYTHOS_WEBHOOK_SECRET). Off by default.
  *   validateInputs  false to skip inputSchema validation (default true)
  *   injectionScan   false to skip the check for instruction-like text in results (default true)
+ *   license         licence key text (default: MYTHOS_LICENSE, MYTHOS_LICENSE_FILE, then <stateDir>/license.key)
+ *   licenseFile     path to a file holding the licence key
+ *   licenseKeys     trusted public keys for licences (PEM strings or a Map). Default: the keys
+ *                   shipped in license-keys.js. For tests and the issuer's own checks; the CLI
+ *                   and environment never set it.
+ *   A tool marked tier: 'pro' runs only with a valid licence that covers this agent
+ *   (and the tool's feature, if it names one). The licence check is an extra gate: it
+ *   never changes an allow/ask/block decision, an Auto opt-in or a one-click category.
  */
 export class AgentRuntime {
   constructor(manifest, options = {}) {
@@ -97,6 +106,21 @@ export class AgentRuntime {
     this.killed = false;
     this.log = [];
     this.pendingWebhooks = [];
+    const lt = readLicenseToken({ token: options.license || null, file: options.licenseFile || null, stateDir: this.stateDir });
+    this.licenseToken = lt.token; this.licenseSource = lt.source;
+    this.licenseKeys = options.licenseKeys || null;
+  }
+
+  /** The licence as checked now (expiry is evaluated on every call). Never includes the key. */
+  licenseStatus(now = new Date()) {
+    return checkLicense(this.licenseToken, { keys: this.licenseKeys, now, agent: this.manifest.name });
+  }
+
+  /** Licence summary for people and models: plan, licensee, expiry, which tools it unlocks. */
+  licenseReport() {
+    const st = this.licenseStatus();
+    const pro = this.manifest.tools.filter((t) => t.tier === 'pro');
+    return { ...licenseView(st), ...(this.licenseSource ? { read_from: this.licenseSource } : {}), paid_tools: pro.map((t) => ({ name: t.name, ...(t.feature ? { feature: t.feature } : {}), unlocked: licenseHas(st, t.feature) })) };
   }
 
   kill() { this.killed = true; }
@@ -110,7 +134,7 @@ export class AgentRuntime {
   listTools() {
     return this.manifest.tools.map((t) => {
       const d = this.policy.decide(t.name, { mode: this.mode, autoActions: this.autoActions });
-      return { name: t.name, kind: t.kind, category: t.category || null, decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema, title: t.title || null, openWorld: !!t.openWorld };
+      return { name: t.name, kind: t.kind, category: t.category || null, tier: t.tier || 'free', decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema, title: t.title || null, openWorld: !!t.openWorld };
     });
   }
 
@@ -166,6 +190,8 @@ export class AgentRuntime {
       },
       // How the files read so far in this call were mapped (one entry per adapted file).
       sourceReports: () => seen.slice(),
+      // Licence as checked for this call: { status, valid, plan, features, ... }. Never the key.
+      license: (() => { const st = this.licenseStatus(); return Object.freeze({ ...licenseView(st), valid: st.valid, has: (feature) => licenseHas(st, feature) }); })(),
       readText: (p) => readFileSync(safePath(root, p), 'utf8'),
       readJson: (p, schemaName) => {
         const data = JSON.parse(readFileSync(safePath(root, p), 'utf8'));
@@ -281,6 +307,17 @@ export class AgentRuntime {
     if (d.decision === 'block') {
       this.#record(tool, args, { decision: 'block', status: 'blocked', reason: d.reason });
       return { status: 'blocked', decision: 'block', reason: d.reason };
+    }
+    // Paid tools: checked after the policy (a block stays a block) and before any
+    // approval is requested, so nobody is asked to approve a call that cannot run.
+    if (t.tier === 'pro') {
+      const st = this.licenseStatus();
+      if (!licenseHas(st, t.feature)) {
+        const why = st.valid ? `The installed licence (${st.plan}) does not include the "${t.feature}" feature.` : st.reason;
+        const reason = `${tool} is part of the paid tier. ${why} Free tools keep working.`;
+        this.#record(tool, args, { decision: d.decision, status: 'needs_license', reason, license_status: st.status });
+        return { status: 'needs_license', decision: d.decision, reason, license: licenseView(st), how_to_license: 'Install a licence key with "<agent> license install <file>" or set MYTHOS_LICENSE. See "<agent> license status".' };
+      }
     }
     const ignored = [];
     if (this.validateInputs && t.inputSchema) {
