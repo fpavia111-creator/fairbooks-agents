@@ -61,6 +61,6 @@ npm run bench    # scale test: every read/report tool on generated 1,000- and 10
 node scripts/sources-doc.mjs   # regenerate the "Exports it reads" README sections
 ```
 
-`npm run bench` grows each eval case's fictional tables to the sizes given (`--sizes 1000,50000`, or name agents to run only those), runs each tool in its own process with the policy on, and writes `mythos-out/bench/bench.md` with time and memory per tool. It flags tools that are slow, grow much faster than the input, crash or time out. The generated rows are seeded and repeatable, and stay fictional.
+`npm run bench` grows each eval case's fictional tables to the sizes given (`--sizes 1000,50000`, or name agents to run only those), runs each tool in its own process with the policy on, and writes `mythos-out/bench/bench.md` with time and memory per tool (the 15 Nov 2026 results are in `docs/bench-2026-11-15.md`). It flags tools that are slow, grow much faster than the input, crash or time out. The generated rows are seeded and repeatable, and stay fictional.
 
 MIT © 2026 Kurt Francisco · <https://mythosmachines.com>

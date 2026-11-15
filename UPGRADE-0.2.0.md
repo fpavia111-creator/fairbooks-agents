@@ -166,7 +166,7 @@ The first run found nine agents that were quadratic or ran out of memory at 10,0
 
 Final run (Node 22, 4-core Linux container): 66 of 68 tools ran at 10,000 rows (Urania's charts and pack need figures locked first, so they were skipped); 49 finished under 1 s, 61 under 3 s, the slowest was Auxo's duplicate vendor check at about 11 s, peak memory 245 MB. Auxo's check compares names pairwise by nature; it now scores only pairs that can reach the threshold.
 
-Two outputs change on very large or odd files: Augeas lists a tax id or phone shared by more than 500 rows under `not_compared` instead of pairing them all, and Praxidike lists a receipt shared by more than 200 lines under `not_paired`. Epeius names at most five similar earlier RFIs per RFI and counts the rest. Tests: 669 pass on Node 20, 22 and 24; evals 420 of 420.
+Two outputs change on very large or odd files: Augeas lists a tax id or phone shared by more than 500 rows under `not_compared` instead of pairing them all, and Praxidike lists a receipt shared by more than 200 lines under `not_paired`. Epeius names at most five similar earlier RFIs per RFI and counts the rest. Full table: `docs/bench-2026-11-15.md`. Tests: 670 pass on Node 20, 22 and 24; evals 420 of 420; `npm run hostile:args` 0 findings over 20,670 calls (it caught one hang in the new Penelope code, a huge `date_window` walking every day in the range, now fixed and tested); `npm run release:check` passes.
 
 ## Not done
 
