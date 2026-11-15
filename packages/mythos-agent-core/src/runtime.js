@@ -1,24 +1,37 @@
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { PolicyEngine } from './policy.js';
 import { MODES, ONE_CLICK_CATEGORIES } from './manifest.js';
 import { AuditLog } from './audit.js';
-import { ApprovalStore } from './approvals.js';
-import { sha256, canonical, safePath, readRecords } from './util.js';
+import { ApprovalStore, signWebhook } from './approvals.js';
+import { UsageStore, capHit } from './usage.js';
+import { validate, assertValid } from './schema.js';
+import { loadSigner } from './signing.js';
+import { sha256, canonical, safePath, readRecords, sha256File } from './util.js';
 
 export const DEFAULT_CAPS = Object.freeze({ maxSteps: 50, maxSpendUsd: 5 });
 
 /**
- * Runs pack tools behind the policy engine, caps, kill switch, approvals and audit log.
+ * Runs pack tools behind the policy engine, input validation, caps, kill switch,
+ * approvals and audit log.
  *
  * options:
- *   mode        'review' | 'assist' (default) | 'auto'
- *   autoActions tool names the buyer opts in to Auto (off by default, per action)
- *   caps        { maxSteps, maxSpendUsd } — enforced in every mode
- *   root        folder the tools may read and write (default: cwd)
- *   stateDir    where audit.jsonl, approvals.jsonl and KILL live (default: <root>/.mythos)
- *   audit       false to keep the log in memory only (tests)
+ *   mode            'review' | 'assist' (default) | 'auto'
+ *   autoActions     tool names the buyer opts in to Auto (off by default, per action)
+ *   caps            { maxSteps, maxSpendUsd, maxStepsPerDay, maxSpendUsdPerDay,
+ *                     perTool: { name: { maxSteps, maxSpendUsd, maxStepsPerDay } } }
+ *                   enforced in every mode; persisted in <stateDir>/usage.json
+ *   session         session id (persisted caps count per session; default random)
+ *   root            folder the tools may read and write (default: cwd)
+ *   stateDir        audit.jsonl, approvals.jsonl, usage.json, KILL (default: <root>/.mythos)
+ *   audit           false to keep the log and approvals in memory only (tests)
+ *   signingKey      path to an Ed25519 private key (outside root): signs every audit line
+ *   auditMirror     second file every audit line is appended to
+ *   approvalTtlHours  approvals expire this long after a person approves (default 24)
+ *   approvalWebhook URL that receives each new pending approval (POST, HMAC-signed
+ *                   with MYTHOS_WEBHOOK_SECRET). Off by default.
+ *   validateInputs  false to skip inputSchema validation (default true)
  */
 export class AgentRuntime {
   constructor(manifest, options = {}) {
@@ -32,16 +45,22 @@ export class AgentRuntime {
       if (!t) throw new Error(`Auto opt-in "${name}" is not a tool in ${manifest.name}`);
       if (ONE_CLICK_CATEGORIES.includes(t.category)) throw new Error(`"${name}" (${t.category}) cannot be put on Auto; it stays one-click`);
     }
-    this.caps = { ...DEFAULT_CAPS, ...(manifest.caps || {}), ...(options.caps || {}) };
+    this.caps = Object.freeze({ ...DEFAULT_CAPS, ...(manifest.caps || {}), ...(options.caps || {}) });
     this.root = resolve(options.root || process.cwd());
     this.stateDir = options.stateDir === null ? null : resolve(options.stateDir || join(this.root, '.mythos'));
-    this.audit = new AuditLog(options.audit === false || !this.stateDir ? null : join(this.stateDir, 'audit.jsonl'));
-    this.approvals = new ApprovalStore(options.audit === false ? null : this.stateDir);
+    const persist = options.audit !== false && !!this.stateDir;
+    this.signer = options.signingKey ? (typeof options.signingKey === 'string' ? loadSigner(options.signingKey, { root: this.root }) : options.signingKey) : null;
+    this.audit = new AuditLog(persist ? join(this.stateDir, 'audit.jsonl') : null, { signer: this.signer, mirror: options.auditMirror ? resolve(options.auditMirror) : null });
+    this.approvals = new ApprovalStore(persist ? this.stateDir : null, { ttlHours: options.approvalTtlHours });
+    this.usage = new UsageStore(persist ? this.stateDir : null);
+    this.approvalWebhook = options.approvalWebhook || null;
+    this.validateInputs = options.validateInputs !== false;
     this.session = options.session || randomUUID();
     this.steps = 0;
     this.spendUsd = 0;
     this.killed = false;
     this.log = [];
+    this.pendingWebhooks = [];
   }
 
   kill() { this.killed = true; }
@@ -55,21 +74,40 @@ export class AgentRuntime {
   listTools() {
     return this.manifest.tools.map((t) => {
       const d = this.policy.decide(t.name, { mode: this.mode, autoActions: this.autoActions });
-      return { name: t.name, kind: t.kind, category: t.category || null, decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema };
+      return { name: t.name, kind: t.kind, category: t.category || null, decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema, title: t.title || null };
     });
+  }
+
+  /** Usage so far: this session and today (persisted across restarts). */
+  usageReport() {
+    const u = this.usage.get(this.session);
+    return { session: this.session, caps: this.caps, session_usage: u.session, today: { date: u.day, ...u.today } };
   }
 
   approvalId(tool, args) { return sha256(`${this.manifest.name}|${tool}|${canonical(args || {})}`).slice(0, 16); }
 
   context() {
     const root = this.root;
+    const configSchemas = this.manifest.configSchemas || {};
     return {
       root,
       manifest: this.manifest,
       path: (p) => safePath(root, p),
       records: (p) => readRecords(safePath(root, p)),
+      readText: (p) => readFileSync(safePath(root, p), 'utf8'),
+      readJson: (p, schemaName) => {
+        const data = JSON.parse(readFileSync(safePath(root, p), 'utf8'));
+        if (schemaName) {
+          if (!configSchemas[schemaName]) throw new Error(`unknown config schema "${schemaName}"`);
+          assertValid(configSchemas[schemaName], data, `${p} is not a valid ${schemaName}`);
+        }
+        return data;
+      },
+      exists: (p) => existsSync(safePath(root, p)),
+      hashFile: (p) => sha256File(safePath(root, p)),
+      validate: (schema, value, label) => assertValid(schema, value, label),
       outDir: (p) => { const d = safePath(root, p || 'mythos-out'); mkdirSync(d, { recursive: true }); return d; },
-      writeFile: (dir, name, text) => { const f = join(dir, name); writeFileSync(f, text); return f; },
+      writeFile: (dir, name, text) => { const f = safePath(root, join(dir, name)); writeFileSync(f, text); return f; },
     };
   }
 
@@ -85,6 +123,20 @@ export class AgentRuntime {
     return entry;
   }
 
+  /** Record an event that is not a tool call (webhook rejections, key rotation notes). */
+  note(type, fields = {}) { return this.audit.write({ type, session: this.session, agent: this.manifest.name, agent_version: this.manifest.version, ...fields }); }
+
+  #notifyWebhook(rec) {
+    if (!this.approvalWebhook) return;
+    const secret = process.env.MYTHOS_WEBHOOK_SECRET;
+    if (!secret) { this.note('webhook-skipped', { reason: 'MYTHOS_WEBHOOK_SECRET is not set', approval_id: rec.id }); return; }
+    const body = JSON.stringify({ type: 'approval.pending', ...rec });
+    const p = fetch(this.approvalWebhook, { method: 'POST', headers: { 'content-type': 'application/json', 'x-mythos-signature': signWebhook(body, secret) }, body })
+      .then((r) => this.note('webhook-sent', { approval_id: rec.id, http_status: r.status }))
+      .catch((e) => this.note('webhook-failed', { approval_id: rec.id, reason: String(e && e.message || e).slice(0, 200) }));
+    this.pendingWebhooks.push(p);
+  }
+
   async call(tool, args = {}) {
     if (args === null || typeof args !== 'object' || Array.isArray(args)) args = {};
     if (this.isKilled()) {
@@ -93,25 +145,41 @@ export class AgentRuntime {
     }
     const d = this.policy.decide(tool, { mode: this.mode, autoActions: this.autoActions });
     const t = d.tool;
-    const cost = t ? Number(t.costUsd) || 0 : 0;
-    if (d.decision !== 'block' && (this.steps >= this.caps.maxSteps || this.spendUsd + cost > this.caps.maxSpendUsd)) {
-      const reason = this.steps >= this.caps.maxSteps ? `step cap reached (${this.caps.maxSteps})` : `spend cap reached ($${this.caps.maxSpendUsd})`;
-      this.#record(tool, args, { decision: 'block', status: 'blocked', reason });
-      return { status: 'blocked', decision: 'block', reason: `${reason}. Stopped and reported; a human can raise the cap.` };
-    }
     if (d.decision === 'block') {
       this.#record(tool, args, { decision: 'block', status: 'blocked', reason: d.reason });
       return { status: 'blocked', decision: 'block', reason: d.reason };
+    }
+    if (this.validateInputs && t.inputSchema) {
+      const v = validate(t.inputSchema, args);
+      if (!v.ok) {
+        const reason = `invalid arguments: ${v.errors.slice(0, 6).map((e) => `${e.path} ${e.message}`).join('; ')}`;
+        this.#record(tool, args, { decision: d.decision, status: 'invalid', reason: reason.slice(0, 500) });
+        return { status: 'error', decision: d.decision, reason, errors: v.errors };
+      }
+    }
+    const cost = Number(t.costUsd) || 0;
+    const usage = this.usage.get(this.session);
+    // In-memory counters also apply (tests and audit:false runs keep no usage file).
+    const live = { session: { ...usage.session, steps: Math.max(usage.session.steps, this.steps), spend_usd: Math.max(usage.session.spend_usd, this.spendUsd) }, today: usage.today };
+    const hit = capHit(this.caps, live, tool, cost);
+    if (hit) {
+      this.#record(tool, args, { decision: 'block', status: 'blocked', reason: hit.reason, cap: hit });
+      return { status: 'blocked', decision: 'block', reason: `${hit.reason}. Stopped and reported; a human can raise the cap.`, cap: hit };
     }
     let approvedBy = null, approvalId = null;
     if (d.decision === 'ask') {
       approvalId = this.approvalId(tool, args);
       const rec = this.approvals.consume(approvalId);
       if (!rec) {
+        const st = this.approvals.state(approvalId);
+        const req = { id: approvalId, agent: this.manifest.name, tool, category: t.category || null, one_click: d.oneClick, args_sha256: sha256(canonical(args)), reason: d.reason, args_preview: preview(args) };
+        this.approvals.request(req);
+        if (st.status !== 'pending') this.#notifyWebhook(req);
+        const extra = st.status === 'rejected' ? { previously_rejected_by: st.rejected_by } : st.status === 'expired' ? { previous_approval_expired: true } : {};
         this.#record(tool, args, { decision: 'ask', status: 'needs_approval', reason: d.reason, approval_id: approvalId });
         return {
-          status: 'needs_approval', decision: 'ask', reason: d.reason, approval_id: approvalId,
-          how_to_approve: `A person runs: npx -y -p mythos-agent-core mythos-approve ${approvalId} --as "Your Name" --dir "${this.stateDir || '.mythos'}" and then the same call is repeated with the same arguments.`,
+          status: 'needs_approval', decision: 'ask', reason: d.reason, approval_id: approvalId, ...extra,
+          how_to_approve: `A person approves it, then the same call is repeated with the same arguments. Either: npx -y -p mythos-agent-core mythos-approve ${approvalId} --as "Your Name" --dir "${this.stateDir || '.mythos'}", or open the local approvals page: npx ${this.manifest.name} approvals serve.`,
         };
       }
       approvedBy = rec.approved_by;
@@ -122,18 +190,35 @@ export class AgentRuntime {
     }
     this.steps += 1;
     this.spendUsd += cost;
+    const started = Date.now();
     try {
       const result = await t.handler(args, this.context());
       const extra = result && Number(result.costUsd) > 0 ? Number(result.costUsd) : 0;
       this.spendUsd += extra;
+      this.usage.add(this.session, tool, 1, cost + extra);
       this.#record(tool, args, {
         decision: d.decision, status: 'executed', reason: d.reason, approved_by: approvedBy, approval_id: approvalId,
-        auto: !!d.auto, summary: result && result.summary ? String(result.summary).slice(0, 500) : null,
+        auto: !!d.auto, ms: Date.now() - started, summary: result && result.summary ? String(result.summary).slice(0, 500) : null,
+        ...(result && result.output_sha256 ? { output_sha256: result.output_sha256 } : {}),
       });
       return { status: 'executed', decision: d.decision, approved_by: approvedBy, auto: !!d.auto, result };
     } catch (err) {
-      this.#record(tool, args, { decision: d.decision, status: 'error', reason: String(err && err.message || err).slice(0, 500) });
-      return { status: 'error', decision: d.decision, reason: String(err && err.message || err) };
+      this.usage.add(this.session, tool, 1, cost);
+      const reason = String(err && err.message || err);
+      this.#record(tool, args, { decision: d.decision, status: 'error', reason: reason.slice(0, 500), ...(err && err.errors ? { errors: err.errors.slice(0, 10) } : {}) });
+      return { status: 'error', decision: d.decision, reason, ...(err && err.errors ? { errors: err.errors } : {}) };
     }
   }
+}
+
+/** Short, non-sensitive preview of args for a human approver: keys and short scalar values only. */
+function preview(args) {
+  const out = {};
+  for (const [k, v] of Object.entries(args || {}).slice(0, 12)) {
+    if (/secret|token|password|key|tin|ssn|card|iban|account|email|phone|dob|birth/i.test(k)) { out[k] = '[hidden]'; continue; }
+    if (v === null || ['number', 'boolean'].includes(typeof v)) out[k] = v;
+    else if (typeof v === 'string') out[k] = v.length > 80 ? v.slice(0, 77) + '…' : v;
+    else out[k] = Array.isArray(v) ? `[${v.length} item(s)]` : '{…}';
+  }
+  return out;
 }

@@ -1,10 +1,23 @@
 import { createInterface } from 'node:readline';
 
-const SUPPORTED = ['2025-06-18', '2025-03-26', '2024-11-05'];
+const SUPPORTED = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
+
+/** MCP tool annotations derived from the tool kind and policy (hints for hosts, not guarantees). */
+export function annotationsFor(t) {
+  const readOnly = t.kind === 'read' || t.kind === 'report';
+  return {
+    title: t.title || t.name.replace(/_/g, ' ').replace(/^./, (c) => c.toUpperCase()),
+    readOnlyHint: t.kind === 'read',
+    destructiveHint: t.kind === 'action',
+    idempotentHint: readOnly,
+    openWorldHint: !!t.openWorld,
+  };
+}
 
 /**
  * Minimal MCP stdio server (newline-delimited JSON-RPC 2.0) for one AgentRuntime.
- * Implements initialize, ping, tools/list and tools/call. No dependencies.
+ * Implements initialize, ping, tools/list, tools/call, prompts/list and
+ * prompts/get (when the manifest ships prompts). No dependencies.
  * Logs go to stderr only; stdout carries protocol messages.
  */
 export function createMcpHandler(runtime) {
@@ -13,13 +26,17 @@ export function createMcpHandler(runtime) {
     name: 'mythos_info',
     description: 'Show this pack: pinned model, mode, caps, Auto opt-ins, and the allow/ask/block decision for every tool.',
     inputSchema: { type: 'object', properties: {} },
+    annotations: { title: 'Pack info', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   };
+  const prompts = Array.isArray(m.prompts) ? m.prompts : [];
 
   function toolList() {
     return [infoTool, ...runtime.listTools().map((t) => ({
       name: t.name,
+      title: annotationsFor(t).title,
       description: `[${t.decision.toUpperCase()}${t.category ? ' · ' + t.category : ''}] ${t.description}`,
       inputSchema: t.inputSchema,
+      annotations: annotationsFor(t),
     }))];
   }
 
@@ -40,7 +57,7 @@ export function createMcpHandler(runtime) {
         const req = params.protocolVersion;
         return ok({
           protocolVersion: SUPPORTED.includes(req) ? req : SUPPORTED[0],
-          capabilities: { tools: { listChanged: false } },
+          capabilities: { tools: { listChanged: false }, ...(prompts.length ? { prompts: { listChanged: false } } : {}) },
           serverInfo: { name: m.name, version: m.version },
           instructions: `${m.name}: ${m.description} Mode: ${runtime.mode}. Pinned model (declared): ${m.model.provider}/${m.model.id}. ` +
             'Tools marked ASK return an approval_id; a named human must approve before the same call runs. Tools marked BLOCK never run.',
@@ -53,12 +70,24 @@ export function createMcpHandler(runtime) {
         return ok({});
       case 'tools/list':
         return ok({ tools: toolList() });
+      case 'prompts/list':
+        return ok({ prompts: prompts.map((p) => ({ name: p.name, title: p.title || p.name, description: p.description, arguments: p.arguments || [] })) });
+      case 'prompts/get': {
+        const p = prompts.find((x) => x.name === params.name);
+        if (!p) return fail(-32602, `Unknown prompt: ${params.name}`);
+        const a = params.arguments || {};
+        for (const arg of p.arguments || []) if (arg.required && !a[arg.name]) return fail(-32602, `Missing required argument: ${arg.name}`);
+        const text = String(p.text).replace(/\{\{(\w+)\}\}/g, (_, k) => (a[k] !== undefined ? String(a[k]) : `[${k}]`));
+        return ok({ description: p.description, messages: [{ role: 'user', content: { type: 'text', text } }] });
+      }
       case 'tools/call': {
         const name = params.name;
         if (name === 'mythos_info') {
           return ok(text({
             name: m.name, version: m.version, description: m.description, model: m.model, mode: runtime.mode,
-            caps: runtime.caps, auto_actions: [...runtime.autoActions], kill_switch: runtime.isKilled(),
+            caps: runtime.caps, usage: runtime.usageReport(), auto_actions: [...runtime.autoActions], kill_switch: runtime.isKilled(),
+            audit_signing: runtime.signer ? { key_id: runtime.signer.keyId } : 'unsigned',
+            pending_approvals: runtime.approvals.pending().filter((p) => p.agent === m.name).map(({ id, tool, category, one_click, reason, ts }) => ({ id, tool, category, one_click, reason, ts })),
             tools: runtime.listTools().map(({ name: n, kind, category, decision, reason }) => ({ name: n, kind, category, decision, reason })),
           }));
         }

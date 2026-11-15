@@ -30,7 +30,7 @@
     "eval": "node bin/helios-of-seats.js eval"
   },
   "dependencies": {
-    "mythos-agent-core": "^0.1.0"
+    "mythos-agent-core": "^0.2.0"
   },
   "repository": {
     "type": "git",

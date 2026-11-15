@@ -63,6 +63,11 @@ export function defineManifest(m) {
     }
     if (t.handler && typeof t.handler !== 'function') errs.push(`tool ${t.name}: handler must be a function`);
   }
+  for (const p of m.prompts || []) {
+    if (!NAME_RE.test(p.name || '')) errs.push(`prompt name "${p.name}" must match ${NAME_RE}`);
+    if (!p.description || !p.text) errs.push(`prompt ${p.name}: description and text are required`);
+  }
+  if (m.configSchemas && (typeof m.configSchemas !== 'object' || Array.isArray(m.configSchemas))) errs.push('configSchemas must be an object of JSON Schemas');
   if (errs.length) throw new ManifestError('Invalid pack manifest:\n- ' + errs.join('\n- '));
   return Object.freeze({
     description: '',

@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
-import { readFileSync, existsSync, statSync } from 'node:fs';
-import { resolve, relative, isAbsolute, extname } from 'node:path';
+import { readFileSync, existsSync, statSync, realpathSync } from 'node:fs';
+import { resolve, relative, isAbsolute, extname, dirname, basename, join } from 'node:path';
 import { parseCsv } from './csv.js';
 
 export function sha256(s) { return createHash('sha256').update(s).digest('hex'); }
@@ -12,12 +12,35 @@ export function canonical(v) {
   return '{' + Object.keys(v).sort().map((k) => JSON.stringify(k) + ':' + canonical(v[k])).join(',') + '}';
 }
 
-/** Resolve a user path and refuse anything outside root. */
+function within(root, abs) {
+  const rel = relative(root, abs);
+  return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+}
+
+/** Real path of p, or of its nearest existing ancestor joined with the rest. */
+function realish(p) {
+  let cur = p; const rest = [];
+  for (let i = 0; i < 4096; i++) {
+    try { return join(realpathSync(cur), ...rest.reverse()); } catch { /* keep walking up */ }
+    const parent = dirname(cur);
+    if (parent === cur) return p;
+    rest.push(basename(cur)); cur = parent;
+  }
+  return p;
+}
+
+/**
+ * Resolve a user path and refuse anything outside root: "..", absolute paths
+ * elsewhere, NUL bytes, and symlinks (at any level) that point outside root.
+ */
 export function safePath(root, p) {
   if (typeof p !== 'string' || !p) throw new Error('path is required');
-  const abs = resolve(root, p);
-  const rel = relative(resolve(root), abs);
-  if (rel.startsWith('..') || isAbsolute(rel)) throw new Error(`path "${p}" is outside the allowed root`);
+  if (p.includes('\0')) throw new Error('path contains a NUL byte');
+  const r = resolve(root);
+  const abs = resolve(r, p);
+  if (!within(r, abs)) throw new Error(`path "${p}" is outside the allowed root`);
+  const realRoot = realish(r);
+  if (!within(realRoot, realish(abs))) throw new Error(`path "${p}" leaves the allowed root through a symlink`);
   return abs;
 }
 
@@ -56,3 +79,6 @@ export function toNumber(v) {
 }
 
 export const round2 = (n) => Math.round(n * 100) / 100;
+
+/** sha256 of a file's bytes. */
+export function sha256File(file) { return createHash('sha256').update(readFileSync(file)).digest('hex'); }

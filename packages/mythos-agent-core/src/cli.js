@@ -4,6 +4,12 @@ import { AgentRuntime } from './runtime.js';
 import { serveStdio } from './mcp.js';
 import { runEvalFile } from './evals.js';
 import { ApprovalStore } from './approvals.js';
+import { writeEvalReport } from './eval-report.js';
+import { serveApprovals } from './approvals-server.js';
+import { generateSigningKey, loadSigner, loadPublicKeys } from './signing.js';
+import { AuditLog, readAudit, verifyChain } from './audit.js';
+import { validate } from './schema.js';
+import { readFileSync } from 'node:fs';
 
 export function parseFlags(argv) {
   const flags = {}; const pos = [];
@@ -26,10 +32,18 @@ export function runtimeFromFlags(manifest, flags) {
   const caps = {};
   if (flags['max-steps'] || env.MYTHOS_MAX_STEPS) caps.maxSteps = Number(flags['max-steps'] || env.MYTHOS_MAX_STEPS);
   if (flags['max-spend'] || env.MYTHOS_MAX_SPEND_USD) caps.maxSpendUsd = Number(flags['max-spend'] || env.MYTHOS_MAX_SPEND_USD);
+  if (flags['max-steps-per-day'] || env.MYTHOS_MAX_STEPS_PER_DAY) caps.maxStepsPerDay = Number(flags['max-steps-per-day'] || env.MYTHOS_MAX_STEPS_PER_DAY);
+  if (flags['max-spend-per-day'] || env.MYTHOS_MAX_SPEND_USD_PER_DAY) caps.maxSpendUsdPerDay = Number(flags['max-spend-per-day'] || env.MYTHOS_MAX_SPEND_USD_PER_DAY);
+  for (const [k, v] of Object.entries(caps)) if (!Number.isFinite(v) || v < 0) throw new Error(`cap ${k} must be a non-negative number`);
   return new AgentRuntime(manifest, {
     mode, autoActions: auto, caps,
     root: flags.root || env.MYTHOS_ROOT || process.cwd(),
     stateDir: flags['state-dir'] || env.MYTHOS_STATE_DIR || undefined,
+    session: flags.session || env.MYTHOS_SESSION || undefined,
+    signingKey: flags['signing-key'] || env.MYTHOS_SIGNING_KEY || undefined,
+    auditMirror: flags['audit-mirror'] || env.MYTHOS_AUDIT_MIRROR || undefined,
+    approvalTtlHours: flags['approval-ttl'] || env.MYTHOS_APPROVAL_TTL_HOURS || undefined,
+    approvalWebhook: flags['approval-webhook'] || env.MYTHOS_APPROVAL_WEBHOOK || undefined,
   });
 }
 
@@ -42,7 +56,16 @@ Usage:
   ${bin} call <tool> '<json>'     Run one tool through the policy gate
   ${bin} demo                     Run the built-in demo on the bundled fixtures
   ${bin} eval [cases.json]        Run the private evals (default: bundled cases)
+  ${bin} eval --report DIR [--baseline old/report.json]   Also write report.html + report.json
   ${bin} approve <id> --as "Name" Approve one "ask" action (a human, once)
+  ${bin} reject <id> --as "Name"  Reject a pending action
+  ${bin} approvals [list]         List pending approvals
+  ${bin} approvals serve [--port N]   Local approvals page on 127.0.0.1
+  ${bin} usage                    Steps and spend for this session and today
+  ${bin} keygen --out DIR         Make an Ed25519 audit signing key (keep DIR outside --root)
+  ${bin} rotate-key --signing-key OLD --new-key NEW --as "Name"   Signed key rotation
+  ${bin} verify-log [file] [--pubkey public.pem]   Verify the audit chain (and signatures)
+  ${bin} validate-config <schema> <file>   Check a config file (schemas: see "tools --configs")
   ${bin} kill | unkill            Engage or clear the kill switch (.mythos/KILL)
 
 Options:
@@ -51,6 +74,12 @@ Options:
   --max-steps N --max-spend USD   Caps (always enforced)
   --root DIR                      Folder the tools may read/write (default: cwd)
   --state-dir DIR                 Audit log, approvals, kill file (default: <root>/.mythos)
+  --session ID                    Session id for persisted caps (default: random per process)
+  --max-steps-per-day N --max-spend-per-day USD   Daily caps (persisted in usage.json)
+  --signing-key FILE              Ed25519 private key (outside --root): sign every audit line
+  --audit-mirror FILE             Also append every audit line to this file
+  --approval-ttl HOURS            Approvals expire this long after approval (default 24)
+  --approval-webhook URL          POST pending approvals, HMAC-signed with MYTHOS_WEBHOOK_SECRET
 `;
 }
 
@@ -67,6 +96,8 @@ export async function runCli(manifest, argv, opts = {}) {
     const rt = runtimeFromFlags(manifest, flags);
     out(`mode: ${rt.mode}   model pin (declared): ${manifest.model.provider}/${manifest.model.id}`);
     for (const t of rt.listTools()) out(`  ${t.decision.padEnd(5)}  ${t.name.padEnd(34)} ${t.kind}${t.category ? ' · ' + t.category : ''}`);
+    if (manifest.prompts && manifest.prompts.length) out(`prompts: ${manifest.prompts.map((p) => p.name).join(', ')}`);
+    if (manifest.configSchemas) out(`config schemas: ${Object.keys(manifest.configSchemas).join(', ')}`);
     return 0;
   }
   if (cmd === 'call') {
@@ -77,11 +108,55 @@ export async function runCli(manifest, argv, opts = {}) {
     out(r);
     return r.status === 'executed' || r.status === 'needs_approval' ? 0 : 1;
   }
-  if (cmd === 'approve') {
-    const dir = resolve(flags.dir || flags['state-dir'] || join(flags.root || process.cwd(), '.mythos'));
-    const rec = new ApprovalStore(dir).approve(pos[1], flags.as, flags.note || '');
-    out(`Approved ${rec.id} as ${rec.approved_by}. It can be used once.`);
+  const stateDir = () => resolve(flags.dir || flags['state-dir'] || process.env.MYTHOS_STATE_DIR || join(flags.root || process.env.MYTHOS_ROOT || process.cwd(), '.mythos'));
+  if (cmd === 'approve' || cmd === 'reject') {
+    const store = new ApprovalStore(stateDir(), { ttlHours: flags['approval-ttl'] });
+    const rec = cmd === 'approve' ? store.approve(pos[1], flags.as, flags.note || '') : store.reject(pos[1], flags.as, flags.note || '');
+    out(cmd === 'approve' ? `Approved ${rec.id} as ${rec.approved_by}. It can be used once, until ${rec.expires_at}.` : `Rejected ${rec.id} as ${rec.rejected_by}.`);
     return 0;
+  }
+  if (cmd === 'approvals') {
+    const dir = stateDir();
+    if (pos[1] === 'serve') {
+      const port = flags.port !== undefined ? Number(flags.port) : 7457;
+      const host = flags.host || '127.0.0.1';
+      if (!/^(127\.0\.0\.1|localhost|::1)$/.test(host) && !flags['i-understand-remote']) { out('Refusing to bind beyond localhost. Pass --i-understand-remote to override.'); return 2; }
+      const s2 = await serveApprovals({ stateDir: dir, host, port, ttlHours: flags['approval-ttl'], title: `${manifest.name} approvals` });
+      process.stderr.write(`Approvals page: ${s2.url}  (Ctrl+C to stop)\n`);
+      return null;
+    }
+    const pend = new ApprovalStore(dir).pending();
+    if (!pend.length) { out('No pending approvals.'); return 0; }
+    for (const p of pend) out(`${p.id}  ${p.tool.padEnd(32)} ${p.one_click ? 'one-click  ' : ''}${p.ts}  ${p.reason || ''}`);
+    return 0;
+  }
+  if (cmd === 'usage') { out(runtimeFromFlags(manifest, flags).usageReport()); return 0; }
+  if (cmd === 'keygen') {
+    if (!flags.out) { out('keygen needs --out DIR (outside the agent root)'); return 2; }
+    const k = generateSigningKey(flags.out, { root: flags.root || process.env.MYTHOS_ROOT || process.cwd() });
+    out(`Signing key ${k.keyId} written. Private: ${k.privateKeyFile} (keep it secret). Public: ${k.publicKeyFile}.`);
+    return 0;
+  }
+  if (cmd === 'rotate-key') {
+    if (!flags['signing-key'] || !flags['new-key'] || !flags.as) { out('rotate-key needs --signing-key OLD --new-key NEW --as "Name"'); return 2; }
+    const root = flags.root || process.env.MYTHOS_ROOT || process.cwd();
+    const log = new AuditLog(join(stateDir(), 'audit.jsonl'), { signer: loadSigner(flags['signing-key'], { root }) });
+    const line = log.rotate(loadSigner(flags['new-key'], { root }), { by: String(flags.as), note: flags.note || '' });
+    out(`Rotation recorded at ${line.id}: new key ${line.new_key_id}. Start the agent with --signing-key ${flags['new-key']} from now on.`);
+    return 0;
+  }
+  if (cmd === 'verify-log') {
+    const file = resolve(pos[1] || join(stateDir(), 'audit.jsonl'));
+    const r = verifyChain(readAudit(file), { publicKeys: flags.pubkey ? loadPublicKeys(String(flags.pubkey).split(',')) : null });
+    out(r);
+    return r.ok ? 0 : 1;
+  }
+  if (cmd === 'validate-config') {
+    const schemas = manifest.configSchemas || {};
+    if (!pos[1] || !schemas[pos[1]]) { out(`Known config schemas: ${Object.keys(schemas).join(', ') || '(none)'}\nUsage: ${bin} validate-config <schema> <file>`); return 2; }
+    const v = validate(schemas[pos[1]], JSON.parse(readFileSync(resolve(pos[2]), 'utf8')));
+    out(v.ok ? `${pos[2]} is a valid ${pos[1]}.` : `${pos[2]} is not a valid ${pos[1]}:\n` + v.errors.map((e) => `  ${e.path} ${e.message}`).join('\n'));
+    return v.ok ? 0 : 1;
   }
   if (cmd === 'kill' || cmd === 'unkill') {
     const dir = resolve(flags['state-dir'] || join(flags.root || process.cwd(), '.mythos'));
@@ -97,6 +172,11 @@ export async function runCli(manifest, argv, opts = {}) {
     const r = await runEvalFile(manifest, file);
     for (const c of r.results) out(`${c.pass ? 'PASS' : 'FAIL'}  ${c.id}${c.fails.length ? '  — ' + c.fails.join('; ') : ''}`);
     out(`${r.passed}/${r.total} passed`);
+    if (flags.report) {
+      const w = writeEvalReport(r, String(flags.report), { baseline: flags.baseline ? resolve(String(flags.baseline)) : undefined });
+      out(`Report: ${w.html}${w.comparison ? `  (regressions: ${w.comparison.regressions.length})` : ''}`);
+      if (w.comparison && w.comparison.regressions.length) return 1;
+    }
     return r.passed === r.total ? 0 : 1;
   }
   if (cmd === 'demo') {

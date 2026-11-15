@@ -1,6 +1,6 @@
 {
   "name": "mythos-agent-core",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Shared core for Mythos domain agents: pinned-model pack manifests, Talos-style allow/ask/block policy, Review/Assist/Auto modes with caps and a kill switch, hash-chained JSONL audit logs, a zero-dependency stdio MCP server and fixture-based evals.",
   "type": "module",
   "license": "MIT",
