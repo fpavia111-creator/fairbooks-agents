@@ -108,9 +108,10 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const r = runOff(a, ctx); const st = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/eos'), 'offboarding'); mkdirSync(dir, { recursive: true }); const files = []; let drafts = 0;
         const asOf = parseDate(r.as_of);
+        const byPerson = new Map(); for (const x of st.items) if (!byPerson.has(x.person_id)) byPerson.set(x.person_id, x);
         for (const p of r.items) {
           files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-offboarding.md`, offboardingMarkdown(p)));
-          const person = st.items.find((x) => x.person_id === p.person_id);
+          const person = byPerson.get(p.person_id);
           for (const t of p.tasks) if (t.kind === 'access_removal' && t.state !== 'done') { const orig = person.tasks.find((x) => x.task_id === t.mirrors); files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.mirrors)}-remove.md`, accessDraft(person, orig, 'remove', asOf))); drafts++; }
         }
         return { summary: `${r.people} offboarding checklist(s) and ${drafts} removal draft(s) written. Nothing was submitted or changed.`, files };

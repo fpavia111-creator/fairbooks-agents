@@ -68,9 +68,12 @@ export function outcomeReview(rows, exists) {
 
 export function review({ grants, budget = [], outcomes = [], exists = () => false, ...a }) {
   const dl = deadlines(grants, a);
+  // Rows grouped by grant once (file order kept), instead of filtering both files per grant.
+  const byGrant = (rows) => { const m = new Map(); for (const r of rows) { const k = pick(r, 'grant_id', 'grant'); if (!m.has(k)) m.set(k, []); m.get(k).push(r); } return (id) => m.get(id) || []; };
+  const budgetOf = byGrant(budget), outcomesOf = byGrant(outcomes);
   const items = dl.map((g) => {
-    const b = budgetReview(g, budget.filter((l) => pick(l, 'grant_id', 'grant') === g.grant_id), a);
-    const o = outcomeReview(outcomes.filter((r) => pick(r, 'grant_id', 'grant') === g.grant_id), exists).map((x) => ({ ...x, ref: `${g.grant_id}-${x.ref}` }));
+    const b = budgetReview(g, budgetOf(g.grant_id), a);
+    const o = outcomeReview(outcomesOf(g.grant_id), exists).map((x) => ({ ...x, ref: `${g.grant_id}-${x.ref}` }));
     const gaps = [];
     if (g.status === 'overdue') gaps.push(`Report was due ${g.report_due} (${-g.days_to_due} days ago).`);
     for (const f of b.flags) gaps.push(f === 'no_budget_lines' ? 'No budget lines found.' : `Budget lines total ${money(b.total_budgeted)}, award is ${money(g.award_amount)}.`);

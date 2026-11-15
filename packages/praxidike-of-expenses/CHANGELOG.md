@@ -19,3 +19,8 @@ Hardening (review pass)
 - A misspelled argument such as `receipt` for `receipts` is now refused with the right name instead of running without receipt checks.
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+Speed (ver 4)
+
+- Duplicate expenses: only pairs that share a receipt file, receipt text, receipt total and date, or an employee with close amounts and dates are scored. Same pairs as before (checked on 300 random cases). 1,000 lines: 13 s to well under 1 s; 10,000 lines no longer time out.
+
+- A receipt shared by more than 200 lines is listed once under `not_paired` instead of producing every pair (10,000 lines sharing receipts used to run out of memory); those lines are still checked for fuzzy duplicates. Fuzzy candidates are found by date order within each employee.

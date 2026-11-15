@@ -16,6 +16,11 @@ Hardening (review pass)
 
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+
+Speed (ver 4)
+
+- Matching indexes bank and GL lines by day, reference and amount instead of scanning every pair. On generated 10,000-line files, reconcile went from about 40 s to under 1 s, roll-forward from 35 s to under 2 s; results are the same as before (checked on 300 random cases).
+
 ## 0.1.0
 
 - First release: proposed matches, reconciling items, tie-out, workpaper, accepted matches, one-click adjusting-entry request.

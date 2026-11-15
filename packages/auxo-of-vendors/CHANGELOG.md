@@ -24,6 +24,11 @@ Hardening (review pass)
 - Request draft file names are built with `safeFileName`, so a vendor id like `../../x` can no longer place a draft outside `requests/`.
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+
+Speed (ver 4)
+
+- `auxo_find_duplicates` only scores pairs that can match: same TIN or email from an index, and names whose Jaro-Winkler score could reach the threshold (an exact bound on shared characters). Results are the same as comparing every pair (checked on 1,500 random cases). 1,000 vendors: 7.3 s to 0.3 s; 10,000 vendors: over 3 minutes to about 12 s.
+
 ## 0.1.0
 
 First release.

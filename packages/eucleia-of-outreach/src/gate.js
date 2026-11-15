@@ -7,15 +7,30 @@ export const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export function words(text) { return String(text ?? '').trim().split(/\s+/).filter(Boolean).length; }
 
-export function validTimeZone(tz) { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } }
+// Building an Intl formatter is slow, so one is kept per time zone (results are identical).
+const FMT = new Map(); const TZ_OK = new Map();
+export function validTimeZone(tz) {
+  const k = String(tz);
+  if (!TZ_OK.has(k)) { let ok; try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); ok = true; } catch { ok = false; } if (TZ_OK.size < 1000) TZ_OK.set(k, ok); else return ok; }
+  return TZ_OK.get(k);
+}
+function formatterFor(timeZone) {
+  let f = FMT.get(timeZone);
+  if (!f) { f = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit' }); if (FMT.size < 1000) FMT.set(timeZone, f); }
+  return f;
+}
 
 /** Weekday and hour of an instant in a time zone (default America/Chicago). */
+const LP = new Map();
 export function localParts(iso, timeZone = DEFAULTS.time_zone) {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return null;
-  const f = new Intl.DateTimeFormat('en-US', { timeZone, weekday: 'short', hour: 'numeric', minute: 'numeric', hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit' });
+  const key = `${timeZone}|${d.getTime()}`; const hit = LP.get(key); if (hit) return { ...hit };
+  const f = formatterFor(timeZone);
   const p = Object.fromEntries(f.formatToParts(d).map((x) => [x.type, x.value]));
-  return { weekday: p.weekday, hour: Number(p.hour), minute: Number(p.minute), date: `${p.year}-${p.month}-${p.day}`, label: `${p.weekday} ${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute} ${timeZone}` };
+  const out = { weekday: p.weekday, hour: Number(p.hour), minute: Number(p.minute), date: `${p.year}-${p.month}-${p.day}`, label: `${p.weekday} ${p.year}-${p.month}-${p.day} ${p.hour}:${p.minute} ${timeZone}` };
+  if (LP.size >= 200000) LP.clear(); LP.set(key, out);
+  return { ...out };
 }
 
 /** The configured windows: "windows" if given, else one window from days/start_hour/end_hour. */
@@ -40,10 +55,19 @@ export function inWindow(iso, cfg = DEFAULTS, timeZone) {
 }
 
 /** Next instant inside the window, searching in 15-minute steps up to 60 days. */
+const NW = new Map();
 export function nextWindow(fromIso, cfg = DEFAULTS, timeZone) {
   let t = new Date(fromIso).getTime();
   if (Number.isNaN(t)) return null;
   t = Math.ceil(t / 900000) * 900000;
+  // Many drafts in a batch share a send time; the search is the same for each.
+  const key = `${t}|${timeZone}|${JSON.stringify(cfg)}`;
+  if (NW.has(key)) return NW.get(key);
+  const found = searchWindow(t, cfg, timeZone);
+  if (NW.size >= 10000) NW.clear(); NW.set(key, found);
+  return found;
+}
+function searchWindow(t, cfg, timeZone) {
   for (let i = 0; i < 60 * 96; i++, t += 900000) if (inWindow(new Date(t).toISOString(), cfg, timeZone).ok) return new Date(t).toISOString();
   return null;
 }
@@ -71,10 +95,12 @@ function suppressed(email, set) {
 export const SPAM_PHRASES = Object.freeze(['free', 'guarantee', 'guaranteed', 'no obligation', 'risk-free', 'risk free', 'act now', 'limited time', 'urgent', 'winner', 'cash', '100%', 'click here', 'buy now', 'order now', 'special promotion', 'earn money', 'make money', 'double your', 'no cost', 'lowest price', 'once in a lifetime', 'congratulations', 'dear friend', 'this is not spam', 'increase sales', 'miracle', 'no catch', 'what are you waiting for', 'exclusive deal']);
 
 const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const PHRASE_RE = new Map();
 export function spamHits(fields, extra = []) {
   const hits = [];
   for (const phrase of [...SPAM_PHRASES, ...extra.map((x) => x.toLowerCase())]) {
-    const re = new RegExp(`(^|[^a-z0-9])(${reEsc(phrase)})(?![a-z0-9])`, 'gi');
+    let re = PHRASE_RE.get(phrase); if (!re) { re = new RegExp(`(^|[^a-z0-9])(${reEsc(phrase)})(?![a-z0-9])`, 'gi'); if (PHRASE_RE.size < 5000) PHRASE_RE.set(phrase, re); }
+    re.lastIndex = 0;
     for (const [field, text] of Object.entries(fields)) {
       let m; while ((m = re.exec(text))) {
         const at = m.index + m[1].length;

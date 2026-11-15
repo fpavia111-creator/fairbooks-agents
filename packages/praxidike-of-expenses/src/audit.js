@@ -36,8 +36,31 @@ export function findDuplicates(lines, a = {}) {
   const cache = new Map();
   const all = lines.map((l, i) => lineOf(l, i, 'current')).concat((a.history || []).map((l, i) => lineOf(l, i, 'history')));
   for (const l of all) l.r = receiptInfo(a.receiptsDir, l.receipt, cache);
+  // Only pairs that can match are scored: the same receipt file, receipt text, or receipt
+  // total and date (from indexes), or the same employee with amounts and dates close
+  // enough for a fuzzy match. Same result as checking every pair, in the same order.
+  const cand = all.map(() => new Set());
+  const block = (key) => { const m = new Map(); all.forEach((l, i) => { const k = key(l); if (k) { if (!m.has(k)) m.set(k, []); m.get(k).push(i); } }); return m.values(); };
+  const linkAll = (ids, ok = () => true) => { for (let p = 0; p < ids.length; p++) for (let q = p + 1; q < ids.length; q++) if (ok(all[ids[p]], all[ids[q]])) cand[ids[p]].add(ids[q]); };
+  // One receipt shared by hundreds of lines would mean tens of thousands of pairs; such a
+  // receipt is listed once under not_paired instead (its lines are still checked for
+  // fuzzy duplicates by employee, amount and date).
+  const MAX_SHARED = 200; const notPaired = [];
+  const receiptBlocks = (key, what) => { for (const ids of block(key)) { if (ids.length > MAX_SHARED) { const l = all[ids[0]]; notPaired.push(`${ids.length} lines share ${what === 'file' ? `the receipt file "${l.receipt}"` : what === 'text' ? `the same receipt text (first: ${l.receipt})` : `one receipt total and date (first: ${l.receipt})`}; check them as a group`); continue; } linkAll(ids); } };
+  receiptBlocks((l) => (l.receipt ? l.receipt.toLowerCase() : ''), 'file');
+  receiptBlocks((l) => (l.r && l.r.hash !== undefined ? `h:${l.r.hash}` : ''), 'text');
+  receiptBlocks((l) => (l.r && l.r.total !== null && l.r.date ? `${l.r.total}|${l.r.date}` : ''), 'total');
+  // Fuzzy: same employee, dates within the window (sorted by date, so only neighbours are
+  // compared), amounts within the tolerance.
+  for (const ids of block((l) => (l.employee ? l.employee.toLowerCase() : ''))) {
+    const dated = ids.map((i) => [i, parseDate(all[i].date)]).filter(([, d]) => d !== null).sort((p, q) => p[1] - q[1] || p[0] - q[0]);
+    for (let p = 0; p < dated.length; p++) for (let q = p + 1; q < dated.length && (dated[q][1] - dated[p][1]) / DAY <= win; q++) {
+      const i = Math.min(dated[p][0], dated[q][0]), j = Math.max(dated[p][0], dated[q][0]); const x = all[i], y = all[j];
+      if (Math.abs(x.amount - y.amount) <= Math.max(0.01, tolPct * Math.max(x.amount, y.amount))) cand[i].add(j);
+    }
+  }
   const pairs = [];
-  for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) {
+  for (let i = 0; i < all.length; i++) for (const j of [...cand[i]].sort((p, q) => p - q)) {
     const x = all[i]; const y = all[j];
     if (x.source === 'history' && y.source === 'history') continue;
     const reasons = []; let score = 0; const why = (pts, text) => { score += pts; reasons.push({ points: pts, reason: text }); };
@@ -61,6 +84,7 @@ export function findDuplicates(lines, a = {}) {
   }
   pairs.sort((p, q) => q.score - p.score || p.a.localeCompare(q.a) || p.b.localeCompare(q.b));
   return {
+    ...(notPaired.length ? { not_paired: notPaired } : {}),
     pairs: pairs.length, cross_period: pairs.filter((p) => p.b_source === 'history' || p.a_source === 'history').length, date_window_days: win, amount_tolerance_pct: tolPct, items: pairs,
     note: 'Possible duplicates for a person to check. Not a finding of wrongdoing and not fraud detection.',
   };

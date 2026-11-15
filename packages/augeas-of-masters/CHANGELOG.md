@@ -23,3 +23,8 @@
 
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+
+Speed (ver 4)
+
+- A tax id or phone shared by more than 500 rows (usually a placeholder such as 000-000-0000) is no longer paired on; the result lists it under `not_compared`. Before, 10,000 rows sharing one phone ran out of memory.
+- Clusters collect their pairs through an id index instead of scanning every pair per cluster. 10,000 vendors: about 3 s.

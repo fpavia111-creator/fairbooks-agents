@@ -15,3 +15,6 @@ Hardening (review pass)
 
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+Speed (ver 4)
+
+- Evidence packs look up earlier orders by customer from an index built once, instead of scanning every order for every dispute. 10,000 rows: 18 s to about 1 s; same packs.

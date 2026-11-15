@@ -146,13 +146,35 @@ Still 0.2.0 and still unpublished. Verified on Node 20.19.5, 22.23.4 and 24.11.0
 
 **Release command.** `npm run release:check` checks npm names and versions (all 31 names are on npm under `kurtfrancisco` at 0.1.0, and 0.2.0 is higher), metadata and changelogs, git state, `.npmrc`, secrets in tracked and packed files, banned claims, one-click policy, tests, evals, the hostile run and pack contents, then prints the publish commands in order with a throwaway userconfig reading `NPM_TOKEN`. It never publishes. Writing it caught one bug in itself: Node 24 prints its test summary differently, which would have read as zero tests.
 
+## Scale pass, handoff ver 4 (15 Nov 2026, third pass)
+
+Still 0.2.0 and still unpublished; "ver 4" names the handoff bundle, not an npm version. New `npm run bench` runs every read and report tool that takes table files (68 tools in 21 agents) on generated 1,000- and 10,000-row fictional files, each in its own process with the policy on, and writes `mythos-out/bench/bench.md`. The generator is seeded: each copy of a fixture row gets its own ids, emails, party names, tax ids, phones and street numbers, amounts move by up to 10% and dates spread over four weeks.
+
+The first run found nine agents that were quadratic or ran out of memory at 10,000 rows. All nine were rewritten to index or block instead of comparing everything with everything, and each rewrite was checked against the old code (same output on random and fixture data):
+
+| Agent and tool | 10,000 rows before | after |
+|---|---|---|
+| Penelope reconcile / roll-forward / workpaper | 40 s / 35 s / 41 s | under 2 s each |
+| Auxo duplicate vendors | over 3 minutes (est.; 7.3 s at 1,000) | about 11 s |
+| Augeas duplicates and merge proposals | out of memory | under 3 s |
+| Eos status, offboarding, owner actions, readiness | 16 to 35 s | about 1 s |
+| Epeius RFI log review | timed out (180 s) | under 4 s |
+| Eucleia draft check / send plan | 178 s / timed out | under 1 s / about 1 s |
+| Polyhymnia review and template check | 31 s | under 1 s |
+| Soteria evidence packs | 18 s | under 5 s |
+| Praxidike duplicates, audit queue, evidence pack | timed out / out of memory | about 2 s |
+
+Final run (Node 22, 4-core Linux container): 66 of 68 tools ran at 10,000 rows (Urania's charts and pack need figures locked first, so they were skipped); 49 finished under 1 s, 61 under 3 s, the slowest was Auxo's duplicate vendor check at about 11 s, peak memory 245 MB. Auxo's check compares names pairwise by nature; it now scores only pairs that can reach the threshold.
+
+Two outputs change on very large or odd files: Augeas lists a tax id or phone shared by more than 500 rows under `not_compared` instead of pairing them all, and Praxidike lists a receipt shared by more than 200 lines under `not_paired`. Epeius names at most five similar earlier RFIs per RFI and counts the rest. Tests: 669 pass on Node 20, 22 and 24; evals 420 of 420.
+
 ## Not done
 
 - **Windows** has not run the suite (the CI matrix covers it once the repo is on GitHub).
 - **The injection check is a short pattern list.** It will miss paraphrased or non-English attempts. The protection that does not depend on it is that go-live, money, access, deletion, binding sends and deploys need a named person.
 
 - **Live connectors (A3):** agents read exported files, not live APIs. The export profiles cover the same systems offline; none was tested against a real account.
-- **Shared fixture generator (A7)** and the 10k-row performance tests.
+- **Real customer volumes:** the scale test uses generated fictional rows; real exports can be messier (very long text, many columns).
 - **Paid tier:** the licence mechanism is built; which tools are paid, and the trusted key, wait for you.
 - **Competitor research was shallow:** searches returned result titles, not page contents, so feature choices rest on general knowledge of the named products rather than on pages read during this work.
 - **The website** (cards, JSON-LD) was not touched; it is not in this repo.

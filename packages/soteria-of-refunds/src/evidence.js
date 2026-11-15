@@ -10,11 +10,23 @@ const days = (a, b) => { const x = Date.parse(a), y = Date.parse(b); return Numb
  * Build the evidence record for one chargeback.
  * src: { requestsFile, ordersFile, policyFile, policySha256 }
  */
+// Built once per pair of files and reused for every dispute (the same lists, in file order).
+const IDX = new WeakMap();
+function indexes(orders, allRequests) {
+  let byReq = IDX.get(orders); if (!byReq) { byReq = new WeakMap(); IDX.set(orders, byReq); }
+  let x = byReq.get(allRequests);
+  if (!x) {
+    const byCustomer = new Map(); for (const o of orders.values()) { if (!byCustomer.has(o.customer)) byCustomer.set(o.customer, []); byCustomer.get(o.customer).push(o); }
+    x = { disputed: new Set(allRequests.filter((q) => q.type === 'chargeback').map((q) => q.order_id)), byCustomer };
+    byReq.set(allRequests, x);
+  }
+  return x;
+}
 export function disputeEvidence(item, orders, allRequests, policy, src) {
   const o = orders.get(item.order_id) || null;
   const cls = classifyDispute(item, policy.reason_code_overrides || {});
-  const disputed = new Set(allRequests.filter((q) => q.type === 'chargeback').map((q) => q.order_id));
-  const prior = o && item.customer ? [...orders.values()].filter((x) => x.order_id !== o.order_id && x.customer === item.customer && !disputed.has(x.order_id)).filter((x) => { const d = days(x.ordered, item.requested_at); return d !== null && d >= 120 && d <= 365; }) : [];
+  const { disputed, byCustomer } = indexes(orders, allRequests);
+  const prior = o && item.customer ? (byCustomer.get(item.customer) || []).filter((x) => x.order_id !== o.order_id && x.customer === item.customer && !disputed.has(x.order_id)).filter((x) => { const d = days(x.ordered, item.requested_at); return d !== null && d >= 120 && d <= 365; }) : [];
   const facts = {
     order: !!o, delivered: !!(o && o.delivered), tracking: !!(o && o.tracking), returned: !!item.returned, refunded: !!(o && o.refunded > 0), prior_undisputed: prior.length >= 2,
   };

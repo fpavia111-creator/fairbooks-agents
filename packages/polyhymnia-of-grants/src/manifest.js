@@ -22,7 +22,13 @@ const tprop = { template: { ...str, description: 'Funder template JSON under --r
 const loadTemplate = (a, ctx) => (a.template ? ctx.readJson(a.template, 'funder_template') : null);
 const vargs = (a, t) => ({ ...a, variance_pct: a.variance_pct ?? (t && t.variance_threshold_pct), variance_amount: a.variance_amount ?? (t && t.variance_threshold_amount) });
 const budgetFor = (a, ctx) => (a.budget ? ctx.records(a.budget) : []);
-const linesOf = (rows, id) => rows.filter((l) => String(l.grant_id ?? l.grant ?? '').trim() === id);
+// Budget lines grouped by grant once per file (file order kept).
+const LINES = new WeakMap();
+const linesOf = (rows, id) => {
+  let m = LINES.get(rows);
+  if (!m) { m = new Map(); for (const l of rows) { const k = String(l.grant_id ?? l.grant ?? '').trim(); if (!m.has(k)) m.set(k, []); m.get(k).push(l); } LINES.set(rows, m); }
+  return (m.get(id) || []).slice();
+};
 const fileExists = (ctx, p) => { try { const f = ctx.path(p); return existsSync(f) && statSync(f).isFile(); } catch { return false; } };
 // Evidence paths are relative to the folder of the outcomes file.
 const evPath = (a, ctx, p) => ctx.path(join(dirname(a.outcomes || '.'), p));

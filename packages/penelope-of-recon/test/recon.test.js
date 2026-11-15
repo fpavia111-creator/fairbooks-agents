@@ -52,3 +52,11 @@ test('adjusting entry is one-click even in Auto; ledger posting blocked', async 
   assert.match(readFileSync(b.result.file, 'utf8'), /Bank fees expense/);
   assert.equal((await new AgentRuntime(manifest, { root, mode: 'auto' }).call('ledger_post_journal', {})).status, 'blocked');
 });
+
+test('scale: 5,000 bank and 5,000 GL lines over one month reconcile in seconds, not minutes', async () => {
+  const { reconcile } = await import('../src/recon.js');
+  const line = (side, i) => ({ side, id: `${side[0].toUpperCase()}${i + 2}`, row: i + 2, date: `2026-10-${String(1 + (i % 28)).padStart(2, '0')}`, description: 'fictional', reference: i % 3 ? `R${i}` : '', amount: ((i % 97) + 1) * 10 });
+  const bank = Array.from({ length: 5000 }, (_, i) => line('bank', i)), gl = Array.from({ length: 5000 }, (_, i) => line('gl', i));
+  const t0 = Date.now(); const r = reconcile(bank, gl, {});
+  assert.equal(r.matched_groups, 5000); assert.ok(Date.now() - t0 < 15000, `took ${Date.now() - t0} ms`);
+});

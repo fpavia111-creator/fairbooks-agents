@@ -50,7 +50,6 @@ export function resolve(ref, index) {
 }
 const tokens = (s) => new Set(String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)));
 const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'are', 'what', 'which', 'this', 'that', 'shall', 'should', 'per', 'please', 'confirm', 'clarify', 'detail', 'at', 'of', 'on', 'in', 'to', 'is']);
-const jaccard = (a, b) => { const x = tokens(a); const y = tokens(b); const i = [...x].filter((w) => y.has(w)).length; return x.size + y.size - i ? i / (x.size + y.size - i) : 0; };
 
 const OPEN = new Set(['open', 'sent', 'pending', 'issued', 'in_review']);
 export function reviewLog(docs, rfis = [], submittals = [], a = {}) {
@@ -71,9 +70,25 @@ export function reviewLog(docs, rfis = [], submittals = [], a = {}) {
     if (open && (!it.cost_impact || !it.schedule_impact)) it.flags.push('impact_unstated');
     return it;
   });
-  for (let i = 0; i < items.length; i++) for (let j = 0; j < i; j++) {
-    const x = items[i]; const y = items[j];
-    if (OPEN.has(x.status) || x.status === 'draft') if (jaccard(`${x.subject} ${x.question}`, `${y.subject} ${y.question}`) >= dupAt) { x.flags.push('possible_duplicate'); x.notes.push(`Similar to RFI ${y.rfi_no} (${y.status}).`); }
+  // Possible duplicates: an open or draft RFI against every earlier RFI. Word sets are
+  // built once, and only RFIs that share one of the rarest words of each can reach the
+  // similarity (prefix filtering); same result as comparing every pair.
+  const sets = items.map((x) => tokens(`${x.subject} ${x.question}`));
+  const sim = (x, y) => { let i = 0; for (const w of x) if (y.has(w)) i++; return x.size + y.size - i ? i / (x.size + y.size - i) : 0; };
+  const earlier = (i) => {
+    if (!(dupAt > 0)) return Array.from({ length: i }, (_, j) => j);
+    const js = new Set(); for (const w of prefixOf[i]) for (const j of post.get(w)) { if (j >= i) break; js.add(j); }
+    return [...js].sort((p, q) => p - q);
+  };
+  const df = new Map(); for (const x of sets) for (const w of x) df.set(w, (df.get(w) || 0) + 1);
+  const prefixOf = sets.map((x) => { const ws = [...x].sort((p, q) => df.get(p) - df.get(q) || (p < q ? -1 : p > q ? 1 : 0)); return ws.slice(0, Math.max(0, ws.length - Math.ceil(dupAt * ws.length - 1e-9) + 1)); });
+  const post = new Map(); prefixOf.forEach((ws, i) => { for (const w of ws) { if (!post.has(w)) post.set(w, []); post.get(w).push(i); } });
+  for (let i = 0; i < items.length; i++) {
+    const x = items[i]; if (!(OPEN.has(x.status) || x.status === 'draft')) continue;
+    // At most five are named, so a log full of near-identical RFIs stays readable.
+    let similar = 0;
+    for (const j of earlier(i)) { const y = items[j]; if (sim(sets[i], sets[j]) >= dupAt) { similar++; if (similar === 1) x.flags.push('possible_duplicate'); if (similar <= 5) x.notes.push(`Similar to RFI ${y.rfi_no} (${y.status}).`); } }
+    if (similar > 5) x.notes.push(`Similar to ${similar - 5} more earlier RFI(s).`);
   }
   for (const it of items) it.flags = [...new Set(it.flags)];
   const specIds = new Set([...index.values()].flat().filter((d) => d.type === 'spec').map((d) => docKey(d.doc_id)));

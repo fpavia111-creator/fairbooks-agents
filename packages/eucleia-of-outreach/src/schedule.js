@@ -28,12 +28,18 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
   const counts = new Map(); const slots = []; const unplaced = [];
   const used = []; // minute indexes already taken
   // The latest taken minute closer than the gap to minute m, or null when m is free.
-  const blocker = (m) => { let b = null; for (const x of used) if (Math.abs(x - m) < gap && (b === null || x > b)) b = x; return b; };
+  // `used` is kept sorted, so this is a binary search for the largest x below m + gap.
+  const blocker = (m) => { let lo = 0, hi = used.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (used[mid] < m + gap) lo = mid + 1; else hi = mid; } const x = lo ? used[lo - 1] : null; return x !== null && Math.abs(x - m) < gap ? x : null; };
+  const take = (m) => { let lo = 0, hi = used.length; while (lo < hi) { const mid = (lo + hi) >> 1; if (used[mid] < m) lo = mid + 1; else hi = mid; } used.splice(lo, 0, m); };
   const startMin = Math.ceil(start / 60000) * 60000; const end = start + horizon_days * 86400000;
   const pointer = new Map(); // per time zone: where the next search starts
+  // A search that found no slot gives the same answer again until something is placed.
+  const failed = new Map();
   for (const c of checked.filter((x) => x.r.ok)) {
     const tz = c.r.time_zone;
     let placed = false;
+    const from = pointer.get(tz) ?? startMin; const f = failed.get(tz);
+    if (f && f.from === from && f.placed === slots.length) { unplaced.push({ row: c.row, to: c.d.to, reason: `no slot within ${horizon_days} days` }); continue; }
     for (let u = pointer.get(tz) ?? startMin; u <= end; u += 60000) {
       const w = inWindow(new Date(u).toISOString(), cfg, tz);
       if (!w.ok) { u += 14 * 60000 - ((u / 60000) % 15) * 60000; continue; } // windows open on the quarter hour
@@ -41,11 +47,11 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
       if (b !== null) { u = (b + gap - 1) * 60000; continue; } // jump past the gap instead of stepping minute by minute
       const day = localParts(new Date(u).toISOString(), cfg.time_zone).date;
       if ((counts.get(day) || 0) >= perDay) continue;
-      counts.set(day, (counts.get(day) || 0) + 1); used.push(u / 60000);
+      counts.set(day, (counts.get(day) || 0) + 1); take(u / 60000);
       slots.push({ row: c.row, to: c.d.to, subject: c.d.subject, send_at: new Date(u).toISOString(), local: w.local, sender_day: day });
       pointer.set(tz, u + step); placed = true; break;
     }
-    if (!placed) unplaced.push({ row: c.row, to: c.d.to, reason: `no slot within ${horizon_days} days` });
+    if (!placed) { failed.set(tz, { from, placed: slots.length }); unplaced.push({ row: c.row, to: c.d.to, reason: `no slot within ${horizon_days} days` }); }
   }
   slots.sort((x, y) => (x.send_at < y.send_at ? -1 : x.send_at > y.send_at ? 1 : x.row - y.row));
   const held = checked.filter((x) => !x.r.ok).map((x) => ({ row: x.row, to: x.d.to, reasons: x.r.fails }));

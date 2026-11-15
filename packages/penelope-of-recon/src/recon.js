@@ -39,24 +39,50 @@ const KIND = [
 export function reconcile(bank, gl, opts = {}) {
   const w = Number(opts.date_window ?? 3), tol = Number(opts.amount_tolerance ?? 0), maxG = Math.min(Number(opts.max_group ?? 3), 4);
   const usedB = new Set(), usedG = new Set(), matches = [];
+  // Indexes so each line looks only at lines with the same reference or within the
+  // date window, not at every line (10,000 x 10,000 comparisons took ~40 s before).
+  // Candidates are always taken in file order, so results are the same as a full scan.
+  const pos = new Map([...bank.map((x, i) => [x, i]), ...gl.map((x, i) => [x, i])]);
+  const dayOf = new Map([...bank, ...gl].map((x) => [x, day(x.date)]));
+  const byDay = (list) => { const m = new Map(); for (const x of list) { const d = dayOf.get(x); if (d === null) continue; if (!m.has(d)) m.set(d, []); m.get(d).push(x); } return m; };
+  const glByDay = byDay(gl), bankByDay = byDay(bank);
+  const within = (idx, d) => { if (d === null) return []; const out = []; for (let k = d - w; k <= d + w; k++) { const a = idx.get(k); if (a) for (const x of a) out.push(x); } return out.sort((x, y) => pos.get(x) - pos.get(y)); };
+  // The first `limit` lines in file order inside the window that pass `ok`, by merging
+  // the per-day lists (each already in file order) instead of sorting the whole window.
+  const firstWithin = (idx, d, ok, limit) => {
+    if (d === null) return [];
+    const lists = []; for (let k = d - w; k <= d + w; k++) { const a = idx.get(k); if (a && a.length) lists.push(a); }
+    const at = lists.map(() => 0); const out = [];
+    while (out.length < limit) {
+      let best = -1; for (let j = 0; j < lists.length; j++) if (at[j] < lists[j].length && (best < 0 || pos.get(lists[j][at[j]]) < pos.get(lists[best][at[best]]))) best = j;
+      if (best < 0) break; const x = lists[best][at[best]++]; if (ok(x)) out.push(x);
+    }
+    return out;
+  };
+  // Exact-amount candidates (no tolerance) come from an amount index instead of the window.
+  const cents = (a) => Math.round(a * 100);
+  const glByAmount = new Map(); if (!tol) for (const x of gl) if (x.amount !== null && dayOf.get(x) !== null) { const k = cents(x.amount); if (!glByAmount.has(k)) glByAmount.set(k, []); glByAmount.get(k).push(x); }
+  const glByRef = new Map(); for (const x of gl) if (x.reference) { const k = x.reference.toLowerCase(); if (!glByRef.has(k)) glByRef.set(k, []); glByRef.get(k).push(x); }
   for (const b of bank) {
     if (!b.reference) continue;
-    const g = gl.find((x) => !usedG.has(x.id) && x.reference && x.reference.toLowerCase() === b.reference.toLowerCase() && eq(x.amount, b.amount, tol));
+    const g = (glByRef.get(b.reference.toLowerCase()) || []).find((x) => !usedG.has(x.id) && eq(x.amount, b.amount, tol));
     if (g) { usedB.add(b.id); usedG.add(g.id); matches.push({ type: 'reference', confidence: 'high', bank: [b.id], gl: [g.id], amount: b.amount, note: `reference ${b.reference}` }); }
   }
   // Accepted, learned rules (only when the caller passes them).
   for (const m of applyRules(bank, gl, opts.rules || [], { usedB, usedG, tol, day })) matches.push(m);
+  const dist = (x, b) => Math.abs(dayOf.get(x) - dayOf.get(b));
   for (const b of bank) {
     if (usedB.has(b.id)) continue;
-    const c = gl.filter((x) => !usedG.has(x.id) && eq(x.amount, b.amount, tol) && near(x.date, b.date, w));
+    const db = dayOf.get(b); if (db === null) continue;
+    const c = (tol || b.amount === null ? within(glByDay, db) : (glByAmount.get(cents(b.amount)) || []).filter((x) => Math.abs(dayOf.get(x) - db) <= w)).filter((x) => !usedG.has(x.id) && eq(x.amount, b.amount, tol));
     if (!c.length) continue;
-    c.sort((x, y) => Math.abs(day(x.date) - day(b.date)) - Math.abs(day(y.date) - day(b.date)));
+    c.sort((x, y) => dist(x, b) - dist(y, b));
     usedB.add(b.id); usedG.add(c[0].id);
-    matches.push({ type: 'amount_date', confidence: c.length > 1 ? 'low' : 'medium', bank: [b.id], gl: [c[0].id], amount: b.amount, note: c.length > 1 ? `ambiguous: ${c.length} GL lines with this amount` : `same amount, ${Math.abs(day(c[0].date) - day(b.date))} day(s) apart` });
+    matches.push({ type: 'amount_date', confidence: c.length > 1 ? 'low' : 'medium', bank: [b.id], gl: [c[0].id], amount: b.amount, note: c.length > 1 ? `ambiguous: ${c.length} GL lines with this amount` : `same amount, ${dist(c[0], b)} day(s) apart` });
   }
   for (const b of bank) {
     if (usedB.has(b.id) || b.amount === null) continue;
-    const pool = gl.filter((x) => !usedG.has(x.id) && x.amount !== null && Math.sign(x.amount) === Math.sign(b.amount) && near(x.date, b.date, w)).slice(0, 14);
+    const pool = firstWithin(glByDay, dayOf.get(b), (x) => !usedG.has(x.id) && x.amount !== null && Math.sign(x.amount) === Math.sign(b.amount), 14);
     let hit = null;
     const rec = (start, pick, sum) => {
       if (hit) return;
@@ -70,7 +96,7 @@ export function reconcile(bank, gl, opts = {}) {
   // One GL line = 2..max_group bank lines (e.g. one payroll entry clearing as several debits).
   for (const g of gl) {
     if (usedG.has(g.id) || g.amount === null) continue;
-    const pool = bank.filter((x) => !usedB.has(x.id) && x.amount !== null && Math.sign(x.amount) === Math.sign(g.amount) && near(x.date, g.date, w)).slice(0, 14);
+    const pool = firstWithin(bankByDay, dayOf.get(g), (x) => !usedB.has(x.id) && x.amount !== null && Math.sign(x.amount) === Math.sign(g.amount), 14);
     let hit = null;
     const rec = (start, pick, sum) => {
       if (hit) return;

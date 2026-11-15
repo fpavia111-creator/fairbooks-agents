@@ -58,6 +58,9 @@ export function status(people, template, statusRows = [], a = {}) {
   const t = validateTemplate(template); const now = asOfMs(a.as_of); const soon = Number(a.due_soon_days) || 3;
   const st = new Map(); const unknown = [];
   for (const r of statusRows) st.set(`${pick(r, 'person_id', 'person')}|${pick(r, 'task_id', 'task')}`, { status: pick(r, 'status').toLowerCase().replace(/\s+/g, '_'), done_on: pick(r, 'done_on', 'completed_on'), note: pick(r, 'note') });
+  // Task ids in the status file per person id, in file order (one pass instead of one scan per person).
+  const tidsOf = new Map();
+  for (const k of st.keys()) { const [pid, tid] = k.split('|'); if (!tidsOf.has(pid)) tidsOf.set(pid, []); tidsOf.get(pid).push(tid); }
   const out = people.map((p, i) => {
     const person = { person_id: pick(p, 'person_id', 'id') || `P${i + 1}`, name: pick(p, 'name', 'full_name'), type: pick(p, 'type', 'kind').toLowerCase(), role: pick(p, 'role', 'title'), manager: pick(p, 'manager', 'owner'), start_date: pick(p, 'start_date', 'start'), end_date: pick(p, 'end_date', 'end') };
     const cl = checklistFor(t, person.type, person.role); const tasks = cl.tasks; const flags = []; const notes = [];
@@ -67,7 +70,7 @@ export function status(people, template, statusRows = [], a = {}) {
     const start = parseDate(person.start_date); const end = parseDate(person.end_date);
     for (const x of cl.removed || []) if (x.kind === 'access' && DONE.has((st.get(`${person.person_id}|${x.id}`) || {}).status)) { flags.push('access_outside_role'); notes.push(`${x.system || x.title} access is marked granted, but the ${cl.role_template} role does not include it. Check whether it is needed.`); }
     const known = new Set([...tasks.map((x) => x.id), ...offIds(t, person.type, tasks), ...(cl.removed || []).filter((x) => x.kind === 'access').map((x) => x.id)]);
-    for (const k of st.keys()) { const [pid, tid] = k.split('|'); if (pid === person.person_id && !known.has(tid)) unknown.push(`${pid}/${tid}`); }
+    for (const tid of tidsOf.get(person.person_id) || []) if (!known.has(tid)) unknown.push(`${person.person_id}/${tid}`);
     const isDone = (id) => DONE.has((st.get(`${person.person_id}|${id}`) || {}).status);
     const rows = tasks.map((x) => {
       const s = st.get(`${person.person_id}|${x.id}`) || { status: 'not_started' };

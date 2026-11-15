@@ -41,7 +41,8 @@
     "hostile": "node scripts/hostile-inputs.mjs",
     "hostile:args": "node scripts/hostile-inputs.mjs --args",
     "release:check": "node scripts/release-check.mjs",
-    "release:check:offline": "node scripts/release-check.mjs --offline"
+    "release:check:offline": "node scripts/release-check.mjs --offline",
+    "bench": "node scripts/bench.mjs"
   },
   "engines": {
     "node": ">=20"

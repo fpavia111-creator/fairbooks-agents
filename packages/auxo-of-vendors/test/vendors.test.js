@@ -68,3 +68,19 @@ test('tracker CSV has blank follow-up columns and readiness disclaims tax advice
   const rows = parseCsv(readFileSync(r.result.files[0], 'utf8')); assert.equal(rows.length, 8); assert.equal(rows[0].owner, '');
   assert.match(readFileSync(r.result.files[1], 'utf8'), /Not tax advice and not a filing/);
 });
+
+test('duplicate check scales: 5,000 vendors with planted duplicates finish quickly and find them', async () => {
+  const { findDuplicates } = await import('../src/vendors.js');
+  const SYL = ['ka', 'ver', 'lo', 'mi', 'dra', 'sun', 'tel', 'ox', 'bri', 'na', 'qu', 'zen', 'har', 'pol', 'ris', 'vo', 'jux', 'em', 'fro', 'gru', 'hy', 'ic', 'jen', 'cle'];
+  let s = 11; const g = () => { s = (Math.imul(s, 1103515245) + 12345) >>> 0; return (s >>> 8) / 16777216; };
+  const word = () => { let w = ''; for (let i = 0; i < 3; i++) w += SYL[Math.floor(g() * SYL.length)]; return w; };
+  const vendors = [];
+  for (let i = 0; i < 5000; i++) vendors.push({ vendor_id: `V${i}`, name: `${word()} ${word()}`, country: 'US', entity_type: 'c-corp', tin: String(100000000 + i * 7), address: `${i} Example Way`, email: `ap${i}@vendor${i}.example` });
+  vendors.push({ vendor_id: 'DUP1', name: vendors[10].name + ' Inc', country: 'US', entity_type: 'c-corp', tin: '', address: '', email: '' });
+  vendors.push({ vendor_id: 'DUP2', name: 'Other Name', country: 'US', entity_type: 'c-corp', tin: vendors[20].tin, address: '', email: '' });
+  const t = Date.now();
+  const r = findDuplicates(vendors, [], { year: 2025 });
+  assert.ok(Date.now() - t < 20000, `took ${Date.now() - t} ms`);
+  assert.ok(r.pairs.some((p) => p.a === 'V10' && p.b === 'DUP1' && p.reasons.includes('similar_name')));
+  assert.ok(r.pairs.some((p) => p.a === 'V20' && p.b === 'DUP2' && p.reasons.includes('same_tin')));
+});

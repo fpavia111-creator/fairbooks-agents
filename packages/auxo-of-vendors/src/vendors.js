@@ -1,4 +1,4 @@
-import { toNumber, round2, toCsv, nameSimilarity, normalizeAddress, normalizeName } from 'mythos-agent-core';
+import { toNumber, round2, toCsv, normalizeAddress, normalizeName, jaroWinkler, tokenSetSimilarity } from 'mythos-agent-core';
 
 const DAY = 86400000;
 const norm = (k) => String(k).trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -264,12 +264,55 @@ export function findDuplicates(vendors, payments = [], a = {}) {
   const byId = new Map(r.items.map((i) => [i.vendor_id, i]));
   const recs = vendors.map((v, i) => ({ id: pick(v, 'vendor_id', 'id') || `row${i + 1}`, name: pick(v, 'legal_name', 'name', 'vendor_name'), alt: pick(v, 'name'), tin: pick(v, 'tin', 'ein', 'ssn', 'tax_id').replace(/\D/g, ''), addr: normalizeAddress(pick(v, 'address', 'street', 'address_line1')), email: pick(v, 'email', 'ap_email', 'contact_email').toLowerCase() }));
   const min = Number.isFinite(Number(a.name_threshold)) && a.name_threshold !== undefined ? Number(a.name_threshold) : 0.92;
+  // Only pairs that can produce a reason are scored. Same TIN and same email come from
+  // indexes; a similar name needs nameSimilarity >= min, which is ruled out exactly with
+  // a bound on Jaro-Winkler (shared characters) and on token overlap. Same results as
+  // comparing every pair, in the same order.
+  const forms = recs.map((x) => [prep(x.name), prep(x.alt)]);
+  const cand = recs.map(() => new Set());
+  const link = (idx) => { for (const ids of idx.values()) for (let p = 0; p < ids.length; p++) for (let q = p + 1; q < ids.length; q++) cand[ids[p]].add(ids[q]); };
+  const index = (key) => { const m = new Map(); recs.forEach((x, i) => { const k = key(x); if (k) { if (!m.has(k)) m.set(k, []); m.get(k).push(i); } }); return m; };
+  link(index((x) => (x.tin.length === 9 ? x.tin : '')));
+  link(index((x) => x.email));
+  if (!(min > 0)) for (let i = 0; i < recs.length; i++) for (let j = i + 1; j < recs.length; j++) cand[i].add(j);
+  else for (const k of [0, 1]) {
+    const tok = new Map();
+    forms.forEach((f, i) => { if (f[k]) for (const t of f[k].tokens) { if (!tok.has(t)) tok.set(t, []); tok.get(t).push(i); } });
+    for (const ids of tok.values()) for (let p = 0; p < ids.length; p++) for (let q = p + 1; q < ids.length; q++) cand[ids[p]].add(ids[q]);
+    // Names that share no word. Their score is a Jaro-Winkler score, of the names or of
+    // their sorted words. When the first letters differ there is no Winkler bonus, so
+    // the score is plain Jaro, and Jaro >= min needs at least need * length shared
+    // characters (need = 3 * min - 2): two such names must share one of the rarest
+    // (length - need * length + 1) characters of each (prefix filtering). Names with
+    // the same first letter are bounded pair by pair. With a threshold of 2/3 or
+    // lower that tells us nothing, and every pair is bounded.
+    const live = forms.map((f, i) => i).filter((i) => forms[i][k]);
+    const need = 3 * min - 2;
+    const floor = min - 1e-12;
+    const test = (i, j) => { const lo = i < j ? i : j, hi = i < j ? j : i; if (jwBound(forms[lo][k], forms[hi][k], floor) && !cand[lo].has(hi)) cand[lo].add(hi); };
+    if (!(need > 0)) { for (let p = 0; p < live.length; p++) for (let q = p + 1; q < live.length; q++) test(live[p], live[q]); continue; }
+    const first = new Map();
+    for (const i of live) for (const key of new Set(['n' + forms[i][k].n[0], 's' + forms[i][k].sorted[0]])) { if (!first.has(key)) first.set(key, []); first.get(key).push(i); }
+    for (const ids of first.values()) for (let p = 0; p < ids.length; p++) for (let q = p + 1; q < ids.length; q++) test(ids[p], ids[q]);
+    const elems = new Map(); const freq = new Map();
+    for (const i of live) { const occ = new Map(); const e = []; for (const ch of forms[i][k].n) { const o = (occ.get(ch) || 0) + 1; occ.set(ch, o); const code = ch + o; e.push(code); freq.set(code, (freq.get(code) || 0) + 1); } elems.set(i, e); }
+    const post = new Map(); const stamp = new Int32Array(recs.length).fill(-1);
+    for (const i of live) {
+      const e = elems.get(i).sort((x, y) => freq.get(x) - freq.get(y) || (x < y ? -1 : x > y ? 1 : 0));
+      const l = e.length, keep = Math.min(l, Math.max(1, l - Math.ceil(need * l - 1e-9) + 1));
+      for (let t = 0; t < keep; t++) {
+        const list = post.get(e[t]);
+        if (list) for (const j of list) if (stamp[j] !== i) { stamp[j] = i; test(j, i); }
+      }
+      for (let t = 0; t < keep; t++) { if (!post.has(e[t])) post.set(e[t], []); post.get(e[t]).push(i); }
+    }
+  }
   const pairs = [];
-  for (let i = 0; i < recs.length; i++) for (let j = i + 1; j < recs.length; j++) {
+  for (let i = 0; i < recs.length; i++) for (const j of [...cand[i]].sort((p, q) => p - q)) {
     const x = recs[i], y = recs[j]; const reasons = [];
-    const sim = Math.max(nameSimilarity(x.name, y.name), nameSimilarity(x.alt, y.alt));
+    const sim = Math.max(simPrepped(forms[i][0], forms[j][0]), simPrepped(forms[i][1], forms[j][1]));
     if (x.tin.length === 9 && x.tin === y.tin) reasons.push('same_tin');
-    if (sim >= min && normalizeName(x.name) && normalizeName(y.name)) reasons.push('similar_name');
+    if (sim >= min && forms[i][0] && forms[j][0]) reasons.push('similar_name');
     if (x.addr && x.addr === y.addr && sim >= 0.75) reasons.push('same_address');
     if (x.email && x.email === y.email) reasons.push('same_email');
     if (!reasons.length || (reasons.length === 1 && reasons[0] === 'same_address')) continue;
@@ -281,4 +324,33 @@ export function findDuplicates(vendors, payments = [], a = {}) {
   const C = { high: 0, medium: 1, low: 2 };
   pairs.sort((p, q) => Number(q.split_under_threshold) - Number(p.split_under_threshold) || C[p.confidence] - C[q.confidence] || q.combined_reportable - p.combined_reportable);
   return { year: r.year, threshold: r.threshold, vendors: recs.length, pairs, split_under_threshold: pairs.filter((p) => p.split_under_threshold).length };
+}
+
+// Name forms computed once per record, so a pair costs no regex work.
+function prep(s) {
+  const n = normalizeName(s); if (!n) return null;
+  const counts = new Uint32Array(37);
+  for (let i = 0; i < n.length; i++) { const c = n.charCodeAt(i); counts[c >= 97 && c <= 122 ? c - 97 : c >= 48 && c <= 57 ? c - 22 : 36]++; }
+  const chars = Uint8Array.from(counts.keys()).filter((c) => counts[c]);
+  return { n, sorted: n.split(' ').sort().join(' '), tokens: new Set(n.split(/\s+/).filter(Boolean)), counts, chars };
+}
+/** Same value as nameSimilarity on the original strings. */
+function simPrepped(A, B) {
+  if (!A || !B) return 0;
+  return Math.max(jaroWinkler(A.n, B.n), jaroWinkler(A.sorted, B.sorted), tokenSetSimilarity(A.n, B.n));
+}
+/**
+ * Upper bound of both Jaro-Winkler scores of two names: Jaro matches cannot exceed the
+ * characters the names share, and the Winkler prefix adds at most 0.4 of the gap.
+ */
+const jwFromMatches = (m, l1, l2) => (m ? (m / l1 + m / l2 + 1) / 3 * 0.6 + 0.4 : 0);
+/** True when the bound reaches `floor`. Stops as soon as too few characters can be shared. */
+function jwBound(A, B, floor) {
+  const l1 = A.n.length, l2 = B.n.length;
+  if (jwFromMatches(Math.min(l1, l2), l1, l2) < floor) return false;
+  // Smallest number of shared characters that can still reach floor.
+  const need = Math.max(1, Math.ceil(((floor - 0.4) / 0.6 * 3 - 1) / (1 / l1 + 1 / l2) - 1e-9));
+  let m = l1; const ca = A.counts, cb = B.counts;
+  for (const c of A.chars) { const d = ca[c] - cb[c]; if (d > 0) { m -= d; if (m < need) return false; } }
+  return jwFromMatches(m, l1, l2) >= floor;
 }

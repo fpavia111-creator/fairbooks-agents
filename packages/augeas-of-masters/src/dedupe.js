@@ -107,17 +107,22 @@ export function candidatePairs(recs, { full_compare_below = 400 } = {}) {
     if (r.email) add('e:' + r.email, r.i);
   }
   const cap = Math.max(60, Math.ceil(n * 0.03));
-  const seen = new Set();
+  // A tax id or phone shared by very many rows is usually a placeholder (000-000-0000,
+  // the head office number). Pairing all of them would need millions of comparisons,
+  // so such keys are skipped and reported instead.
+  const hardCap = Math.max(500, cap);
+  const seen = new Set(); const skipped = [];
   for (const [k, ids] of [...blocks.entries()].sort((x, y) => (x[0] < y[0] ? -1 : 1))) {
     if (ids.length < 2) continue;
     if (ids.length > cap && !/^[tp]:/.test(k)) continue;
+    if (ids.length > hardCap) { skipped.push({ key: k[0] === 't' ? 'tax id' : 'phone', records: ids.length }); continue; }
     for (let x = 0; x < ids.length; x++) for (let y = x + 1; y < ids.length; y++) {
       const a = Math.min(ids[x], ids[y]), b = Math.max(ids[x], ids[y]); const key = a * n + b;
       if (!seen.has(key)) { seen.add(key); out.push([a, b]); }
     }
   }
   out.sort((p, q) => p[0] - q[0] || p[1] - q[1]);
-  return { pairs: out, blocking: true };
+  return { pairs: out, blocking: true, skipped };
 }
 
 /** Score one pair. Returns null when there is no reason to link them. */
@@ -177,12 +182,22 @@ export function findDuplicates(rows, opts = {}) {
   const groups = new Map();
   recs.forEach((r, i) => { const p = find(i); if (!groups.has(p)) groups.set(p, []); groups.get(p).push(r); });
   const order = opts.survivor_rules || {};
-  const clusters = [...groups.values()].filter((g) => g.length > 1).map((g) => {
-    const ids = new Set(g.map((x) => x.id));
-    const ps = pairs.filter((p) => ids.has(p.a) && ids.has(p.b) && p.score >= 0.75);
+  const multi = [...groups.values()].filter((g) => g.length > 1);
+  // Each cluster's pairs (both ids in the cluster, score >= 0.75), in pair order, found
+  // through an id index instead of scanning every pair once per cluster.
+  const idIn = new Map();
+  multi.forEach((g, ci) => { for (const id of new Set(g.map((x) => x.id))) { if (!idIn.has(id)) idIn.set(id, []); idIn.get(id).push(ci); } });
+  const psOf = multi.map(() => []);
+  for (const p of pairs) {
+    if (!(p.score >= 0.75)) continue;
+    const ca = idIn.get(p.a), cb = idIn.get(p.b); if (!ca || !cb) continue;
+    for (const ci of ca) if (cb.includes(ci)) psOf[ci].push(p);
+  }
+  const clusters = multi.map((g, ci) => {
+    const ps = psOf[ci];
     const survivor = pickSurvivor(g, order);
     return {
-      confidence: Math.min(...ps.filter((p) => p.score >= 0.75).map((p) => p.score)),
+      confidence: ps.reduce((m, p) => Math.min(m, p.score), Infinity),
       survivor: survivor.id, merge: g.filter((x) => x !== survivor).map((x) => x.id),
       records: g.map((x) => ({ id: x.id, name: x.name, inactive: x.inactive })),
       reasons: [...new Set(ps.flatMap((p) => p.reasons))],
@@ -190,7 +205,8 @@ export function findDuplicates(rows, opts = {}) {
     };
   }).sort((x, y) => y.confidence - x.confidence || x.survivor.localeCompare(y.survivor)).map((c, n) => ({ cluster: `C${String(n + 1).padStart(3, '0')}`, ...c }));
   return {
-    kind, threshold, records: recs.length, compared_pairs: cand.pairs.length, blocking: cand.blocking, clusters: clusters.length, records_in_clusters: clusters.reduce((s, c) => s + c.records.length, 0),
+    kind, threshold, records: recs.length, compared_pairs: cand.pairs.length, blocking: cand.blocking,
+    ...(cand.skipped && cand.skipped.length ? { not_compared: cand.skipped.map((x) => `${x.records} records share one ${x.key}; it looks like a placeholder, so they were not paired on it (they are still compared on name, address and email)`) } : {}), clusters: clusters.length, records_in_clusters: clusters.reduce((s, c) => s + c.records.length, 0),
     proposals: clusters, weak_pairs: pairs.filter((p) => p.score < 0.75),
     kept_apart: blocked.map((p) => ({ a: p.a, b: p.b, score: p.score, reason: 'linking them would put two different tax ids in one cluster' })),
     note: 'Proposals only. Check open transactions, balances, bank details and 1099/tax status before merging anything in the ERP.',

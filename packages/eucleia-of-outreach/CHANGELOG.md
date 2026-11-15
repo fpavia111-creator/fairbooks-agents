@@ -22,3 +22,7 @@
 - `eucleia_plan_schedule` refuses `min_gap_minutes` over 1440, `max_per_day` over 100000 and `horizon_days` over 366, and no longer steps minute by minute through a gap. Before this a very large gap never returned. Plans for valid inputs are unchanged (96 configurations compared).
 - Inherited from `mythos-agent-core`: CSV cells that a spreadsheet would run as a formula are neutralised; Markdown output has raw HTML and remote images from data turned into literal text; HTML report tables scroll on narrow screens and header cells carry `scope`; results that quote instruction-like text from data carry a warning; near-miss argument names are refused with the right name; file errors are plain and relative to `--root`.
 
+Speed (ver 4)
+
+- Date formatters are built once per time zone, spam-phrase patterns once per phrase, and the next-window search once per send time. Checking 10,000 drafts went from over 3 minutes to under 1 s; output is byte-for-byte the same.
+- Scheduling finds the gap with a binary search and does not repeat a search that already found no slot. Same plans as before (checked on 60 random batches).
