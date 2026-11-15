@@ -199,3 +199,12 @@ test('eval report: offline HTML with regression highlighted', async () => {
   assert.match(html, /REGRESSED/); assert.ok(!/<script|<link|https?:\/\/(?!json)/i.test(html.replace(/http-equiv/g, '')));
   assert.match(html, /default-src 'none'/);
 });
+
+test('scaffolder writes a complete agent package', async () => {
+  const { spawnSync } = await import('node:child_process');
+  const dir = tmp();
+  const r = spawnSync(process.execPath, [new URL('../bin/mythos-new-agent.js', import.meta.url).pathname, 'iris-of-tests', '--dir', dir], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  for (const f of ['package.json', 'bin/iris-of-tests.js', 'src/manifest.js', 'evals/cases.json', 'test/logic.test.js', 'LICENSE']) assert.ok(existsSync(join(dir, 'iris-of-tests', f)), f);
+  assert.equal(spawnSync(process.execPath, [new URL('../bin/mythos-new-agent.js', import.meta.url).pathname, 'Bad Name'], { encoding: 'utf8' }).status, 2);
+});
