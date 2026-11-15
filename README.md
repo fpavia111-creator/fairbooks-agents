@@ -2,9 +2,11 @@
 
 Small MCP agents that each own **one business process** and cannot act outside it. Each one is its own npm package on a shared core. MIT, Node ≥ 20, local files only, no credentials.
 
+Version 0.2.0: see [UPGRADE-0.2.0.md](UPGRADE-0.2.0.md) for what changed and [docs/build-an-agent.md](docs/build-an-agent.md) to build a new agent.
+
 | Package | Process | Install |
 |---|---|---|
-| [`mythos-agent-core`](packages/mythos-agent-core) | Manifest, allow/ask/block policy, Review/Assist/Auto modes, caps, kill switch, JSONL audit log, stdio MCP server, evals | `npm i mythos-agent-core` |
+| [`mythos-agent-core`](packages/mythos-agent-core) | Manifest, allow/ask/block policy, input validation, Review/Assist/Auto modes, persistent caps, kill switch, signed JSONL audit log, approvals page and webhook, stdio MCP server with prompts, evals with offline reports | `npm i mythos-agent-core` |
 | [`olympus-of-migration`](packages/olympus-of-migration) | NetSuite/ERP migration export checks and a readiness report. Never approves go-live. | `npx -y olympus-of-migration demo` |
 | [`epimetheus-of-scripts`](packages/epimetheus-of-scripts) | SuiteScript inventory and 2.1 risk ranking. Never deploys. | `npx -y epimetheus-of-scripts demo` |
 | [`eirene-of-controls`](packages/eirene-of-controls) | Evidence folder from Talos / Mythos / Alethea logs. Evidence, not certification. | `npx -y eirene-of-controls demo` |
