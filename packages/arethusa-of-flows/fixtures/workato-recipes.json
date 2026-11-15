@@ -4,7 +4,7 @@
     "running": true,
     "code": { "number": 0, "keyword": "trigger", "provider": "workato_webhooks", "name": "new_event", "as": "cancel_hook", "input": { "webhook_name": "order-cancelled" }, "block": [
       { "number": 1, "keyword": "action", "provider": "stripe", "name": "create_refund", "as": "refund", "input": { "charge": "#{_('data.workato_webhooks.cancel_hook.charge')}" } },
-      { "number": 2, "keyword": "action", "provider": "rest", "name": "make_request", "as": "notify", "input": { "url": "https://hooks.slack.com/services/TFAKE0000/BFAKE0000/FAKEdemo0000webhook0000", "method": "POST" } }
+      { "number": 2, "keyword": "action", "provider": "rest", "name": "make_request", "as": "open_ticket", "input": { "url": "https://git.example.com/api/issues", "method": "POST", "request_headers": [{ "name": "X-Git-Auth", "value": "ghp_FAKEdemo0000FAKEdemo0000" }] } }
     ] },
     "config": [ { "keyword": "application", "provider": "stripe", "name": "stripe", "account_id": { "zip_name": "stripe_production.connection.json", "name": "Stripe production" } } ]
   },

@@ -210,9 +210,15 @@ function pageInfo(file, html, ctx = {}) {
     const css = ctx.stylesheet ? ctx.stylesheet(l.attrs.href, file) : null;
     if (css === null) (ctx.unreadCss || []).push({ page: file, href: l.attrs.href }); else sheets.push({ from: l.attrs.href, css });
   }
-  let order = 0; const rules = [];
-  for (const sh of sheets) { const rs = parseCss(sh.css, order); order += rs.length; for (const r of rs) r.from = sh.from; rules.push(...rs); }
-  prepareRules(rules);
+  // Pages that share the same stylesheets share one parsed, indexed rule set.
+  const ruleKey = sha256(sheets.map((x) => `${x.from}\u0000${x.css}`).join('\u0001'));
+  const ruleCache = ctx.ruleCache || new Map();
+  let rules = ruleCache.get(ruleKey);
+  if (!rules) {
+    let order = 0; rules = [];
+    for (const sh of sheets) { const rs = parseCss(sh.css, order); order += rs.length; for (const r of rs) r.from = sh.from; rules.push(...rs); }
+    prepareRules(rules); ruleCache.set(ruleKey, rules);
+  }
   for (const r of focusOutlineRemovals(rules)) add('focus_outline_removed', null, `"${r.selector}" sets outline: ${r.decls.outline ?? r.decls['outline-style'] ?? r.decls['outline-width']} with no other focus style (${r.from}).`, { selector: r.selector });
   const memo = new Map(); const th = ctx.contrast || DEFAULT_CONTRAST; let contrastChecked = 0, contrastSkipped = 0;
   const inHead = (e) => { for (let p = e; p; p = p.parent) if (p.name === 'head') return true; return false; };
@@ -237,14 +243,14 @@ function pageInfo(file, html, ctx = {}) {
 export function audit(siteDir, a = {}) {
   const files = listSite(siteDir); const set = new Set(files);
   const baseHost = a.base_url ? new URL(a.base_url).host.toLowerCase() : '';
-  const cssCache = new Map(); const unreadCss = [];
+  const cssCache = new Map(); const unreadCss = []; const ruleCache = new Map();
   const stylesheet = (href, page) => {
     const res = resolveRef(href, page, set, baseHost);
     if (res.kind !== 'internal' || !res.target) return null;
     if (!cssCache.has(res.target)) cssCache.set(res.target, readFileSync(join(siteDir, res.target), 'utf8'));
     return cssCache.get(res.target);
   };
-  const pages = files.filter(isPage).filter((f) => !(a.ignore_pages || []).some((g) => f === g || (g.endsWith('/') && f.startsWith(g)))).map((f) => pageInfo(f, readFileSync(join(siteDir, f), 'utf8'), { stylesheet, unreadCss, contrast: { ...DEFAULT_CONTRAST, ...(a.contrast || {}) } }));
+  const pages = files.filter(isPage).filter((f) => !(a.ignore_pages || []).some((g) => f === g || (g.endsWith('/') && f.startsWith(g)))).map((f) => pageInfo(f, readFileSync(join(siteDir, f), 'utf8'), { stylesheet, unreadCss, ruleCache, contrast: { ...DEFAULT_CONTRAST, ...(a.contrast || {}) } }));
   if (!pages.length) throw new Error(`no .html files found under ${a.site || siteDir}`);
   const byFile = new Map(pages.map((p) => [p.file, p]));
   const external = new Map(); const issues = [];

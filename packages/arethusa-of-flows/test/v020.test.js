@@ -58,6 +58,10 @@ test('secret detection: known prefixes, secret-named fields, entropy; values nev
     sig: 'https://logs.example.com/i?sig=' + 'FAKE'.repeat(5),
     entropy: 'FAKE' + 'q7v9Zp2LxK8mR4tW1bN6cY3hJ5dF0gS',
   };
+  // Webhook-URL rules need the provider's host, so they are built here and kept out of the fixtures.
+  const hook = ['https://hooks', 'slack', 'com/services/TFAKE0000/BFAKE0000/FAKEdemo0000'].join('.');
+  assert.deepEqual(scanSecrets({ url: hook }).map((h) => h.rule), ['slack_webhook']);
+  assert.ok(!JSON.stringify(redact({ url: hook })).includes('TFAKE'));
   const hits = scanSecrets({ note: seeds.stripe, a: seeds.slack, b: seeds.aws, c: seeds.github, d: seeds.google, e: seeds.sendgrid, f: seeds.jwt, g: seeds.urlpass, h: seeds.sig, i: seeds.entropy, client_secret: 'FAKEplain-secret' });
   assert.deepEqual(hits.map((h) => h.rule), ['stripe_live_key', 'slack_token', 'aws_access_key', 'github_token', 'google_api_key', 'sendgrid_key', 'jwt', 'url_credentials', 'url_signature', 'high_entropy', 'secret_named_field']);
   assert.equal(hits.find((h) => h.rule === 'high_entropy').confidence, 'medium');

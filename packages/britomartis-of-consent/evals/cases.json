@@ -1,7 +1,7 @@
 {
   "suite": "britomartis-of-consent",
   "root": "..",
-  "data_note": "Fictional bakery pages, two hand-written HAR captures and a fictional cookie policy in ../fixtures. Deterministic; no model and no network are used.",
+  "data_note": "Fictional bakery pages, hand-written HAR captures (first visit, after reject, a visit with Global Privacy Control on), an earlier inventory snapshot and a fictional cookie policy in ../fixtures. Deterministic; no model and no network are used.",
   "cases": [
     {"id": "planted-gaps", "tool": "britomartis_inventory", "args": {"site": "fixtures/site", "base_url": "https://www.example.com", "har_first_visit": "fixtures/har/first-visit.har", "har_after_reject": "fixtures/har/after-reject.har", "declared": "fixtures/declared.json"}, "expect": {"status": "executed", "contains": ["nonessential_before_consent", "nonessential_after_reject", "claim_contradicted", "samesite_none_insecure", "undeclared_cookie", "ungated_tracker_script", "no_consent_mechanism", "declared_not_seen"], "equals": {"result.issues": 25, "result.by_severity.error": 11, "result.cookies.length": 7, "result.third_parties.length": 6}}},
     {"id": "guesses-are-labelled-and-no-compliance-claim", "tool": "britomartis_inventory", "args": {"site": "fixtures/site", "base_url": "https://www.example.com", "har_first_visit": "fixtures/har/first-visit.har", "declared": "fixtures/declared.json"}, "expect": {"contains": ["known_list (guess)", "not a compliance finding", "never says a site is GDPR, CCPA/CPRA or ePrivacy compliant"]}},

@@ -53,7 +53,8 @@ test('config file: used by the tools, and typos fail with JSON pointers', async 
     const x = await rt.call('echo_check', { config: `${name}.json` });
     assert.equal(x.status, 'error', name); assert.match(x.reason, /not a valid docs_config/); assert.match(x.reason, re);
   }
-  assert.match((await rt.call('echo_check', {})).reason, /invalid arguments/);
+  assert.match((await rt.call('echo_check', {})).reason, /pack is required/);
+  assert.match((await rt.call('echo_check', { pack: 7 })).reason, /invalid arguments/);
   assert.match((await rt.call('echo_check', { pack: 'ladle-of-api', openapi: 'ladle-of-api/openapi.yaml' })).reason, /convert a YAML spec to JSON/);
 });
 

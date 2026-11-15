@@ -23,7 +23,9 @@
     "evals",
     "README.md",
     "LICENSE",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "action.yml",
+    "examples"
   ],
   "scripts": {
     "test": "node scripts/run-tests.cjs",

@@ -10,10 +10,10 @@ const W = (id) => RULES[id].why;
 
 /** Source rules. Pattern-based: they find things to look at, they do not prove a server is safe or unsafe. */
 export const SOURCE_RULES = [
-  { id: 'NEM-EXEC-SHELL', re: /\b(execSync|exec|spawnSync|spawn|execFile)\s*\(|shell\s*:\s*true|subprocess\.(run|Popen|call)|os\.system\(/ },
+  { id: 'NEM-EXEC-SHELL', re: /(?<![.\w$])(execSync|exec|spawnSync|spawn|execFile|execFileSync)\s*\(|\b(child_process|childProcess|cp)(['"]\))?\.(execSync|exec|spawnSync|spawn|execFile|execFileSync)\s*\(|shell\s*:\s*true|subprocess\.(run|Popen|call)|os\.system\(/ },
   { id: 'NEM-EVAL', re: /\beval\s*\(|new\s+Function\s*\(|\bvm\.(runIn\w*|Script)\b|\bexec\s*\(\s*compile\(/ },
   { id: 'NEM-CODEMODE-NOSANDBOX', re: /(execute|runCode|run_code|codeMode)[\s\S]{0,120}(new\s+Function|eval\s*\(|vm\.runIn)/ },
-  { id: 'NEM-ENV-DUMP', re: /JSON\.stringify\(\s*process\.env\s*\)|\.\.\.process\.env\b|os\.environ\.copy\(\)|dict\(os\.environ\)|env\s*:\s*process\.env\b/ },
+  { id: 'NEM-ENV-DUMP', re: /JSON\.stringify\(\s*process\.env\s*\)|\.\.\.process\.env\b|os\.environ\.copy\(\)|dict\(os\.environ\)/ },
   { id: 'NEM-CRED-PATH', re: /\.ssh\/|id_rsa|id_ed25519|\.aws\/credentials|\.npmrc|\.netrc|\.docker\/config\.json|\.kube\/config|\.config\/gcloud/ },
   { id: 'NEM-HARDCODED-SECRET', re: /(sk_live_[0-9a-zA-Z]{10,}|sk-ant-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9]{20,}|ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|glpat-[A-Za-z0-9_-]{20,}|xox[bpas]-[A-Za-z0-9-]{10,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY)/, mask: true },
   { id: 'NEM-INJECTION-TEXT', re: /ignore (all )?(previous|prior) instructions|disregard (all )?(previous|prior) (instructions|rules)|do not (tell|inform|mention) (this to )?the user|without (asking|telling|informing) the user|<\s*(important|system|instructions)\s*>/i },

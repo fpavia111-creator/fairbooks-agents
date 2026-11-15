@@ -7,14 +7,13 @@ import { driftSarif, compareBaseline, gate, fingerprint, FAIL_ON } from './ci.js
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
 const props = {
-  pack: { ...str, description: 'Package folder with package.json and README.md (docs/, skills/ and SKILL.md are read too), relative to --root' },
+  pack: { ...str, description: 'Package folder with package.json and README.md (docs/, skills/ and SKILL.md are read too), relative to --root. Required unless the config file names it' },
   tools: { ...str, description: 'Tool list as JSON: an MCP tools/list result, mythos_info output, or a plain array. Without it only package.json and link checks run' },
   ignore: { type: 'array', items: str, description: 'Check ids to leave out, e.g. ["count_mismatch"]' },
   openapi: { ...str, description: 'Optional OpenAPI 3.x / Swagger 2.0 spec as JSON, relative to --root. Endpoints in the docs ("GET /notes/{id}") are compared with it' },
   require_changelog: { type: 'boolean', description: 'Flag a package with no CHANGELOG.md (an existing CHANGELOG.md is always checked against the version)' },
   config: { ...str, description: 'Optional Echo config JSON (pack, tools, openapi, ignore, require_changelog, fail_on, baseline), checked against the docs_config schema. Arguments override it' },
 };
-const packOrConfig = [{ required: ['pack'] }, { required: ['config'] }];
 export const CONFIG_SCHEMA = {
   type: 'object', additionalProperties: false, required: ['pack'],
   properties: {
@@ -27,7 +26,7 @@ const rel = (ctx, f) => relative(ctx.root, f).split('\\').join('/');
 function load(aIn, ctx) {
   const cfg = aIn.config ? ctx.readJson(aIn.config, 'docs_config') : {};
   const a = { ...cfg, ...aIn, ignore: [...new Set([...(cfg.ignore || []), ...(aIn.ignore || [])])] };
-  if (!String(a.pack ?? '').trim()) throw new Error('pack is required');
+  if (!String(a.pack ?? '').trim()) throw new Error('pack is required (as an argument or in the config file)');
   const dir = ctx.path(a.pack); if (!existsSync(dir) || !statSync(dir).isDirectory()) throw new Error(`pack folder not found: ${a.pack}`);
   let tools = null;
   if (a.tools) { const f = ctx.path(a.tools); if (!existsSync(f)) throw new Error(`tools file not found: ${a.tools}`); try { tools = JSON.parse(readFileSync(f, 'utf8')); } catch { throw new Error('tools file is not valid JSON'); } }
@@ -53,13 +52,13 @@ export const manifest = defineManifest({
     {
       name: 'echo_check', kind: 'read',
       description: 'Compare the docs with the tool list and package.json. Every finding has a severity, file and line. Reads files only; does not run the package.',
-      inputSchema: { type: 'object', anyOf: packOrConfig, properties: props },
+      inputSchema: { type: 'object', properties: props },
       handler: async (a, ctx) => { const { r } = load(a, ctx); return { summary: `${line(r)} No drift found is not the same as complete docs.`, ...r }; },
     },
     {
       name: 'echo_write_report', kind: 'report',
       description: 'Write docs-drift.md and drift.csv (blank owner and status columns) into out_dir (default mythos-out/echo).',
-      inputSchema: { type: 'object', anyOf: packOrConfig, properties: { ...props, out_dir: str } },
+      inputSchema: { type: 'object', properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
         const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/echo');
         const L = [`# Docs drift: ${r.package}@${r.version}`, '', line(r), '', '| Severity | Check | Where | Detail |', '|---|---|---|---|', ...r.findings.map((f) => `| ${f.severity} | ${f.check} | ${f.file}${f.line ? ':' + f.line : ''} | ${f.detail.replace(/\|/g, '\\|')} |`), ...(r.findings.length ? [] : ['| | none | | |']), '', '## Limits', '', r.limits, ''];
@@ -71,7 +70,7 @@ export const manifest = defineManifest({
     {
       name: 'echo_ci', kind: 'report', title: 'Docs drift CI gate',
       description: 'Run the drift check as a CI gate: writes echo-of-docs.sarif (SARIF 2.1.0 for code scanning, paths relative to --root) and drift.json (findings with line-independent fingerprints) into out_dir (default mythos-out/echo). fail_on sets which severities fail the gate (error, warning, any, none; default error). With baseline (an earlier drift.json), it reports new and fixed findings, and new_only fails on new drift only. Returns pass, the failing findings and output_sha256 of the SARIF. The echo-of-docs ci command exits 1 when the gate fails.',
-      inputSchema: { type: 'object', anyOf: packOrConfig, properties: { ...props, fail_on: { enum: FAIL_ON, description: 'Severities that fail the gate (default error)' }, baseline: { ...str, description: 'Earlier drift.json to compare with' }, new_only: { type: 'boolean', description: 'Fail only on findings that are not in the baseline' }, out_dir: str } },
+      inputSchema: { type: 'object', properties: { ...props, fail_on: { enum: FAIL_ON, description: 'Severities that fail the gate (default error)' }, baseline: { ...str, description: 'Earlier drift.json to compare with' }, new_only: { type: 'boolean', description: 'Fail only on findings that are not in the baseline' }, out_dir: str } },
       handler: async (aIn, ctx) => {
         const { a, r } = load(aIn, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/echo');
         for (const f of r.findings) f.fingerprint = fingerprint(f);
@@ -89,7 +88,7 @@ export const manifest = defineManifest({
     {
       name: 'echo_draft_fixes', kind: 'write',
       description: 'Write fixed copies of docs into out_dir/proposed for mechanical fixes only: version pins that differ from package.json and tool names one or two letters off a single real tool. Capped by max_fixes (default 20) and max_per_file (default 10). Writes changes.md and proposal.json with before/after hashes; your docs are not touched, so there is nothing to roll back. Everything else is listed for a person. Needs a human yes unless opted in to Auto.',
-      inputSchema: { type: 'object', anyOf: packOrConfig, properties: { ...props, max_fixes: { type: 'integer', minimum: 1, maximum: 100 }, max_per_file: { type: 'integer', minimum: 1, maximum: 50 }, out_dir: str } },
+      inputSchema: { type: 'object', properties: { ...props, max_fixes: { type: 'integer', minimum: 1, maximum: 100 }, max_per_file: { type: 'integer', minimum: 1, maximum: 50 }, out_dir: str } },
       handler: async (a, ctx) => {
         const { a: aa, dir, r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/echo');
         const fx = applyFixes(dir, r.fixes, { maxFixes: a.max_fixes || 20, maxPerFile: a.max_per_file || 10 });

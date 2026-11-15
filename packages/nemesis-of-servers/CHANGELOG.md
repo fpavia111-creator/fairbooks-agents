@@ -16,6 +16,9 @@
 
 ### Changed
 - `nemesis_write_report` paths for source findings are now relative to `--root` (they were relative to the scanned folder), matching config and tool findings.
+- The whole-file checks (`NEM-WRITE-NO-APPROVAL`, `NEM-EXEC-NO-ALLOWLIST`) no longer run on docs and JSON/YAML files, where they only matched prose.
+- `NEM-EXEC-SHELL` no longer matches method calls such as `someRegex.exec(text)` or `db.exec(sql)`; it matches a bare `exec(...)`/`spawn(...)` and `child_process.exec(...)`.
+- Files are walked in sorted order so output is the same on every platform.
 - Tool input schemas reject unknown arguments.
 - Findings now include `fix`, `owasp` and `cwe` fields.
 

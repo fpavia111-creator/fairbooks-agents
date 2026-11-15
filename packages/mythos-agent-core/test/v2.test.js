@@ -208,3 +208,12 @@ test('scaffolder writes a complete agent package', async () => {
   for (const f of ['package.json', 'bin/iris-of-tests.js', 'src/manifest.js', 'evals/cases.json', 'test/logic.test.js', 'LICENSE']) assert.ok(existsSync(join(dir, 'iris-of-tests', f)), f);
   assert.equal(spawnSync(process.execPath, [new URL('../bin/mythos-new-agent.js', import.meta.url).pathname, 'Bad Name'], { encoding: 'utf8' }).status, 2);
 });
+
+test('MCP openWorldHint follows the tool openWorld flag', async () => {
+  const m = defineManifest({ name: 'ow-pack', version: '1', description: 'x', model: { provider: 'a', id: 'm-2025' },
+    tools: [{ name: 'net_read', kind: 'read', openWorld: true, description: 'n', handler: async () => ({}) }, { name: 'local_read', kind: 'read', description: 'l', handler: async () => ({}) }],
+    policy: { rules: [{ tool: '*', decision: 'allow' }] } });
+  const tools = (await createMcpHandler(new AgentRuntime(m, { audit: false }))({ jsonrpc: '2.0', id: 1, method: 'tools/list' })).result.tools;
+  assert.equal(tools.find((t) => t.name === 'net_read').annotations.openWorldHint, true);
+  assert.equal(tools.find((t) => t.name === 'local_read').annotations.openWorldHint, false);
+});

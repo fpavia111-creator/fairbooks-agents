@@ -174,7 +174,7 @@ export function diff(a, b, opts = {}) {
       const worst = mine.reduce((w, c) => (ORDER[c.risk] < ORDER[w.risk] ? c : w), { risk: 'low', why: '' });
       const highs = [...new Set(mine.filter((c) => c.risk === 'high' && change === 'added').map((c) => c.why))].slice(0, 3);
       const attrs = Object.keys((change === 'removed' ? a : b).data).filter((k) => resourceOf(k, change === 'removed' ? a.resources : b.resources) === r);
-      const fpVal = change === 'removed' ? undefined : Object.fromEntries(attrs.map((k) => [k, b.data[k]]));
+      const fpVal = change === 'removed' ? undefined : Object.fromEntries(attrs.map((k) => [k, isSecret(k, [b]) ? fingerprint(k, b.data[k], true) : b.data[k]]));
       if (change === 'removed') return { key: r, resource: r, change, before: `${attrs.length} attribute(s)`, after: undefined, risk: a.kind === 'terraform' ? 'high' : 'medium', why: a.kind === 'terraform' ? 'Resource gone from state: destroyed, renamed or moved out of Terraform.' : 'Object removed from the manifests.', after_fp: fingerprint(r, fpVal) };
       return { key: r, resource: r, change, before: undefined, after: `${attrs.length} attribute(s)`, risk: worst.risk === 'high' || ACCESS.test(r) ? 'high' : worst.risk, why: `Resource added.${ACCESS.test(r) ? ' It grants or controls access; confirm who created it.' : ''}${highs.length ? ' ' + highs.join(' ') : ''}`, after_fp: fingerprint(r, fpVal) };
     };

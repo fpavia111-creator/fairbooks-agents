@@ -27,7 +27,9 @@ export function definedTerms(text, { ignore = [] } = {}) {
     }
   });
   const title = (lines.find((l) => /^#\s/.test(l)) || '').replace(/^#\s+/, '');
-  const known = new Set([...STOP, ...ignore, ...title.split(/[^A-Za-z]+/).filter(Boolean)]);
+  const known = new Set([...STOP, ...ignore.flatMap((x) => String(x).split(/\s+/))]);
+  // The document's own title ("this Agreement") is not reported: single title words, or a phrase inside the title.
+  const titleWords = new Set(title.split(/[^A-Za-z]+/).filter(Boolean));
   const defined = [...defs.keys()].sort((a, b) => b.length - a.length);
   const uses = new Map(defined.map((t) => [t, 0])); const cand = new Map();
   lines.forEach((raw, i) => {
@@ -42,6 +44,7 @@ export function definedTerms(text, { ignore = [] } = {}) {
       const words = m[0].split(/\s+/).filter((w) => !known.has(w));
       if (!words.length) continue;
       const term = words.join(' ');
+      if (words.length === 1 ? titleWords.has(term) : title.includes(term)) continue;
       const c = cand.get(term) || { term, lines: [], multi: words.length > 1 }; if (!c.lines.includes(i + 1)) c.lines.push(i + 1); c.count = (c.count || 0) + 1; cand.set(term, c);
     }
   });

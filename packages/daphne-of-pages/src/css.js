@@ -103,12 +103,18 @@ export function specificity(parts) {
   for (const p of parts) { if (p.id) a++; b += p.classes.length + p.attrs.length; if (p.tag) c++; }
   return a * 10000 + b * 100 + c;
 }
-const classesOf = (el) => String(el.attrs.class || '').split(/\s+/).filter(Boolean);
+const NO_CLASSES = Object.freeze([]);
+const classCache = new WeakMap();
+function classesOf(el) {
+  const raw = el.attrs && el.attrs.class; if (!raw) return NO_CLASSES;
+  let c = classCache.get(el); if (!c) { c = String(raw).split(/\s+/).filter(Boolean); classCache.set(el, c); }
+  return c;
+}
 function matchCompound(el, c) {
   if (!el || !el.attrs || el.name === '#root') return false;
   if (c.tag && el.name !== c.tag) return false;
   if (c.id && el.attrs.id !== c.id) return false;
-  const cls = classesOf(el); if (c.classes.some((x) => !cls.includes(x))) return false;
+  if (c.classes.length) { const cls = classesOf(el); for (const x of c.classes) if (!cls.includes(x)) return false; }
   for (const at of c.attrs) {
     if (!(at.name in el.attrs)) return false;
     const v = el.attrs[at.name];
@@ -149,13 +155,43 @@ export function cssPath(el) {
 
 /** Cascade for one element: the winning declared value of each property among normal (non-pseudo) rules and the inline style. */
 export function cascade(el, rules) {
+  // Precedence: !important, then inline style, then specificity, then source order.
   const won = {};
-  const apply = (decls, weight) => { for (const [k, v] of Object.entries(decls)) { const imp = /!important\s*$/i.test(v); const w = weight + (imp ? 1e9 : 0); if (!won[k] || w >= won[k].w) won[k] = { v: v.replace(/\s*!important\s*$/i, ''), w }; } };
-  for (const r of rules) { if (r.pseudo || /print/.test(r.media)) continue; const parts = r.parts; if (parts && matches(el, parts)) apply(r.decls, specificity(parts) * 1e4 + r.order); }
-  if (el.attrs && el.attrs.style) apply(parseDecls(el.attrs.style), 9e8);
+  const beats = (a, b) => { for (let i = 0; i < 4; i++) if (a[i] !== b[i]) return a[i] > b[i]; return true; };
+  const apply = (decls, inline, spec, order) => {
+    for (const [k, v] of Object.entries(decls)) {
+      const w = [/!important\s*$/i.test(v) ? 1 : 0, inline, spec, order];
+      if (!won[k] || beats(w, won[k].w)) won[k] = { v: v.replace(/\s*!important\s*$/i, ''), w };
+    }
+  };
+  for (const r of candidatesFor(el, rules)) { if (r.pseudo || /print/.test(r.media)) continue; if (r.parts && matches(el, r.parts)) apply(r.decls, 0, r.spec, r.order); }
+  if (el.attrs && el.attrs.style) apply(parseDecls(el.attrs.style), 1, 0, 0);
   return Object.fromEntries(Object.entries(won).map(([k, x]) => [k, x.v]));
 }
-export function prepareRules(rules) { for (const r of rules) r.parts = r.pseudo ? null : parseSelector(r.selector); return rules; }
+/**
+ * Parse selectors once and index rules by the key of their rightmost compound (id, first class, tag),
+ * so an element is only tested against rules that could match it.
+ */
+export function prepareRules(rules) {
+  const idx = { id: new Map(), cls: new Map(), tag: new Map(), any: [] };
+  const put = (m, k, r) => { if (!m.has(k)) m.set(k, []); m.get(k).push(r); };
+  for (const r of rules) {
+    r.parts = r.pseudo ? null : parseSelector(r.selector);
+    if (!r.parts) continue;
+    r.spec = specificity(r.parts);
+    const last = r.parts[r.parts.length - 1];
+    if (last.id) put(idx.id, last.id, r); else if (last.classes.length) put(idx.cls, last.classes[0], r); else if (last.tag) put(idx.tag, last.tag, r); else idx.any.push(r);
+  }
+  Object.defineProperty(rules, 'index', { value: idx, enumerable: false });
+  return rules;
+}
+function candidatesFor(el, rules) {
+  const idx = rules.index; if (!idx) return rules;
+  const out = [...idx.any, ...(idx.tag.get(el.name) || [])];
+  if (el.attrs && el.attrs.id) out.push(...(idx.id.get(el.attrs.id) || []));
+  for (const c of classesOf(el)) out.push(...(idx.cls.get(c) || []));
+  return out;
+}
 
 const UA_SIZE = { h1: 32, h2: 24, h3: 18.72, h4: 16, h5: 13.28, h6: 10.72 };
 const BOLD_TAGS = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'strong', 'th']);

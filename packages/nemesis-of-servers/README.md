@@ -13,7 +13,7 @@ Nemesis is static and offline. It reads files you give it under `--root`; it nev
 - dumping `process.env`, credential paths (`~/.ssh`, `~/.aws`, `.npmrc`), hard-coded secrets (values masked);
 - prompt-injection text and invisible Unicode in tool descriptions and docs;
 - outbound requests, plain `http://`, TLS checks turned off, servers bound to `0.0.0.0`, `Access-Control-Allow-Origin: *`, file writes without a root check or approval step;
-- **data flows (taint-style, one file at a time):** environment or credential file → network call, incoming `Authorization` header → upstream call (token passthrough), tool input → exec/eval, tool input → file path, tool input → network call (SSRF). Each finding shows the path, e.g. `line 5 apiKey = environment -> line 6 payload = ... -> line 9 sink: fetch`. Calls to guards such as `safePath(...)`/`inside(...)` and allowlist checks (`ALLOWLIST.includes(cmd)`) are respected;
+- **data flows (taint-style, one file at a time):** a secret (key-like environment variable, the whole environment, or a credential file) → body or URL of a network call; incoming `Authorization` header → upstream call (token passthrough); tool input → exec/eval; tool input → file path; tool input → the URL of a network call (SSRF). Each finding shows the path, e.g. `line 5 apiKey = secret from the environment -> line 6 payload = ... -> line 9 sink: fetch`. Ordinary API-client code is left alone: a secret sent as an auth header, config such as `BASE_URL` or `PORT` from the environment, tool input placed after a fixed host or in a request body. Calls to guards such as `safePath(...)`/`inside(...)` and allowlist checks (`ALLOWLIST.includes(cmd)`) are respected;
 - **supply chain:** install scripts, unpinned (`*`, `latest`) and git/URL dependencies, dependencies with no lockfile, lockfile entries resolved outside the npm registry or without an integrity hash, unpinned Python requirements, and versions that match an **offline advisory list** (a small bundled snapshot plus any list you supply).
 
 **Saved tool definitions** (the JSON of a `tools/list` result, which you capture yourself, for example with the MCP Inspector CLI): hidden instructions (`<IMPORTANT>`, "do not tell the user"), coercive wording, invisible Unicode and whitespace padding, credential-file lures, requests for chat history or file contents, **tool shadowing** (one server's text changing how another server's tool behaves, e.g. adding a BCC), name collisions across servers, look-alike (non-ASCII) names, free-form `command`/`code`/`sql` parameters, and `readOnlyHint: true` on tools named delete/send/run.
@@ -142,7 +142,7 @@ Every rule maps to the [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-
 | `NEM-UNSAFE-DESERIALIZE` | high | Unsafe deserialization | MCP05 | CWE-502 |
 | `NEM-SQL-CONCAT` | high | SQL built from a string template | MCP05 | CWE-89 |
 | `NEM-TOKEN-PASSTHROUGH` | high | Forwards the client token to another service | MCP01, MCP07 | CWE-441 |
-| `NEM-FLOW-ENV-TO-NET` | high | Secret or environment value flows into a network call | MCP01, MCP10 | CWE-201 |
+| `NEM-FLOW-ENV-TO-NET` | high | Secret flows into the body or URL of a network call | MCP01, MCP10 | CWE-201 |
 | `NEM-FLOW-INPUT-TO-EXEC` | high | Tool input flows into command or code execution | MCP05 | CWE-78 |
 | `NEM-FLOW-INPUT-TO-NET` | medium | Tool input flows into a network call (SSRF) | MCP10 | CWE-918 |
 | `NEM-FLOW-INPUT-TO-PATH` | high | Tool input flows into a file path without a root check | MCP02 | CWE-22 |

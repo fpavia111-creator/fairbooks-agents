@@ -13,10 +13,9 @@ const res = recordsResolver(JSON.parse(readFileSync(join(fixtures, 'records.json
 const tmpRoot = () => { const r = mkdtempSync(join(tmpdir(), 'aeolus-v2-')); cpSync(fixtures, r, { recursive: true }); return r; };
 const checks = (r) => r.findings.map((f) => f.check);
 const msg = (n) => readFileSync(join(fixtures, 'messages', n), 'utf8');
-// Every test here must run offline: any attempt to reach a resolver fails loudly.
-const realFetch = globalThis.fetch;
-globalThis.fetch = async () => { throw new Error('network used in a test'); };
-process.on('exit', () => { globalThis.fetch = realFetch; });
+// Every test here must run offline: fetch is replaced by a counter, and the last test asserts it never ran.
+let fetchCalls = 0;
+globalThis.fetch = async () => { fetchCalls++; throw new Error('network used in a test'); };
 
 test('BIMI: syntax, https SVG logo, certificate, needs DMARC enforcement', async () => {
   const b = await audit('brand.example.net', res);
@@ -147,4 +146,9 @@ test('MCP prompt walks the workflow and marks the human click', async () => {
   const text = g.result.messages[0].content.text;
   for (const t of ['aeolus_check_headers', 'aeolus_audit', 'aeolus_dmarc_reports', 'aeolus_plan_dmarc_rollout', 'aeolus_request_dns_change', 'one click']) assert.ok(text.includes(t), t);
   assert.match(text, /example\.com/); assert.match(text, /\[start_date\]/);
+});
+
+test('no test in this file made a network call; tools that can do live lookups are marked open-world', () => {
+  assert.equal(fetchCalls, 0);
+  assert.deepEqual(manifest.tools.filter((t) => t.openWorld).map((t) => t.name).sort(), ['aeolus_audit', 'aeolus_draft_records', 'aeolus_plan_dmarc_rollout', 'aeolus_write_report']);
 });

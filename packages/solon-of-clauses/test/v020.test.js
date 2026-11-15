@@ -21,7 +21,9 @@ test('DOCX input: the .docx fixture gives the same findings and citations as the
   assert.deepEqual(dx.source, { format: 'docx', paragraphs: 43, tracked_insertions: 0, tracked_deletions: 0, first_tracked_paragraph: null, comments: 0, auto_numbered: 0 });
   const a = checkContract(md.text, pb, { file: 'x' }); const b = checkContract(dx.text, pb, { file: 'x', source: dx.source });
   assert.deepEqual(strip(b), strip(a));
-  assert.deepEqual(b.clauses.find((c) => c.id === 'payment_terms').citations[0], { section: '3 Fees and Payment', line: 15, quote: 'Customer will pay each undisputed invoice within sixty (60) days of receipt. Late amounts bear interest at 1% per month.' });
+  const pay = b.clauses.find((c) => c.id === 'payment_terms');
+  assert.deepEqual(pay.citations.map((x) => [x.section, x.line]), [['3 Fees and Payment', 13], ['3 Fees and Payment', 15]]);
+  assert.equal(pay.citations[1].quote, 'Customer will pay each undisputed invoice within sixty (60) days of receipt. Late amounts bear interest at 1% per month.');
 });
 
 test('DOCX: tracked changes read as accepted and flagged, comments counted, auto-numbering flagged, bad files refused', () => {
@@ -114,7 +116,7 @@ test('e-signing stays blocked and sending stays one-click after a named reviewer
 test('README still says near the top: not legal advice, does not replace a lawyer, no accuracy guarantee', () => {
   const top = readFileSync(join(pkgDir, 'README.md'), 'utf8').split('\n').slice(0, 8).join('\n');
   assert.match(top, /not legal advice/i); assert.match(top, /does not replace a lawyer/i); assert.match(top, /no guarantee that its .* accurate/i);
-  assert.doesNotMatch(readFileSync(join(pkgDir, 'README.md'), 'utf8'), /\b(?:compliant|certified|guarantees? (?:that|accuracy))\b/i);
+  assert.doesNotMatch(readFileSync(join(pkgDir, 'README.md'), 'utf8'), /\b(?:compliant|certified|guaranteed|legally sound|lawyer-approved)\b/i);
 });
 
 test('MCP prompt walks the workflow, says not legal advice and marks the human click', async () => {

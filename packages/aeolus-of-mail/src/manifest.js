@@ -55,13 +55,13 @@ export const manifest = defineManifest({
   caps: { maxSteps: 60, maxSpendUsd: 0 },
   tools: [
     {
-      name: 'aeolus_audit', kind: 'read',
+      name: 'aeolus_audit', kind: 'read', openWorld: true,
       description: 'Look up and check the domain\'s mail-authentication records. Each finding has a severity, the record it is about, what it means and the RFC. Read-only; with live lookups only domain names go to the public resolver.',
       inputSchema: { type: 'object', required: ['domain'], properties: props },
       handler: async (a, ctx) => { const r = await run(a, ctx); return { summary: `${r.domain}: ${r.issues} issue(s) (${r.by_severity.error || 0} error, ${r.by_severity.warning || 0} warning, ${r.by_severity.advisory || 0} advisory); SPF lookups ${r.spf_lookups ?? 'n/a'} of 10; ${r.queries} DNS queries via ${source(a)}. A DNS check, not a deliverability guarantee.`, ...r }; },
     },
     {
-      name: 'aeolus_write_report', kind: 'report',
+      name: 'aeolus_write_report', kind: 'report', openWorld: true,
       description: 'Write mail-dns-audit.md, a self-contained mail-dns-audit.html (no scripts) and findings.csv (blank owner and status columns) into out_dir (default mythos-out/aeolus). With reports, also totals the DMARC aggregate reports into the report and dmarc-sources.csv. Returns output_sha256 of the Markdown report, which is written into the audit log.',
       inputSchema: { type: 'object', required: ['domain'], properties: { ...props, reports: reportsProp, out_dir: str } },
       handler: async (a, ctx) => {
@@ -92,7 +92,7 @@ export const manifest = defineManifest({
       },
     },
     {
-      name: 'aeolus_plan_dmarc_rollout', kind: 'write', title: 'Plan a staged DMARC rollout',
+      name: 'aeolus_plan_dmarc_rollout', kind: 'write', title: 'Plan a staged DMARC rollout', openWorld: true,
       description: 'Write a staged DMARC rollout plan into out_dir: dmarc-rollout.md, dmarc-rollout.json, dmarc-rollout.ics (review dates with reminders) and dmarc-next-stage.json, a proposal for the next stage only in the same format aeolus_request_dns_change takes. Stages go none -> quarantine -> reject one step at a time with earliest dates; the plan never skips straight to reject. The next enforcing stage carries a [TO CONFIRM] marker unless the DMARC reports you pass show the readiness threshold is met, so the one-click request is refused until a person clears it. DNS is not changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['domain', 'start_date'], properties: { ...props, start_date: { type: 'string', format: 'date', description: 'Date of the first stage, YYYY-MM-DD' }, reports: reportsProp, pass_threshold: thresholdProp, config: { ...str, description: 'Optional rollout config JSON (stages, pass_threshold, reminder_days, owner); checked against the dmarc_rollout schema' }, rua: { ...str, description: 'Mailbox for DMARC reports if the record has none' }, out_dir: str } },
       handler: async (a, ctx) => {
@@ -116,7 +116,7 @@ export const manifest = defineManifest({
       },
     },
     {
-      name: 'aeolus_draft_records', kind: 'write',
+      name: 'aeolus_draft_records', kind: 'write', openWorld: true,
       description: 'Pre-stage DNS record changes into out_dir: zone-change.md (current vs proposed) and proposed-records.json with its hash. Only safe, mechanical proposals: add SPF from the senders you list, merge duplicate SPF, fix the all term, add DMARC at p=none with reports, add TLS-RPT. Never creates DKIM keys or an enforcing DMARC policy; those are listed for a person. Unknown values are left as [TO CONFIRM] markers. DNS is not changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['domain'], properties: { ...props, senders: { type: 'array', items: str, description: 'SPF terms for services that send as you, e.g. ["include:_spf.google.com"]' }, rua: { ...str, description: 'Mailbox for DMARC/TLS reports, e.g. dmarc@example.com' }, out_dir: str } },
       handler: async (a, ctx) => {

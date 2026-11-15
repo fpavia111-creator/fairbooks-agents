@@ -66,7 +66,7 @@ export function readYarn(projectDir, pj, opts = {}) {
   for (const raw of text.split(/\r?\n/)) {
     if (!raw.trim() || raw.trimStart().startsWith('#')) continue;
     const indent = raw.length - raw.trimStart().length; const line = raw.trim();
-    if (indent === 0) { cur = { specs: line.replace(/:$/, '').split(/,\s*/).map(unq), fields: {}, deps: {} }; blocks.push(cur); sub = null; continue; }
+    if (indent === 0) { cur = { specs: line.replace(/:$/, '').split(/,\s*/).map((x) => x.replace(/^["']|["']$/g, '')), fields: {}, deps: {} }; blocks.push(cur); sub = null; continue; }
     if (!cur) continue;
     if (indent === 2) { const m = /^("?[^\s":]+"?):?\s*(.*)$/.exec(line); if (!m) continue; const k = unq(m[1]); if (!m[2]) { sub = k; continue; } sub = null; cur.fields[k] = unq(m[2]); continue; }
     if (sub === 'dependencies' || sub === 'optionalDependencies') { const m = /^("?[^\s"]+?"?):?\s+(.+)$/.exec(line); if (m) cur.deps[unq(m[1])] = unq(m[2]); }
@@ -110,7 +110,7 @@ export function parseMetadata(text) {
   }
   return fields;
 }
-const CLASSIFIERS = { 'mit license': 'MIT', 'apache software license': 'Apache-2.0', 'isc license (iscl)': 'ISC', 'bsd license': 'BSD-UNSPECIFIED', 'mozilla public license 2.0 (mpl 2.0)': 'MPL-2.0', 'gnu general public license v2 (gplv2)': 'GPL-2.0-only', 'gnu general public license v3 (gplv3)': 'GPL-3.0-only', 'gnu general public license v2 or later (gplv2+)': 'GPL-2.0-or-later', 'gnu general public license v3 or later (gplv3+)': 'GPL-3.0-or-later', 'gnu lesser general public license v2 (lgplv2)': 'LGPL-2.0-only', 'gnu lesser general public license v2 or later (lgplv2+)': 'LGPL-2.0-or-later', 'gnu lesser general public license v3 (lgplv3)': 'LGPL-3.0-only', 'gnu lesser general public license v3 or later (lgplv3+)': 'LGPL-3.0-or-later', 'gnu affero general public license v3': 'AGPL-3.0-only', 'gnu affero general public license v3 or later (agplv3+)': 'AGPL-3.0-or-later', 'the unlicense (unlicense)': 'Unlicense', 'public domain': 'LicenseRef-Public-Domain', 'python software foundation license': 'PSF-2.0', 'zero-clause bsd (0bsd)': '0BSD', 'creative commons attribution 4.0 international (cc by 4.0)': 'CC-BY-4.0' };
+const CLASSIFIERS = { 'mit license': 'MIT', 'apache software license': 'Apache-2.0', 'isc license (iscl)': 'ISC', 'bsd license': 'BSD-UNSPECIFIED', 'mozilla public license 2.0 (mpl 2.0)': 'MPL-2.0', 'gnu general public license v2 (gplv2)': 'GPL-2.0-only', 'gnu general public license v3 (gplv3)': 'GPL-3.0-only', 'gnu general public license v2 or later (gplv2+)': 'GPL-2.0-or-later', 'gnu general public license v3 or later (gplv3+)': 'GPL-3.0-or-later', 'gnu lesser general public license v2 (lgplv2)': 'LGPL-2.0-only', 'gnu lesser general public license v2 or later (lgplv2+)': 'LGPL-2.0-or-later', 'gnu lesser general public license v3 (lgplv3)': 'LGPL-3.0-only', 'gnu lesser general public license v3 or later (lgplv3+)': 'LGPL-3.0-or-later', 'gnu affero general public license v3': 'AGPL-3.0-only', 'gnu affero general public license v3 or later (agplv3+)': 'AGPL-3.0-or-later', 'the unlicense (unlicense)': 'Unlicense', 'public domain': 'LicenseRef-Public-Domain', 'python software foundation license': 'PSF-2.0', 'zero-clause bsd (0bsd)': '0BSD', 'creative commons attribution 4.0 international (cc by 4.0)': 'CC-BY-4.0', 'other/proprietary license': 'UNLICENSED' };
 /** License from a dist-info METADATA: License-Expression, then License (if short), then classifiers. */
 export function pyLicense(fields) {
   if (fields['license-expression']?.[0]) return { value: fields['license-expression'][0].trim(), via: 'License-Expression' };
@@ -129,7 +129,7 @@ function findSitePackages(projectDir, opts) {
   return cands.find((d) => existsSync(d) && statSync(d).isDirectory()) || null;
 }
 export function readPython(projectDir, opts = {}) {
-  let lockFile = ['poetry.lock', 'uv.lock', 'requirements.txt'].find((f) => existsSync(join(projectDir, f)));
+  const lockFile = ['poetry.lock', 'uv.lock', 'requirements.txt'].find((f) => existsSync(join(projectDir, f)));
   const text = readFileSync(join(projectDir, lockFile), 'utf8'); const pkgs = [];
   if (lockFile === 'requirements.txt') {
     for (const raw of text.split(/\r?\n/)) {

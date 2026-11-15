@@ -47,7 +47,7 @@ function loadAll(a, ctx) {
 const load = (a, ctx) => loadAll(a, ctx).r;
 const loadText = (p, ctx) => readContractFile(ctx.path(p)).text;
 const termLines = (r) => { const t = r.defined_terms; const L = [...t.undefined.map((x) => `- Used but not defined: "${x.term}" (line ${x.lines.join(', ')})`), ...t.unused.map((x) => `- Defined but not used: "${x.term}" (line ${x.line})`), ...t.duplicates.map((x) => `- Defined more than once: "${x.term}" (lines ${x.lines.join(', ')})`)]; return L.length ? L : ['- none found']; };
-const line = (r) => `${r.gaps} gap(s) against ${r.playbook_source}: ${r.counts.missing || 0} missing, ${r.counts.prohibited_present || 0} prohibited present, ${r.counts.needs_attention || 0} need attention, ${r.counts.present || 0} present; ${r.document_findings.length} document finding(s). Not legal advice.`;
+const line = (r) => `${r.gaps} gap(s) against ${r.playbook_source}: ${r.counts.missing || 0} missing, ${r.counts.prohibited_present || 0} prohibited present, ${r.counts.needs_attention || 0} need attention, ${r.counts.present || 0} present; ${r.document_findings.length} document finding(s); defined terms: ${r.defined_terms.undefined.length} used but not defined, ${r.defined_terms.unused.length} defined but unused. Playbook version ${r.playbook_version || 'not stated'}. Not legal advice.`;
 
 export const manifest = defineManifest({
   name: 'solon-of-clauses',
@@ -58,7 +58,7 @@ export const manifest = defineManifest({
   tools: [
     {
       name: 'solon_check', kind: 'read',
-      description: 'Check the contract against the playbook. Every clause gets a status with citations (section, line, quote) and the playbook\'s own note. Text matching only; no interpretation and no network.',
+      description: 'Check the contract (.docx, .txt or .md) against the playbook. Every clause gets a status with citations (section, line, quote) and the playbook\'s own note; plus document checks and defined terms (capitalised terms used but not defined, defined but unused, defined twice, with lines). For a .docx, lines are paragraph numbers, tracked changes are read as accepted and flagged, and comments are counted but not read. Text matching only; no interpretation and no network.',
       inputSchema: { type: 'object', required: ['contract', 'playbook'], properties: props },
       handler: async (a, ctx) => { const r = load(a, ctx); return { summary: line(r), ...r }; },
     },

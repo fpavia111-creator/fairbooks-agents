@@ -74,7 +74,7 @@ export class AgentRuntime {
   listTools() {
     return this.manifest.tools.map((t) => {
       const d = this.policy.decide(t.name, { mode: this.mode, autoActions: this.autoActions });
-      return { name: t.name, kind: t.kind, category: t.category || null, decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema, title: t.title || null };
+      return { name: t.name, kind: t.kind, category: t.category || null, decision: d.decision, reason: d.reason, description: t.description, inputSchema: t.inputSchema, title: t.title || null, openWorld: !!t.openWorld };
     });
   }
 
