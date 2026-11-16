@@ -206,7 +206,7 @@ Still 0.2.0 and unpublished. The question was whether the agents work for the la
 
 **Pages people read, in their language.** `--lang de|fr|es|pt|it|ja|zh|ko` (or `MYTHOS_LANG`) writes the approvals page, the Olympus readiness report and the Ladon recertification summary and evidence page in that language. Results, codes, JSON and CSV stay in English so scripts and audits read the same everywhere; the evidence record and its hash do not change with the language. The root README is in all nine languages.
 
-**Verification.** TESTS_LINE
+**Verification.** Tests: **746 pass, 0 fail** on each of Node 20.19.5, 22.23.4 and 24.11.0 (704 in ver 5). Evals: **441 of 441** on each (434 in ver 5; new cases read a Shift_JIS trial balance, a Shift_JIS access export with its roster, a Japanese and a Mexican vendor master, a German MT940 statement, and dispute reasons in Japanese and German). `npm run hostile:args`: 0 findings over 21,218 calls with 3,161 planted values. `npm run release:check:offline`: every step passes; the npm name check needs the network and was skipped. The Node 20 run caught one real bug, now fixed: Node 20 decodes Windows-1252 bytes 0x80-0x9F as control characters, so German and French files lost their euro signs.
 
 **Honest limits.** Every translation was written by Claude and has not been reviewed by a native speaker. The word lists (dispute reasons, consent values, status words, receipt labels) are short and will miss phrasings; a value that is not recognised is left as unknown, never guessed. Nothing in this pass makes any claim about a country's laws, tax rules, consent rules or filing formats.
 
