@@ -331,6 +331,26 @@
           "no fact MEM-0123456789ab"
         ]
       }
+    },
+    {
+      "id": "japanese-shift-jis-trial-balance",
+      "tool": "olympus_tie_out_balances",
+      "args": {
+        "source": "fixtures/intl/ja-source-tb.csv",
+        "target": "fixtures/intl/ja-target-tb.csv"
+      },
+      "expect": {
+        "status": "executed",
+        "contains": [
+          "売掛金",
+          "Shift_JIS"
+        ],
+        "equals": {
+          "result.accounts": 3,
+          "result.not_tied.0.account": "売掛金",
+          "result.not_tied.0.difference": 100
+        }
+      }
     }
   ]
 }

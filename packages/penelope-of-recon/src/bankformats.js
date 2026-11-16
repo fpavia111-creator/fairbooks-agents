@@ -1,5 +1,5 @@
 // Small, zero-dependency readers for bank statement files: ISO 20022 CAMT.053 (XML),
-// BAI2 and OFX (1.x SGML or 2.x XML). Each returns rows with date, description,
+// SWIFT MT940 (common in Germany and across Europe), BAI2 and OFX (1.x SGML or 2.x XML). Each returns rows with date, description,
 // reference, amount (deposits positive) plus opening/closing balances when the file has them.
 // They read the common fields only; they are not full implementations of these standards.
 
@@ -87,10 +87,71 @@ export function parseOfx(text) {
   return { format: 'ofx', account_hint: mask(leaf(text, 'ACCTID')), currency: leaf(text, 'CURDEF'), opening_balance: null, closing_balance: lb && leaf(lb[1], 'BALAMT') !== '' ? round2(Number(leaf(lb[1], 'BALAMT'))) : null, rows };
 }
 
+/**
+ * SWIFT MT940 customer statement (.sta, .mt940), as German and other European banks
+ * send it. Reads :25: (account), :60F:/:60M: and :62F:/:62M: (balances), :61: (lines)
+ * and the :86: text after each line, including the German structured form
+ * (?20-?29 purpose, ?32-?33 name). Amounts use a decimal comma.
+ */
+export function parseMt940(text) {
+  const t = String(text ?? '').replace(/\r\n?/g, '\n');
+  if (!/^:20:/m.test(t) || !/^:(?:60[FM]|61):/m.test(t)) throw new Error('not an MT940 file (no :20: and :60F:/:61: fields)');
+  const fields = [];
+  for (const line of t.split('\n')) {
+    const m = /^:(\d{2}[A-Z]?):(.*)$/.exec(line);
+    if (m) fields.push({ tag: m[1], value: m[2] });
+    else if (fields.length && line.trim() && !/^[-{}]|^\$/.test(line.trim())) fields[fields.length - 1].value += '\n' + line;
+  }
+  const num = (s) => Number(String(s).replace(',', '.'));
+  const bal = (v) => { const m = /^([CD])(\d{6})([A-Z]{3})([\d,]+)/.exec(v.trim()); return m ? { amount: round2((m[1] === 'D' ? -1 : 1) * num(m[4])), currency: m[3] } : null; };
+  const rows = []; let opening = null, closing = null, currency = '', account = '';
+  for (let i = 0; i < fields.length; i++) {
+    const f = fields[i];
+    if (f.tag === '25') account = account || f.value.trim();
+    else if (f.tag === '60F' || f.tag === '60M') { const b = bal(f.value); if (b && opening === null) { opening = b.amount; currency = currency || b.currency; } }
+    else if (f.tag === '62F' || f.tag === '62M') { const b = bal(f.value); if (b) { closing = b.amount; currency = currency || b.currency; } }
+    else if (f.tag === '61') {
+      const m = /^(\d{6})(\d{4})?(RC|RD|C|D)([A-Z])?(\d+,\d*)([NSF][A-Z0-9]{3})([^\n]*)/.exec(f.value);
+      if (!m) throw new Error(`MT940: bad :61: line "${f.value.slice(0, 40)}"`);
+      // RC (reversal of a credit) takes money out; RD (reversal of a debit) puts it back.
+      const sign = m[3] === 'D' || m[3] === 'RC' ? -1 : 1;
+      const value = yymmdd(m[1]);
+      let date = value;
+      if (m[2] && value) { let y = Number(value.slice(0, 4)); const vm = Number(value.slice(5, 7)), em = Number(m[2].slice(0, 2)); if (em - vm > 6) y--; else if (vm - em > 6) y++; date = `${y}-${m[2].slice(0, 2)}-${m[2].slice(2, 4)}`; }
+      const [custRef = '', bankRef = ''] = m[7].split('//');
+      const next = fields[i + 1];
+      const info = mt86(next && next.tag === '86' ? next.value : '');
+      rows.push({ date, value_date: value, description: info.text, reference: custRef.trim().replace(/^NONREF$/i, '') || info.eref, bank_reference: bankRef.trim(), amount: round2(sign * num(m[5])), type_code: m[6] });
+    }
+  }
+  if (!rows.length && opening === null) throw new Error('MT940: no statement lines or balances');
+  return { format: 'mt940', account_hint: mask(account), currency, opening_balance: opening, closing_balance: closing, rows };
+}
+/**
+ * :86: text. The German structured form "166?00SEPA-UEBERWEISUNG?20...?32Name" becomes
+ * "Name: purpose"; SEPA keys in the purpose (EREF+, SVWZ+...) are split out, so the
+ * end-to-end reference (EREF+) can serve as the line's reference.
+ */
+function mt86(v) {
+  const s = String(v || '').replace(/\n/g, '');
+  if (!/^\d{3}\?/.test(s)) return { text: String(v || '').replace(/\s*\n\s*/g, ' ').trim(), eref: '' };
+  const parts = {}; for (const m of s.matchAll(/\?(\d{2})([^?]*)/g)) parts[m[1]] = (parts[m[1]] || '') + m[2];
+  let purpose = Object.keys(parts).filter((k) => (k >= '20' && k <= '29') || (k >= '60' && k <= '63')).sort().map((k) => parts[k]).join('').trim();
+  const keys = {}; const SEPA = /(EREF|KREF|MREF|CRED|DEBT|SVWZ|ABWA|ABWE|IBAN|BIC|COAM|OAMT)\+/g;
+  if (SEPA.test(purpose)) {
+    const bits = purpose.split(/(EREF|KREF|MREF|CRED|DEBT|SVWZ|ABWA|ABWE|IBAN|BIC|COAM|OAMT)\+/);
+    for (let i = 1; i + 1 < bits.length; i += 2) keys[bits[i]] = bits[i + 1].trim();
+    purpose = keys.SVWZ || (bits[0] || '').trim();
+  }
+  const name = [parts['32'], parts['33']].filter(Boolean).join('').trim();
+  const eref = keys.EREF && !/^NOTPROVIDED$/i.test(keys.EREF) ? keys.EREF : '';
+  return { text: [name, purpose || parts['00'] || ''].filter(Boolean).join(': ').replace(/\s+/g, ' ').trim(), eref };
+}
+
 /** Show only the last 4 characters of an account identifier. */
 function mask(acct) { const s = String(acct || ''); return s ? (s.length > 4 ? '••••' + s.slice(-4) : '••••') : ''; }
 
-export const BANK_FORMATS = ['csv', 'tsv', 'xlsx', 'json', 'camt053', 'bai2', 'ofx'];
+export const BANK_FORMATS = ['csv', 'tsv', 'xlsx', 'json', 'camt053', 'mt940', 'bai2', 'ofx'];
 /** Formats read as a table of rows (through the core reader and the export profiles). */
 export const TABLE_FORMATS = ['csv', 'tsv', 'xlsx', 'json'];
 /** Pick a format from the extension, then from the content. */
@@ -98,6 +159,7 @@ export function detectFormat(file, text) {
   const ext = extname(file).toLowerCase();
   if (ext === '.ofx' || ext === '.qfx') return 'ofx';
   if (ext === '.bai' || ext === '.bai2') return 'bai2';
+  if (ext === '.sta' || ext === '.mt940' || ext === '.940') return 'mt940';
   if (ext === '.csv') return 'csv';
   if (ext === '.tsv' || ext === '.tab') return 'tsv';
   if (ext === '.xlsx' || ext === '.xlsm') return 'xlsx';
@@ -106,11 +168,13 @@ export function detectFormat(file, text) {
   if (/BkToCstmrStmt|camt\.053/.test(head)) return 'camt053';
   if (/<OFX>|OFXHEADER/i.test(head)) return 'ofx';
   if (/^\s*01,/.test(head)) return 'bai2';
+  if (/^:20:/m.test(head) && /^:(?:60[FM]|61):/m.test(head)) return 'mt940';
   return null;
 }
 export function parseBankText(format, text) {
   if (format === 'camt053') return parseCamt053(text);
   if (format === 'bai2') return parseBai2(text);
+  if (format === 'mt940') return parseMt940(text);
   if (format === 'ofx') return parseOfx(text);
   throw new Error(`no text parser for ${format}`);
 }

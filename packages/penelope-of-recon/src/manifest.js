@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, decodeText } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { normBank, normGL, reconcile, workpaperCsv, summaryMarkdown, reconciliationHtml } from './recon.js';
@@ -11,8 +11,8 @@ import { SOURCES } from './sources.js';
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }, num = { type: 'number' };
 const nonEmpty = { type: 'string', minLength: 1 };
-const FORMAT = { type: 'string', enum: ['auto', 'csv', 'tsv', 'xlsx', 'json', 'camt053', 'bai2', 'ofx'], description: 'Bank file format. auto (default) uses the extension, then the content.' };
-const bankArg = { ...str, description: 'Bank statement: CSV, TSV, Excel or JSON (date, description, reference, amount or debit/credit; several bank download layouts are recognised, see "sources"), CAMT.053 XML, BAI2 (.bai) or OFX/QFX' };
+const FORMAT = { type: 'string', enum: ['auto', 'csv', 'tsv', 'xlsx', 'json', 'camt053', 'mt940', 'bai2', 'ofx'], description: 'Bank file format. auto (default) uses the extension, then the content.' };
+const bankArg = { ...str, description: 'Bank statement: CSV, TSV, Excel or JSON (date, description, reference, amount or debit/credit; several bank download layouts are recognised, see "sources"), CAMT.053 XML, MT940 (.sta), BAI2 (.bai) or OFX/QFX' };
 const glArg = { ...str, description: 'GL cash-account detail CSV, TSV, Excel or JSON: date, memo, reference, amount (or debit/credit). NetSuite, QuickBooks Online and Xero report layouts are recognised.' };
 const rulesArg = { ...str, description: 'Optional accepted match-rules JSON (schema "match_rules", written by penelope_accept_rule). Rules apply only when this is passed.' };
 const files = { bank: bankArg, gl: glArg, bank_format: FORMAT, bank_balance: num, gl_balance: num, date_window: { type: 'number', minimum: 0 }, amount_tolerance: { type: 'number', minimum: 0 }, max_group: { type: 'integer', minimum: 2, maximum: 4 }, rules: rulesArg };
@@ -22,11 +22,13 @@ const DEFAULT_OUT = 'mythos-out/penelope';
 export function readStatement(ctx, path, format = 'auto') {
   const abs = ctx.path(path);
   let fmt = format && format !== 'auto' ? format : detectFormat(abs, ''); let text = null;
-  if (!fmt) { text = readFileSync(abs, 'utf8'); fmt = detectFormat(abs, text); }
-  if (!fmt) throw new Error(`${path}: cannot tell the bank file format; pass bank_format (csv, tsv, xlsx, json, camt053, bai2, ofx)`);
+  // Text formats are decoded like any other file: MT940 and OFX are often Windows-1252.
+  const readText = () => decodeText(readFileSync(abs), { lang: ctx.lang }).text;
+  if (!fmt) { text = readText(); fmt = detectFormat(abs, text); }
+  if (!fmt) throw new Error(`${path}: cannot tell the bank file format; pass bank_format (csv, tsv, xlsx, json, camt053, mt940, bai2, ofx)`);
   // Table files go through the core reader, so bank download layouts are recognised and mapped.
   if (TABLE_FORMATS.includes(fmt)) return { format: fmt, opening_balance: null, closing_balance: null, currency: '', account_hint: '', rows: normBank(ctx.records(path, 'bank')) };
-  const p = parseBankText(fmt, text ?? readFileSync(abs, 'utf8'));
+  const p = parseBankText(fmt, text ?? readText());
   return { ...p, rows: normBank(p.rows) };
 }
 const loadRules = (a, ctx) => (a.rules ? ctx.readJson(a.rules, 'match_rules').rules : []);

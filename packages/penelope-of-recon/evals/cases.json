@@ -309,6 +309,24 @@
           "\"output_sha256\":\"[0-9a-f]{64}\""
         ]
       }
+    },
+    {
+      "id": "german-mt940-statement",
+      "tool": "penelope_read_statement",
+      "args": {
+        "bank": "fixtures/exports/statement-mt940.sta"
+      },
+      "expect": {
+        "status": "executed",
+        "contains": [
+          "Bürobedarf Müller GmbH",
+          "INV-2026-118"
+        ],
+        "equals": {
+          "result.format": "mt940",
+          "result.balance_check.ties": true
+        }
+      }
     }
   ]
 }

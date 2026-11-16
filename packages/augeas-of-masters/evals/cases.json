@@ -220,6 +220,24 @@
           "result.clusters": 2
         }
       }
+    },
+    {
+      "id": "japanese-vendor-duplicates",
+      "tool": "augeas_find_duplicates",
+      "args": {
+        "path": "fixtures/intl/ja-vendors.csv"
+      },
+      "expect": {
+        "status": "executed",
+        "contains": [
+          "same normalized name",
+          "V001",
+          "V002"
+        ],
+        "equals": {
+          "result.proposals.0.survivor": "V001"
+        }
+      }
     }
   ]
 }

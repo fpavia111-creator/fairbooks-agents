@@ -317,6 +317,27 @@
           "no fact MEM-0123456789ab"
         ]
       }
+    },
+    {
+      "id": "japanese-access-export-and-roster",
+      "tool": "ladon_review_access",
+      "args": {
+        "access": "fixtures/intl/ja-access.csv",
+        "roster": "fixtures/intl/ja-roster.csv",
+        "as_of": "2026-11-16"
+      },
+      "expect": {
+        "status": "executed",
+        "contains": [
+          "privileged_without_mfa",
+          "terminated_in_hr",
+          "Shift_JIS"
+        ],
+        "equals": {
+          "result.accounts": 2,
+          "result.skipped_disabled": 1
+        }
+      }
     }
   ]
 }

@@ -148,3 +148,16 @@ test('new tools keep the policy: accept_rule asks, entries stay one-click, inval
   assert.equal((await rt(fixtures, { mode: 'review' }).call('penelope_accept_rule', { bank_pattern: 'a', gl_pattern: 'b', direction: 'in', max_days: 1 })).status, 'blocked');
   assert.ok(manifest.prompts.find((x) => x.name === 'month_end_bank_rec'));
 });
+
+test('a German MT940 statement in Windows-1252 is read, balanced and reconciled', async () => {
+  const root = tmpRoot('penelope-mt940-');
+  writeFileSync(join(root, 'gl-2026-11-de.csv'), 'Buchungsdatum,Buchungstext,Belegnummer,Soll,Haben\n2026-11-02,Bürobedarf Müller (fiktiv),INV-2026-118,,"1.250,00"\n2026-11-03,Zahlung Beispiel AG (fiktiv),RE-4711,"4.800,00",\n');
+  const s = await rt(root).call('penelope_read_statement', { bank: 'exports/statement-mt940.sta' });
+  assert.equal(s.status, 'executed', JSON.stringify(s));
+  assert.equal(s.result.format, 'mt940'); assert.equal(s.result.lines.length, 3); assert.equal(s.result.balance_check.ties, true);
+  assert.ok(s.result.lines.some((l) => /Bürobedarf Müller GmbH/.test(l.description)), 'umlauts decoded from Windows-1252');
+  assert.ok(s.result.lines.some((l) => l.reference === 'INV-2026-118'), 'the EREF+ end-to-end reference becomes the reference');
+  assert.ok(s.result.lines.some((l) => l.amount === -100), 'a reversed credit (RC) takes money out');
+  const r = await rt(root).call('penelope_reconcile', { bank: 'exports/statement-mt940.sta', gl: 'gl-2026-11-de.csv' });
+  assert.equal(r.status, 'executed', JSON.stringify(r)); assert.equal(r.result.matched_groups, 2, JSON.stringify(r.result));
+});
