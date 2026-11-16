@@ -1,6 +1,6 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { toCsv } from 'mythos-agent-core';
+import { toCsv, foldText } from 'mythos-agent-core';
 
 const DAY = 86400000;
 const norm = (k) => String(k).trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -48,7 +48,21 @@ export function resolve(ref, index) {
   if (asked.status === 'superseded' || (ref.revision && current.revision !== ref.revision && current.status === 'current')) return { ...ref, found: true, doc: asked, current, problem: 'superseded_reference' };
   return { ...ref, found: true, doc: asked, problem: '' };
 }
-const tokens = (s) => new Set(String(s || '').toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)));
+const NON_ASCII = /[^\x00-\x7f]/;
+const CJK_RUN = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]+/gu;
+/**
+ * Word set of a subject or question. Japanese and Chinese have no spaces between words,
+ * so their text adds overlapping character pairs (Korean too); accents are ignored.
+ * Such subjects used to give no words at all, so their duplicates were never found.
+ */
+const tokens = (s) => {
+  const raw = String(s || '');
+  if (!NON_ASCII.test(raw)) return new Set(raw.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 2 && !STOP.has(w)));
+  const t = foldText(raw); const out = new Set();
+  for (const w of t.replace(CJK_RUN, ' ').split(/\s+/)) if (w.length > 2 && !STOP.has(w)) out.add(w);
+  for (const run of t.match(CJK_RUN) || []) for (let i = 0; i < run.length - 1; i++) out.add(run.slice(i, i + 2));
+  return out;
+};
 const STOP = new Set(['the', 'and', 'for', 'with', 'from', 'are', 'what', 'which', 'this', 'that', 'shall', 'should', 'per', 'please', 'confirm', 'clarify', 'detail', 'at', 'of', 'on', 'in', 'to', 'is']);
 
 const OPEN = new Set(['open', 'sent', 'pending', 'issued', 'in_review']);
@@ -301,7 +315,7 @@ export function indexFromTitleBlocks(parsed, docs = []) {
   const n = (c) => findings.filter((f) => f.check === c).length;
   return { sheets_read: parsed.length, new_sheet: n('new_sheet'), index_behind: n('index_behind'), unreadable: n('unreadable_title_block'), findings, rows };
 }
-const normTitle = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+const normTitle = (s) => (NON_ASCII.test(String(s)) ? foldText(s) : String(s).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim());
 export const INDEX_COLUMNS = ['doc_id', 'type', 'title', 'revision', 'issued', 'status', 'file', 'source'];
 
 // ---------- 0.2.0: transmittal drafts ----------

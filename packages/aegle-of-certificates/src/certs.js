@@ -1,4 +1,4 @@
-import { toNumber, toCsv, toIcs, htmlPage, escapeHtml } from 'mythos-agent-core';
+import { toNumber, toCsv, toIcs, htmlPage, escapeHtml, slugify } from 'mythos-agent-core';
 
 const DAY = 86400000;
 export const DEFAULTS = Object.freeze({ critical_days: 14, warn_days: 30, upcoming_days: 90 });
@@ -184,4 +184,5 @@ export function chaseDraft(v) {
     'Could you send an updated certificate of insurance that covers these points?', '', 'Thank you,', '[Your name]', '',
     '(This lists possible gaps against our own requirement list. It is not insurance or legal advice.)', ''].join('\n');
 }
-export const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'vendor';
+// Any script: a Japanese or Korean vendor name used to become "vendor" for every vendor.
+export const slug = (s) => slugify(s, 'vendor');

@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256, canonical, safeMarkdown } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, canonical, safeMarkdown, slugify, uniqueNames } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, basename, extname } from 'node:path';
 import { normalise, audit, findingsCsv, reportMarkdown, proposals, redact, compareBaseline } from './flows.js';
@@ -28,7 +28,7 @@ const run = (a, ctx) => {
   return r;
 };
 const flowsOf = (a, ctx) => a.exports.flatMap((p) => normalise(readJson(ctx, p), p));
-const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'flow';
+const slug = (s) => slugify(s, 'flow');
 
 export const manifest = defineManifest({
   name: 'arethusa-of-flows',
@@ -69,7 +69,8 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['exports'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const pol = loadPolicy(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/arethusa'); const pdir = join(out, 'proposals'); mkdirSync(pdir, { recursive: true });
-        const files = r.items.filter((i) => i.findings.length).map((i) => ctx.writeFile(pdir, `${slug(i.name)}.json`, JSON.stringify(proposals(i), null, 2) + '\n'));
+        const unique = uniqueNames();
+        const files = r.items.filter((i) => i.findings.length).map((i) => ctx.writeFile(pdir, unique(`${slug(i.name)}.json`), JSON.stringify(proposals(i), null, 2) + '\n'));
         for (const p of a.exports) files.push(ctx.writeFile(out, `${basename(p, extname(p))}.redacted.json`, JSON.stringify(redact(readJson(ctx, p), { entropy: pol.entropy }), null, 2) + '\n'));
         return { summary: `${files.length} file(s) written: proposals and redacted copies. Nothing was applied to any platform.`, files };
       },

@@ -1,9 +1,21 @@
-import { toCsv, jaroWinkler, normalizeAddress, tokenSetSimilarity } from 'mythos-agent-core';
+import { toCsv, jaroWinkler, normalizeAddress, tokenSetSimilarity, stripLegalForms, normHeader, namesFor, COLUMN_LANGUAGES } from 'mythos-agent-core';
 
-const SUFFIX = /\b(incorporated|inc|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|plc|gmbh|sa|sas|bv|pty|the|and|&)\b/g;
+// Legal forms and filler words: English plus the common European forms (GmbH, AG, KG,
+// SARL, SRL, S.p.A., Ltda, Oy, ApS...). Punctuation is already spaces here, so dotted
+// forms appear as single letters ("s p a").
+const SUFFIX = /\b(incorporated|inc|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|plc|gmbh|mbh|ag|kg|ohg|kgaa|sa|sas|sasu|sarl|s a r l|srl|s r l|s p a|ltda|eireli|bv|nv|bvba|sprl|oy|oyj|aps|pty|the|and|&)\b/g;
+const NON_ASCII = /[^\x00-\x7f]/;
+/**
+ * Normalized name for matching. Letters of every script are kept, and Japanese, Chinese
+ * and Korean legal forms (株式会社, (株), 有限公司, 주식회사, (주), カ) in bank names) are
+ * removed, so 株式会社架空商事 and 架空商事(株) are the same name. Such names used to
+ * normalize to nothing, so their duplicates were never found.
+ */
 export function normName(s) {
-  return String(s ?? '').toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' and ')
-    .replace(/[^a-z0-9 ]/g, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
+  const raw = String(s ?? '');
+  if (!NON_ASCII.test(raw)) return raw.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
+  const t = stripLegalForms(raw.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/ß/g, 'ss'));
+  return t.replace(/&/g, ' and ').replace(/[^\p{L}\p{N} ]/gu, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
 }
 const digits = (s) => String(s ?? '').replace(/\D/g, '');
 const domain = (e) => { const m = String(e ?? '').toLowerCase().match(/@([a-z0-9.-]+)$/); return m && !/^(gmail|yahoo|outlook|hotmail|icloud|aol)\./.test(m[1]) ? m[1] : ''; };
@@ -19,9 +31,20 @@ export function dice(a, b) {
 }
 const tokenSort = (s) => s.split(' ').sort().join(' ');
 
-function col(row, names) {
+// Column lookup: the English names first (as before), then the same columns as they are
+// named in German, French, Spanish, Portuguese, Italian, Japanese, Chinese and Korean exports.
+const translated = (...concepts) => [...new Set(concepts.flatMap((c) => COLUMN_LANGUAGES.flatMap((l) => namesFor(c, l) || [])).map(normHeader).filter(Boolean))];
+const INTL = {
+  vendor: { id: translated('vendor_id', 'external_id', 'id'), name: translated('legal_name', 'vendor', 'company', 'name'), tax: translated('tax_id'), email: translated('email'), phone: translated('phone'), addr: translated('address') },
+  item: { id: translated('sku', 'external_id', 'id'), name: translated('item', 'description', 'name'), tax: [], email: [], phone: [], addr: [] },
+};
+const STATUS_INTL = translated('status');
+// "Inactive" in a status column, in the nine languages (folded: lowercase, no accents).
+const INACTIVE_WORD = /^(inactive|disabled|inaktiv|deaktiviert|gesperrt|inactif|desactive|inactivo|desactivado|inativo|desativado|inattivo|disattivato|無効|休止|停止|取引停止|停用|禁用|无效|無效|비활성|사용 중지|사용중지|거래중지)$/u;
+function col(row, names, intl = null) {
   const keys = Object.keys(row);
   for (const want of names) { const k = keys.find((x) => x.toLowerCase().replace(/[^a-z]/g, '') === want); if (k) return row[k]; }
+  if (intl) for (const want of intl) { const k = keys.find((x) => normHeader(x) === want); if (k) return row[k]; }
   return '';
 }
 
@@ -31,11 +54,18 @@ const FIELDS = {
 };
 export const DEFAULT_THRESHOLD = 0.92;
 
-/** Tax id / UPC key: digits only when there are enough digits, else lowercase letters and digits. */
+/**
+ * Tax id / UPC key: digits only when there are enough digits (so "DE 123-456-789" and
+ * "123456789" match), else lowercase letters and digits. Ids with letters after the first
+ * digit keep their letters: a Chinese unified credit code (…0001X), an Italian codice
+ * fiscale or a Spanish NIE differ only there, and dropping them could join two companies.
+ */
 export function normTax(v) {
-  const s = String(v ?? '').trim();
-  const d = s.replace(/\D/g, '');
-  return d.length >= 5 ? d : s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const s = String(v ?? '').normalize('NFKC').trim();
+  const alnum = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  const d = alnum.replace(/\D/g, '');
+  if (d.length < 5) return alnum;
+  return /\d[^a-z]*[a-z]/.test(alnum) ? alnum : d;
 }
 
 /**
@@ -68,6 +98,13 @@ export function nameScore(nnA, nnB, weight) {
   return mongeElkan(nnA, nnB, weight);
 }
 
+function isInactive(r) {
+  const flag = col(r, ['isinactive', 'inactive']);
+  if (flag) return /^(t|true|yes|1|inactive)$/i.test(String(flag));
+  const st = col(r, [], STATUS_INTL);
+  return !!st && INACTIVE_WORD.test(String(st).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().trim());
+}
+
 const houseNo = (a) => (a.match(/^\d+/) || [''])[0];
 export function sameAddress(a, b) {
   if (!a || !b || a.length < 6 || b.length < 6) return false;
@@ -79,12 +116,12 @@ export function sameAddress(a, b) {
 
 export function prepare(rows, opts = {}) {
   const kind = opts.kind === 'item' ? 'item' : 'vendor';
-  const F = FIELDS[kind];
+  const F = FIELDS[kind]; const I = INTL[kind];
   return rows.map((r, i) => {
-    const id = String((opts.id_column ? r[opts.id_column] : col(r, F.id)) || `row-${i + 2}`).trim();
-    const name = String((opts.name_column ? r[opts.name_column] : col(r, F.name)) || '').trim();
+    const id = String((opts.id_column ? r[opts.id_column] : col(r, F.id, I.id)) || `row-${i + 2}`).trim();
+    const name = String((opts.name_column ? r[opts.name_column] : col(r, F.name, I.name)) || '').trim();
     const nn = normName(name);
-    return { i, id, name, nn, ts: tokenSort(nn), tax: normTax(col(r, F.tax)), email: domain(col(r, F.email)), phone: digits(col(r, F.phone)).slice(-10), addr: normalizeAddress(col(r, F.addr)), inactive: /^(t|true|yes|1|inactive)$/i.test(String(col(r, ['isinactive', 'inactive']) || '')), raw: r };
+    return { i, id, name, nn, ts: tokenSort(nn), tax: normTax(col(r, F.tax, I.tax)), email: domain(col(r, F.email, I.email)), phone: digits(col(r, F.phone, I.phone)).slice(-10), addr: normalizeAddress(col(r, F.addr, I.addr)), inactive: isInactive(r), raw: r };
   });
 }
 
@@ -233,7 +270,7 @@ export function proposalsCsv(res) {
 /** Apply ONE merge to a copy of the rows: duplicates get merged_into = survivor. Input is never modified. */
 export function applyMerge(rows, { id_column, survivor, merge, kind, golden = null }) {
   const F = FIELDS[kind === 'item' ? 'item' : 'vendor'];
-  const idOf = (r, i) => String((id_column ? r[id_column] : col(r, F.id)) || `row-${i + 2}`).trim();
+  const idOf = (r, i) => String((id_column ? r[id_column] : col(r, F.id, INTL[kind === 'item' ? 'item' : 'vendor'].id)) || `row-${i + 2}`).trim();
   const ids = rows.map(idOf);
   if (!ids.includes(survivor)) throw new Error(`survivor ${survivor} not found`);
   const want = new Set(merge);

@@ -1,4 +1,4 @@
-import { toNumber, round2, toCsv, normalizeAddress, normalizeName, jaroWinkler, tokenSetSimilarity } from 'mythos-agent-core';
+import { toNumber, round2, toCsv, normalizeAddress, normalizeName, jaroWinkler, tokenSetSimilarity, slugify } from 'mythos-agent-core';
 
 const DAY = 86400000;
 const norm = (k) => String(k).trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -214,7 +214,7 @@ export function requestDraft(i) {
     reminder ? `Following up on our request from ${i.days_since_request} days ago: we still need the following for our vendor records:` : 'To keep our vendor records up to date, could you send us:', ...missing.map((m) => `- ${m}`), '',
     'Please do not email your taxpayer identification number in plain text. Use our secure upload link: [add your secure link].', '', 'Thank you,', '[Your name]', ''].join('\n');
 }
-export const slug = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'vendor';
+export const slug = (s) => slugify(s, 'vendor');
 
 // ---- 1099 readiness summary ---------------------------------------------------
 /** Vendors at or over the threshold (non-card methods) and what is still missing. Not a filing. */

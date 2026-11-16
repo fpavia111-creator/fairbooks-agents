@@ -42,12 +42,45 @@ export function jaroWinkler(s1, s2, { prefixScale = 0.1 } = {}) {
 }
 
 const STOP = new Set(['the', 'and', 'of', '&']);
-const ENTITY = /\b(inc|incorporated|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|plc|gmbh|sa|sarl|bv|nv|pty|lp|llp|pc)\b\.?/g;
+// Legal forms: English, plus the common European ones (GmbH, AG, KG, SARL, SAS, SRL,
+// S.p.A., Ltda, Oy, ApS...). Matched as whole words anywhere in the name.
+const ENTITY = /\b(inc|incorporated|llc|l\.l\.c|ltd|limited|corp|corporation|co|company|plc|gmbh|mbh|ag|kg|ohg|kgaa|sa|sarl|sas|sasu|srl|s\.r\.l|s\.p\.a|s\.a\.s|s\.a|ltda|eireli|bv|nv|bvba|sprl|oy|oyj|aps|pty|lp|llp|pc)\b\.?/g;
+// Japanese, Chinese and Korean legal forms, written before or after the name and with
+// no spaces around them: 株式会社 / (株), 有限公司, 주식회사 / (주) and the like.
+const CJK_LEGAL = /(株式会社|有限会社|合同会社|合資会社|合名会社|一般社団法人|一般財団法人|\((?:株|有|同|合|資|名)\)|股份有限公司|有限责任公司|有限責任公司|有限公司|股份公司|주식\s*회사|유한\s*회사|유한책임회사|\((?:주|유)\))/gu;
+const CJK_TAIL = /(公司|会社|회사)$/u;
+// Japanese bank-transfer names abbreviate the legal form in katakana: カ) or (カ for
+// 株式会社, ユ) for 有限会社, ド) for 合同会社 (half-width in the file; NFKC makes them full-width).
+const KANA_LEGAL_HEAD = /^\s*\(?(?:カ|ユ|ド)\)\s*/u;
+const KANA_LEGAL_TAIL = /\s*\((?:カ|ユ|ド)\)?\s*$/u;
+const KANA_LEGAL_WORDS = /(カブシキガイシヤ|カブシキガイシャ|カブシキカイシヤ|カブシキカイシャ|ユウゲンガイシヤ|ユウゲンガイシャ|ゴウドウガイシヤ|ゴウドウガイシャ)/gu;
+const NON_ASCII = /[^\x00-\x7f]/;
 
-/** Lowercase, strip accents, punctuation and legal suffixes (Inc, LLC, Ltd…). */
+/**
+ * Remove Japanese, Chinese and Korean legal forms from a name (株式会社, (株), 有限公司,
+ * 주식회사, (주)...). Half-width and full-width forms are unified first (NFKC).
+ */
+export function stripLegalForms(s) {
+  let t = String(s ?? '').normalize('NFKC').replace(CJK_LEGAL, ' ').replace(KANA_LEGAL_WORDS, ' ').replace(KANA_LEGAL_HEAD, '').replace(KANA_LEGAL_TAIL, '').trim();
+  const tail = CJK_TAIL.exec(t);
+  if (tail && t.length - tail[0].length >= 2) t = t.slice(0, -tail[0].length);
+  return t;
+}
+
+/**
+ * Lowercase, strip accents, punctuation and legal suffixes (Inc, LLC, Ltd, GmbH, AG,
+ * SARL, 株式会社, 有限公司, 주식회사…). Letters of every script are kept, so names in
+ * Japanese, Chinese, Korean, Greek or Cyrillic compare too (they used to become empty).
+ */
 export function normalizeName(s, { stripEntity = true } = {}) {
-  let t = String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/&/g, ' and ');
-  t = t.replace(/[^a-z0-9\s.]/g, ' ');
+  const raw = String(s ?? '');
+  let t;
+  if (!NON_ASCII.test(raw)) t = raw.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9\s.]/g, ' ');
+  else {
+    t = raw.normalize('NFKD').replace(/[̀-ͯ]/g, '').normalize('NFC').toLowerCase().replace(/ß/g, 'ss').replace(/&/g, ' and ');
+    if (stripEntity) t = stripLegalForms(t);
+    t = t.replace(/[^\p{L}\p{N}\s.]/gu, ' ');
+  }
   if (stripEntity) t = t.replace(ENTITY, ' ');
   return t.replace(/\./g, ' ').split(/\s+/).filter((w) => w && !STOP.has(w)).join(' ');
 }
@@ -56,9 +89,11 @@ const ADDR = [[/\bstreet\b/g, 'st'], [/\bavenue\b/g, 'ave'], [/\broad\b/g, 'rd']
 
 /** Normalise a postal address (USPS-style abbreviations, punctuation removed). */
 export function normalizeAddress(s) {
-  let t = String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const raw = String(s ?? '');
+  let t = NON_ASCII.test(raw) ? raw.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/ß/g, 'ss') : raw.toLowerCase();
   for (const [re, rep] of ADDR) t = t.replace(re, rep);
-  return t.replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
+  // Letters of every script are kept (a Japanese or Korean address used to become just its digits).
+  return t.replace(/[^\p{L}\p{N}\s]/gu, ' ').replace(/\s+/g, ' ').trim();
 }
 
 /** Token-set similarity (Jaccard on words) in [0, 1]. */

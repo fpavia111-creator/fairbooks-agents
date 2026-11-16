@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, uniqueNames } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync, mkdirSync } from 'node:fs';
 import { join, basename } from 'node:path';
 import { scan, reportMarkdown, reportHtml, calendarIcs, chaseDraft, expiryCsv, slug, diffInventory, reminderOffsets, pick } from './certs.js';
@@ -97,7 +97,8 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['cois'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/aegle'), 'chase-drafts'); mkdirSync(dir, { recursive: true });
-        const files = r.vendors.filter((v) => v.gaps.length).map((v) => ctx.writeFile(dir, `${slug(v.vendor)}.md`, chaseDraft(v)));
+        const unique = uniqueNames();
+        const files = r.vendors.filter((v) => v.gaps.length).map((v) => ctx.writeFile(dir, unique(`${slug(v.vendor)}.md`), chaseDraft(v)));
         return { summary: `${files.length} chase draft(s) written. Nothing was sent.`, files };
       },
     },

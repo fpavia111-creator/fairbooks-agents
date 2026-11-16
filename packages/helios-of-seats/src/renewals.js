@@ -1,6 +1,6 @@
 // Contract terms, renewal-aware savings, owner confirmation drafts, a renewal calendar
 // and period-over-period comparison. Deterministic: every date comes from as_of.
-import { round2, toCsv, toIcs } from 'mythos-agent-core';
+import { round2, toCsv, toIcs, slugify } from 'mythos-agent-core';
 
 const n = (s) => String(s ?? '').trim();
 const low = (s) => n(s).toLowerCase();
@@ -125,8 +125,8 @@ export function renewalIcs(r) {
   for (const a of r.by_app) {
     if (a.billing !== 'annual' || !a.renewal_date) continue;
     const desc = `${a.seats} active seat(s); ${a.revoke_candidates} revoke and ${a.downgrade_candidates} downgrade candidate(s); recommended seats at renewal: ${a.recommended_seats}${a.min_seats !== null ? ` (contract minimum ${a.min_seats})` : ''}. Estimated saving ${a.est_monthly_saving}/month. Estimates from your export; check the contract.`;
-    if (a.act_by) ev.push({ uid: `helios-actby-${a.app.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${a.act_by}@helios.local`, date: a.act_by, summary: `Seat true-down notice due: ${a.app}`, description: desc, reminders: [14, 3], categories: ['Helios', 'SaaS renewal'] });
-    ev.push({ uid: `helios-renewal-${a.app.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${a.renewal_date}@helios.local`, date: a.renewal_date, summary: `Renewal: ${a.app}`, description: desc, reminders: [30], categories: ['Helios', 'SaaS renewal'] });
+    if (a.act_by) ev.push({ uid: `helios-actby-${slugify(a.app, 'app')}-${a.act_by}@helios.local`, date: a.act_by, summary: `Seat true-down notice due: ${a.app}`, description: desc, reminders: [14, 3], categories: ['Helios', 'SaaS renewal'] });
+    ev.push({ uid: `helios-renewal-${slugify(a.app, 'app')}-${a.renewal_date}@helios.local`, date: a.renewal_date, summary: `Renewal: ${a.app}`, description: desc, reminders: [30], categories: ['Helios', 'SaaS renewal'] });
   }
   ev.sort((x, y) => x.date.localeCompare(y.date) || x.summary.localeCompare(y.summary));
   return { events: ev.length, text: toIcs(ev, { prodId: '-//Mythos Machine//helios-of-seats//EN', calName: 'SaaS renewals (Helios)', stamp: `${r.as_of.replace(/-/g, '')}T000000Z` }) };

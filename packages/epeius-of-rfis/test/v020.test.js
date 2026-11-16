@@ -109,3 +109,17 @@ test('MCP prompt walks the weekly review and fills placeholders', async () => {
   assert.match(got.result.messages[0].content.text, /documents=documents.csv, rfis=rfis.csv/);
   assert.match(got.result.messages[0].content.text, /one named human click/);
 });
+
+test('duplicate RFIs written in Japanese or Korean are found (they used to have no words to compare)', () => {
+  const rfis = [
+    { rfi_no: 'J-1', subject: '3階 梁の鉄筋径について', question: 'B3通りの梁の主筋径を確認してください', status: 'answered', sent_date: '2026-10-01', due_date: '2026-10-10', references: 'S-201' },
+    { rfi_no: 'J-2', subject: '3階 梁の鉄筋径の確認', question: 'B3通り 梁の主筋径を確認してください', status: 'open', sent_date: '2026-11-01', due_date: '2026-11-30', references: 'S-201' },
+    { rfi_no: 'J-3', subject: '屋上防水の仕様', question: '屋上の防水材の製品名を教えてください', status: 'open', sent_date: '2026-11-02', due_date: '2026-11-30', references: 'S-201' },
+    { rfi_no: 'K-1', subject: '지하 1층 방수 사양', question: '지하 1층 외벽 방수 사양을 확인 바랍니다', status: 'answered', sent_date: '2026-10-01', due_date: '2026-10-10', references: 'S-201' },
+    { rfi_no: 'K-2', subject: '지하 1층 외벽 방수 사양', question: '지하 1층 외벽 방수 사양 확인 바랍니다', status: 'open', sent_date: '2026-11-01', due_date: '2026-11-30', references: 'S-201' },
+  ];
+  const r = reviewLog([{ doc_id: 'S-201', type: 'drawing', title: '構造図', revision: 'B', status: 'current' }], rfis, [], { as_of });
+  const flagged = (no) => r.items.find((x) => x.rfi_no === no).flags.includes('possible_duplicate');
+  assert.ok(flagged('J-2'), 'Japanese near-duplicate found'); assert.ok(!flagged('J-3'), 'a different Japanese question is not');
+  assert.ok(flagged('K-2'), 'Korean near-duplicate found');
+});

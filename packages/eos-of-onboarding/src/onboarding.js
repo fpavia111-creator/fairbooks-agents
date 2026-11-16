@@ -1,4 +1,4 @@
-import { toCsv } from 'mythos-agent-core';
+import { toCsv, slugify } from 'mythos-agent-core';
 
 const DAY = 86400000;
 const norm = (k) => String(k).trim().toLowerCase().replace(/[\s-]+/g, '_');
@@ -12,7 +12,7 @@ function asOfMs(as_of) {
   if (as_of) { const t = parseDate(as_of); if (t === null) throw new Error(`as_of must be YYYY-MM-DD, got "${as_of}"`); return t; }
   const n = new Date(); return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate());
 }
-export const slug = (s) => String(s || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+export const slug = (s) => slugify(s, '');
 const DONE = new Set(['done', 'complete', 'completed', 'n/a', 'na', 'not_applicable', 'waived']);
 
 export function validateTemplate(t) {

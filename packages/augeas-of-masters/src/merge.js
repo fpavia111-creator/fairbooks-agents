@@ -1,4 +1,4 @@
-import { sha256 } from 'mythos-agent-core';
+import { sha256, foldText } from 'mythos-agent-core';
 import { prepare, pickSurvivor } from './dedupe.js';
 
 export const FIELD_RULES = ['survivor_fill_blank', 'survivor', 'most_complete', 'longest', 'most_common', 'most_recent', 'never'];
@@ -46,7 +46,9 @@ export function mergePreview(rows, { survivor, merge, kind, id_column, rules = {
     if (SYSTEM.test(f)) continue;
     const values = group.map((r) => ({ id: r.id, value: String(r.raw[f] ?? '') }));
     const filled = values.filter((v) => !blank(v.value));
-    const distinct = [...new Set(filled.map((v) => v.value.toLowerCase().replace(/[^a-z0-9]/g, '')))];
+    // Compared without case, accents, spaces or punctuation, in any script (CJK values used to
+    // compare as empty, so a conflict between two Japanese addresses was never shown).
+    const distinct = [...new Set(filled.map((v) => foldText(v.value).replace(/ /g, '')))];
     let rule = (rules.fields && rules.fields[f]) || rules.default_rule || 'survivor_fill_blank';
     if (BANK.test(f) || protectedSet.has(f.toLowerCase())) rule = 'never';
     if (rule === 'most_recent' && !rules.date_column) rule = 'survivor_fill_blank';

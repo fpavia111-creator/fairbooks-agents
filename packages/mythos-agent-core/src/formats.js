@@ -279,17 +279,37 @@ const WIN_RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 /**
  * Turn untrusted text (a vendor id, a contact name, a ticket number) into one
- * safe file-name segment: no slashes, no "..", no control characters, no
- * leading dot, no Windows-reserved name. Keeps letters, digits, dot, dash and
- * underscore; everything else becomes a dash.
+ * safe file-name segment: no slashes, no "..", no control or direction-override
+ * characters, no leading dot, no Windows-reserved name. Keeps letters and digits of
+ * every script (架空商事, 가상상사, Müller becomes Muller), dot, dash and underscore;
+ * everything else becomes a dash. Names in Japanese, Chinese or Korean used to become
+ * the fallback, so two such vendors wrote the same file.
  */
 export function safeFileName(s, { fallback = 'item', max = 80 } = {}) {
-  let t = String(s ?? '').normalize('NFKD').replace(/[̀-ͯ]/g, '');
-  t = t.replace(/[^A-Za-z0-9._-]+/g, '-').replace(/\.{2,}/g, '.').replace(/-{2,}/g, '-').replace(/^[.-]+|[.-]+$/g, '');
+  let t = String(s ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC');
+  t = t.replace(/[^\p{L}\p{N}._-]+/gu, '-').replace(/\.{2,}/g, '.').replace(/-{2,}/g, '-').replace(/^[.-]+|[.-]+$/g, '');
   if (t.length > max) t = t.slice(0, max).replace(/[.-]+$/, '');
   if (!t) t = fallback;
   if (WIN_RESERVED.test(t.split('.')[0])) t = '_' + t;
   return t;
+}
+
+/** Lowercase slug for file names and calendar ids, in any script ("Acme, Inc." -> "acme-inc", "株式会社架空商事" stays). */
+export function slugify(s, fallback = 'item', max = 60) {
+  const t = String(s ?? '').normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, max).replace(/-+$/, '');
+  return t && !WIN_RESERVED.test(t) ? t : t ? '_' + t : fallback;
+}
+
+/** Make file names unique within one batch: a second "acme.md" becomes "acme-2.md". */
+export function uniqueNames() {
+  const seen = new Map();
+  return (name) => {
+    const k = name.toLowerCase(); const n = (seen.get(k) || 0) + 1; seen.set(k, n);
+    if (n === 1) return name;
+    const dot = name.lastIndexOf('.');
+    return dot > 0 ? `${name.slice(0, dot)}-${n}${name.slice(dot)}` : `${name}-${n}`;
+  };
 }
 
 function escapeMdSegment(seg) {

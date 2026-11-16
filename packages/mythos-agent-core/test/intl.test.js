@@ -157,6 +157,15 @@ test('yes and no in a yes/no column, in all nine languages and as form marks', (
   assert.deepEqual(r.rows.map((x) => x.mfa), [...yes.map(() => 'yes'), ...no.map(() => 'no'), 'vielleicht'], 'an unknown word is kept as it is');
 });
 
+test('file names and slugs keep Japanese, Chinese and Korean names, and stay safe', async () => {
+  const { safeFileName, slugify, uniqueNames, normalizeName } = await import('../src/index.js');
+  assert.equal(safeFileName('株式会社架空商事'), '株式会社架空商事'); assert.equal(safeFileName('가상상사'), '가상상사'); assert.equal(safeFileName('Müller GmbH'), 'Muller-GmbH');
+  assert.equal(safeFileName('../../etc/passwd'), 'etc-passwd'); assert.equal(safeFileName('evil\u202Etxt.exe'), 'evil-txt.exe', 'direction overrides are dropped'); assert.equal(safeFileName('CON'), '_CON');
+  assert.equal(slugify('Acme, Inc.'), 'acme-inc'); assert.equal(slugify('虚构贸易有限公司'), '虚构贸易有限公司'); assert.equal(slugify('', 'vendor'), 'vendor');
+  const u = uniqueNames(); assert.deepEqual(['a.md', 'A.md', 'a.md', 'b'].map(u), ['a.md', 'A-2.md', 'a-3.md', 'b']);
+  assert.equal(normalizeName('ｶ)ｶｸｳｼｮｳｼﾞ'), 'カクウショウジ', 'half-width bank names are unified and lose the カ) legal form');
+});
+
 test('mythos-sources.json can set a file\'s encoding; an unknown one is refused', async () => {
   const root = tmp(); copyFileSync(join(FX, 'zh-gbk.csv'), join(root, 'a.csv'));
   const m = defineManifest({
