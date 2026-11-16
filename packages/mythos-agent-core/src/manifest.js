@@ -69,6 +69,7 @@ export function defineManifest(m) {
       errs.push(`tool ${t.name}: category ${t.category} must be "ask" or "block"`);
     }
     if (t.handler && typeof t.handler !== 'function') errs.push(`tool ${t.name}: handler must be a function`);
+    if (t.approvalPreview !== undefined && typeof t.approvalPreview !== 'function') errs.push(`tool ${t.name}: approvalPreview must be a function`);
   }
   for (const p of m.prompts || []) {
     if (!NAME_RE.test(p.name || '')) errs.push(`prompt name "${p.name}" must match ${NAME_RE}`);

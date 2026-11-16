@@ -49,6 +49,7 @@ export function serveApprovals({ stateDir, host = '127.0.0.1', port = 0, ttlHour
 <div><b>${escapeHtml(r.tool)}</b> <span class="mut">· ${escapeHtml(r.agent || '')}${r.category ? ' · ' + escapeHtml(r.category) : ''}${r.one_click ? ' · <span class="warn">one-click</span>' : ''}</span></div>
 <div class="mut">Requested ${escapeHtml(r.ts)} · id <code>${escapeHtml(r.id)}</code> · args sha256 <code>${escapeHtml(String(r.args_sha256 || '').slice(0, 16))}…</code></div>
 <div>${escapeHtml(r.reason || '')}</div>
+${r.details ? `<div><b>What you are approving</b></div><pre style="white-space:pre-wrap;font-size:13px">${escapeHtml(JSON.stringify(r.details, null, 2))}</pre>` : ''}
 <pre style="white-space:pre-wrap;font-size:13px">${escapeHtml(JSON.stringify(r.args_preview || {}, null, 2))}</pre>
 <form method="post" action="/decide" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
 <input type="hidden" name="csrf" value="${token}"><input type="hidden" name="id" value="${escapeHtml(r.id)}">
@@ -66,7 +67,7 @@ export function serveApprovals({ stateDir, host = '127.0.0.1', port = 0, ttlHour
       if (!allowedHosts.has(hostHdr)) return send(res, 421, 'Misdirected request (unexpected Host header)', 'text/plain');
       const url = new URL(req.url, `http://${hostHdr}`);
       if (req.method === 'GET' && url.pathname === '/') return send(res, 200, page());
-      if (req.method === 'GET' && url.pathname === '/pending.json') return send(res, 200, JSON.stringify(store.pending().map(({ args_preview, ...r }) => r)), 'application/json');
+      if (req.method === 'GET' && url.pathname === '/pending.json') return send(res, 200, JSON.stringify(store.pending().map(({ args_preview, details, ...r }) => r)), 'application/json');
       if (req.method === 'POST' && url.pathname === '/decide') {
         const origin = req.headers.origin;
         if (origin && !allowedHosts.has(origin.replace(/^https?:\/\//, ''))) return send(res, 403, 'Cross-origin request refused', 'text/plain');

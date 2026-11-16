@@ -386,13 +386,19 @@ export class AgentRuntime {
       const rec = this.approvals.consume(approvalId);
       if (!rec) {
         const st = this.approvals.state(approvalId);
-        const req = { id: approvalId, agent: this.manifest.name, tool, category: t.category || null, one_click: d.oneClick, args_sha256: sha256(canonical(args)), reason: d.reason, args_preview: preview(args) };
+        // A tool can say in plain terms what the person is approving (for example the
+        // fact behind a memory id), so nobody approves an id they cannot read.
+        let details = null;
+        if (typeof t.approvalPreview === 'function') {
+          try { details = t.approvalPreview(args, this.context(args, tool)); const txt = JSON.stringify(details); if (txt === undefined) details = null; else if (txt.length > 2000) details = { note: `${txt.slice(0, 1990)}…` }; } catch { details = null; }
+        }
+        const req = { id: approvalId, agent: this.manifest.name, tool, category: t.category || null, one_click: d.oneClick, args_sha256: sha256(canonical(args)), reason: d.reason, args_preview: preview(args), ...(details ? { details } : {}) };
         this.approvals.request(req);
         if (st.status !== 'pending') this.#notifyWebhook(req);
         const extra = st.status === 'rejected' ? { previously_rejected_by: st.rejected_by } : st.status === 'expired' ? { previous_approval_expired: true } : {};
         this.#record(tool, args, { decision: 'ask', status: 'needs_approval', reason: d.reason, approval_id: approvalId });
         return {
-          status: 'needs_approval', decision: 'ask', reason: d.reason, approval_id: approvalId, ...extra,
+          status: 'needs_approval', decision: 'ask', reason: d.reason, approval_id: approvalId, ...(details ? { approving: details } : {}), ...extra,
           how_to_approve: `A person approves it, then the same call is repeated with the same arguments. Either: npx -y -p mythos-agent-core mythos-approve ${approvalId} --as "Your Name" --dir "${this.stateDir || '.mythos'}", or open the local approvals page: npx ${this.manifest.name} approvals serve.`,
         };
       }

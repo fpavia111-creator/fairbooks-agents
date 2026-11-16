@@ -141,7 +141,7 @@ export async function runCli(manifest, argv, opts = {}) {
     }
     const pend = new ApprovalStore(dir).pending();
     if (!pend.length) { out('No pending approvals.'); return 0; }
-    for (const p of pend) out(`${p.id}  ${p.tool.padEnd(32)} ${p.one_click ? 'one-click  ' : ''}${p.ts}  ${p.reason || ''}`);
+    for (const p of pend) out(`${p.id}  ${p.tool.padEnd(32)} ${p.one_click ? 'one-click  ' : ''}${p.ts}  ${p.reason || ''}${p.details ? `\n    approving: ${JSON.stringify(p.details).slice(0, 300)}` : ''}`);
     return 0;
   }
   if (cmd === 'usage') { out(runtimeFromFlags(manifest, flags).usageReport()); return 0; }

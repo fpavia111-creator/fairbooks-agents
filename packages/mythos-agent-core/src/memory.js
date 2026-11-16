@@ -250,6 +250,7 @@ export function memoryTools(prefix, kinds = {}) {
     },
     {
       name: `${prefix}_accept_learning`, kind: 'action', category: MEMORY_CATEGORY, title: 'Accept or reject a learned fact',
+      approvalPreview: (a, ctx) => factPreview(a, ctx, all),
       description: `A named person accepts or rejects a fact waiting in this agent's memory. Accepting makes it apply from the next run (see each kind's effect). Always needs a person's approval, even in Auto; the approver's name is recorded with the fact.`,
       inputSchema: { type: 'object', additionalProperties: false, required: ['id', 'decision'], properties: { id, decision: { enum: ['accept', 'reject'] }, reason: { type: 'string', maxLength: 500 } } },
       handler: async (a, ctx) => {
@@ -260,6 +261,7 @@ export function memoryTools(prefix, kinds = {}) {
     },
     {
       name: `${prefix}_retire_memory`, kind: 'action', category: MEMORY_CATEGORY, title: 'Retire a learned fact',
+      approvalPreview: (a, ctx) => factPreview(a, ctx, all),
       description: 'A named person stops an accepted fact from applying. The history stays in the file. Always needs a person\'s approval, even in Auto.',
       inputSchema: { type: 'object', additionalProperties: false, required: ['id', 'reason'], properties: { id, reason: { type: 'string', minLength: 1, maxLength: 500 } } },
       handler: async (a, ctx) => {
@@ -276,6 +278,14 @@ export function memoryTools(prefix, kinds = {}) {
     { tool: `${prefix}_retire_memory`, decision: 'ask', reason: 'Changing what the agent remembers needs a named person, even in Auto.' },
   ];
   return { tools, rules, kinds: all };
+}
+
+/** What a person sees when asked to approve accepting, rejecting or retiring a fact. */
+function factPreview(a, ctx, kinds) {
+  const f = ctx.memory && ctx.memory.load().facts.find((x) => x.id === a.id);
+  if (!f) return { fact: a.id, problem: 'no such fact in this agent\'s memory; approving it will not change anything' };
+  const k = kinds[f.kind] || {};
+  return { fact: f.id, action: a.decision ? `${a.decision} this fact` : 'retire this fact', kind: f.kind, value: f.value, note: f.note, status_now: f.status, effect_if_accepted: k.effect || null, proposed_at: f.proposed_at };
 }
 
 /** Where an agent's memory lives under a state folder. */

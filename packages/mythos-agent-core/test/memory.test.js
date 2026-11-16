@@ -341,3 +341,27 @@ test('mythos_info shows memory counts and whether the file verifies; MCP marks a
   const pi = await plain({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'mythos_info', arguments: {} } });
   assert.equal(pi.result.structuredContent.memory, undefined);
 });
+
+test('the person approving sees the fact itself, not just its id (result, approvals file and page)', async () => {
+  const dir = tmp();
+  const rt = new AgentRuntime(memManifest(), { root: dir });
+  const id = (await rt.call('mem_learn', { kind: 'extra_role', value: { role: 'Shown Role' }, note: 'Why it matters' })).result.fact.id;
+  const ask = await rt.call('mem_accept_learning', { id, decision: 'accept' });
+  assert.equal(ask.status, 'needs_approval');
+  assert.deepEqual(ask.approving.value, { role: 'Shown Role' });
+  assert.equal(ask.approving.note, 'Why it matters');
+  assert.equal(ask.approving.effect_if_accepted, KINDS.extra_role.effect);
+  const pending = new ApprovalStore(join(dir, '.mythos')).pending();
+  assert.equal(pending[0].details.kind, 'extra_role');
+  const { serveApprovals } = await import('../src/index.js');
+  const s = await serveApprovals({ stateDir: join(dir, '.mythos'), port: 0 });
+  try {
+    const html = await (await fetch(s.url)).text();
+    assert.match(html, /What you are approving/);
+    assert.match(html, /Shown Role/);
+  } finally { await s.close(); }
+  const r = await cli(memManifest(), ['approvals', 'list', '--root', dir]);
+  assert.match(r.text, /approving: .*Shown Role/);
+  const none = await rt.call('mem_accept_learning', { id: 'MEM-0123456789ab', decision: 'accept' });
+  assert.match(none.approving.problem, /no such fact/);
+});

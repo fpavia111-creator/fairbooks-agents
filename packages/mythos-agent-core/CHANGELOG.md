@@ -7,6 +7,7 @@ Added (domain memory, handoff ver 5)
 - New one-click category `accept_learning`: changing what an agent remembers always needs a named person, even in Auto.
 - `ctx.memoryFacts(kind)` returns accepted facts for a check to use; results carry `memory_applied` and audit lines the fact ids. `ctx.memory`, `ctx.approvedBy`, `ctx.approvalId` for memory tools.
 - Runtime option `memory: false`, CLI `--no-memory` and `MYTHOS_NO_MEMORY=1`.
+- Tools may define `approvalPreview(args, ctx)`: what the person is approving, in plain terms. It is stored with the approval request, returned as `approving` with `needs_approval`, and shown on the approvals page and in `approvals list`. The memory accept and retire tools use it to show the fact, not just its id.
 - `mythos_info` shows memory counts, whether the file verifies and the kinds an agent can learn.
 - CLI `<pack> memory list | accept | reject | retire | verify`; `verify` cross-checks the audit log so lines cut from the end of the memory file are reported.
 - `defineManifest` validates `memory`: kinds need a description, an effect and a closed object schema; the four tools must be present with the right kind and category.

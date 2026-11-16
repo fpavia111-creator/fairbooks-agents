@@ -141,7 +141,7 @@ npx <pack> memory retire MEM-1a2b3c4d5e6f --as "Your Name" --reason "Role remove
 npx <pack> memory verify [--pubkey public.pem]
 ```
 
-`memory accept` takes the same path as the agent: the call asks, the named person approves, the call runs.
+`memory accept` takes the same path as the agent: the call asks, the named person approves, the call runs. Whoever approves sees the fact itself (kind, value, note and what it changes), not just its id: in the `needs_approval` result (`approving`), on the approvals page and in `approvals list`. Any tool can offer this with an `approvalPreview(args, ctx)` function.
 
 **Honest limits:** the same as approvals. If the agent also has a shell in the same folder, it could write the memory and approvals files. Without a signing key, someone with write access can rewrite and re-chain the whole memory file; with `--signing-key` (key kept outside `--root`) that fails `memory verify --pubkey`. Removing lines from the end of an unsigned file is only caught by the audit-log cross-check. Learned facts are what a person accepted, not proof that they are right.
 
