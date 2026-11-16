@@ -83,7 +83,7 @@ export function match(pos, receipts, invoices, tol = {}, profile = null) {
     else if (!p) ex.push({ code: 'po_line_missing', detail: `${inv.po} line ${inv.line}` });
     const matchedReceipts = [];
     if (p && !ex.some((e) => e.code === 'duplicate_invoice' || e.code === 'near_duplicate_invoice')) {
-      if (p.vendor && inv.vendor && p.vendor.toLowerCase() !== inv.vendor.toLowerCase()) ex.push({ code: 'vendor_mismatch', detail: `PO ${p.vendor} vs invoice ${inv.vendor}` });
+      if (p.vendor && inv.vendor && p.vendor.toLowerCase() !== inv.vendor.toLowerCase() && (normalizeName(p.vendor) || p.vendor.toLowerCase()) !== (normalizeName(inv.vendor) || inv.vendor.toLowerCase())) ex.push({ code: 'vendor_mismatch', detail: `PO ${p.vendor} vs invoice ${inv.vendor}` });
       const prior = billed.get(k) || 0; const total = prior + (inv.qty || 0); billed.set(k, total);
       const got = r ? r.qty : 0;
       if (r) { // FIFO allocation of this invoice's quantity to receipts

@@ -15,8 +15,9 @@ const GL_FIELDS = {
   memo: { aliases: ['Description', 'Memo/Description', 'Line Description', 'Narration', 'Details'] },
   reference: { aliases: ['Ref', 'Document Number', 'Doc Number', 'Num', 'Check Number', 'Journal Number', 'Tran ID', 'Reference Number'] },
   amount: { type: 'money', aliases: ['Amt', 'Net Amount', 'Net'] },
-  debit: { type: 'money', aliases: ['Dr', 'Debit Amount', 'Amount (Debit)'] },
-  credit: { type: 'money', aliases: ['Cr', 'Credit Amount', 'Amount (Credit)'] },
+  // Ledger debit/credit (Soll/Haben, 借方/貸方), not the bank's money out/in.
+  debit: { type: 'money', translate: 'ledger_debit', aliases: ['Dr', 'Debit Amount', 'Amount (Debit)'] },
+  credit: { type: 'money', translate: 'ledger_credit', aliases: ['Cr', 'Credit Amount', 'Amount (Credit)'] },
 };
 
 const blank = (v) => String(v ?? '').trim() === '';

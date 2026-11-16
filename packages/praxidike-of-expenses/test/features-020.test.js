@@ -158,3 +158,22 @@ test('MCP prompt walks the workflow and keeps money movement with a person', asy
   const got = await h({ jsonrpc: '2.0', id: 1, method: 'prompts/get', params: { name: 'review_expense_reports', arguments: { expenses: 'e.csv', policy: 'p.json' } } });
   assert.match(got.result.messages[0].content.text, /expenses "e\.csv"/);
 });
+
+test('receipts from Japan, Korea, China, Brazil, France and Italy: yen and won without decimals, local labels and dates', () => {
+  const want = {
+    's6-ja-yen.txt': ['架空マート 新宿店', 1210, '2026-11-14', 'JPY', 1100, 110],
+    's7-ja-halfwidth.txt': ['カフェ サンプル', 1500, '2026-11-03', 'JPY', null, 136],
+    's8-ko-won.txt': ['가상식당 강남점', 22000, '2026-11-14', 'KRW', 20000, 2000],
+    's9-zh-yuan.txt': ['虚构咖啡馆', 58, '2026-11-14', 'CNY', 52, null],
+    's10-br-reais.txt': ['Padaria Exemplo', 19.8, '2026-11-03', 'BRL', 18, null],
+    's11-fr-ttc.txt': ['Brasserie Fictive', 24, '2026-11-03', 'EUR', 20, 4],
+    's12-it-month.txt': ['Bar Esempio', 7.5, '2026-11-14', 'EUR', null, 1.35],
+  };
+  for (const [f, w] of Object.entries(want)) {
+    const r = style(f);
+    assert.deepEqual([r.merchant, r.total, r.date, r.currency, r.subtotal, r.tax], w, f);
+  }
+  assert.deepEqual(style('s11-fr-ttc.txt').amounts, [24], 'Sous-total is not a total');
+  assert.deepEqual(style('s6-ja-yen.txt').amounts, [1210], 'お預り (cash handed over) and 3点 (item count) are not totals');
+  assert.equal(normalizeReceipt('Shop\nTotal 3 items\nTotal 12.00').total, 12, 'English receipts still need two decimals');
+});
