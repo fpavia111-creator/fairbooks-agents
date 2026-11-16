@@ -365,3 +365,19 @@ test('the person approving sees the fact itself, not just its id (result, approv
   const none = await rt.call('mem_accept_learning', { id: 'MEM-0123456789ab', decision: 'accept' });
   assert.match(none.approving.problem, /no such fact/);
 });
+
+test('a value edited in place and re-chained no longer matches its id, so it is not used', async () => {
+  const dir = tmp();
+  const rt = new AgentRuntime(memManifest(), { root: dir });
+  const id = (await rt.call('mem_learn', { kind: 'extra_role', value: { role: 'Original Role' } })).result.fact.id;
+  await approved(rt, 'mem_accept_learning', { id, decision: 'accept' });
+  const file = rt.memory.file;
+  // Rewrite the value and re-chain the whole file, as someone with write access could.
+  const log = readAudit(file).map(({ sha256: _h, sig: _s, ...rest }) => (rest.value ? { ...rest, value: { role: 'Swapped Role' } } : rest));
+  writeFileSync(file, '');
+  const w = new AuditLog(file);
+  for (const { id: _a, ts: _t, date: _d, v: _v, prev_sha256: _p, requirements: _r, ...e } of log) w.write(e);
+  assert.ok(verifyChain(readAudit(file)).ok, 'the re-chained file verifies on its own');
+  assert.deepEqual((await rt.call('mem_check', {})).result.roles, []);
+  assert.ok(rt.memory.load().problems.some((p) => /does not match its content/.test(p)));
+});

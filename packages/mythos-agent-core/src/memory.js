@@ -125,6 +125,9 @@ export class DomainMemory {
       if (e.agent !== this.agent) { problems.push(`line ${i + 1} belongs to ${e.agent}, not ${this.agent}; ignored`); continue; }
       const id = e.memory_id; if (!id) continue;
       if (e.event === 'proposed') {
+        // The id is a hash of the fact. A value edited in place no longer matches its
+        // id, so an approval given for the original fact cannot carry over to it.
+        if (id !== contentId(this.agent, e.kind, e.value)) { problems.push(`line ${i + 1}: fact ${id} does not match its content (edited?); ignored`); continue; }
         const prev = facts.get(id);
         if (prev && ['pending', 'active', 'unverified'].includes(prev.status)) continue;
         if (!this.kinds[e.kind]) problems.push(`${id}: kind "${e.kind}" is not one this version of ${this.agent} knows; it is kept but never used`);
