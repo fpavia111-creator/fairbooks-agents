@@ -2,6 +2,7 @@
 // self-contained HTML report page. No dependencies, no network.
 
 import { sha256 } from './util.js';
+import { HTML_LANG, normLang } from './lang.js';
 
 // ---- iCalendar (RFC 5545) ------------------------------------------------------
 
@@ -242,17 +243,18 @@ function tidyTable(t) {
  * A self-contained HTML page: inline CSS only, no scripts, no fonts, no network.
  * CSP: default-src 'none'; style-src 'unsafe-inline'. bodyHtml must already be escaped.
  */
-export function htmlPage({ title, bodyHtml, footer = '' }) {
+export function htmlPage({ title, bodyHtml, footer = '', lang = 'en' }) {
   bodyHtml = accessibleTables(String(bodyHtml ?? ''));
+  const htmlLang = HTML_LANG[normLang(lang)] || 'en';
   return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
+<html lang="${htmlLang}"><head><meta charset="utf-8">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escapeHtml(title)}</title>
 <style>
 :root{--bg:#fbfaf7;--fg:#1d1c1a;--mut:#6b6760;--line:#e4e0d8;--ok:#1f7a4d;--bad:#b42318;--warn:#a15c07;--card:#fff}
 @media (prefers-color-scheme:dark){:root{--bg:#161514;--fg:#ecebe8;--mut:#a29d94;--line:#34312d;--ok:#4ade80;--bad:#f87171;--warn:#fbbf24;--card:#1f1e1c}}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,-apple-system,Segoe UI,"Hiragino Sans","Yu Gothic UI","Microsoft YaHei","PingFang SC","Malgun Gothic","Apple SD Gothic Neo","Noto Sans CJK",sans-serif}
 main{max-width:1040px;margin:0 auto;padding:24px 16px}
 h1{font-size:22px;margin:0 0 4px}h2{font-size:17px;margin:28px 0 8px}
 .mut{color:var(--mut)}.ok{color:var(--ok)}.bad{color:var(--bad)}.warn{color:var(--warn)}

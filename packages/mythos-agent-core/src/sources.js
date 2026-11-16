@@ -26,113 +26,14 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { rowsToRecords } from './csv.js';
 import { assertValid } from './schema.js';
+import { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal } from './intl.js';
+import { translatedNames } from './i18n/columns.js';
+import { encodingName, ENCODINGS } from './encoding.js';
+
+export { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal };
 
 export const FIELD_TYPES = ['text', 'date', 'datetime', 'money', 'number', 'bool', 'email'];
 export const SOURCES_FILE = 'mythos-sources.json';
-
-/** Header comparison key: lower case, letters and digits only (a header that is only a symbol, such as "#", is kept). */
-export const normHeader = (h) => { const t = String(h ?? '').trim().toLowerCase(); const k = t.replace(/[^a-z0-9]/g, ''); return k || (t.length <= 3 ? t : ''); };
-
-const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
-const DIM = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-const p2 = (n) => String(n).padStart(2, '0');
-const year = (y) => { const n = Number(y); return String(y).length <= 2 ? (n < 70 ? 2000 + n : 1900 + n) : n; };
-const okDate = (y, m, d) => y >= 1900 && y <= 2200 && m >= 1 && m <= 12 && d >= 1 && d <= DIM[m - 1] && (m !== 2 || d < 29 || (y % 4 === 0 && (y % 100 !== 0 || y % 400 === 0)));
-function timeOf(rest) {
-  const m = /^[T ,@]*\s*(?:at\s+)?(\d{1,2}):(\d{2})(?::(\d{2})(?:[.,]\d+)?)?\s*(am|pm|a\.m\.|p\.m\.)?\s*(z|utc|gmt|[+-]\d{2}:?\d{2})?/i.exec(rest || '');
-  if (!m) return null;
-  let h = Number(m[1]); const ap = (m[4] || '').toLowerCase().replace(/\./g, '');
-  if (ap === 'pm' && h < 12) h += 12; if (ap === 'am' && h === 12) h = 0;
-  if (h > 23 || Number(m[2]) > 59 || Number(m[3] || 0) > 59) return null;
-  let zone = (m[5] || '').toUpperCase();
-  if (zone === 'UTC' || zone === 'GMT') zone = 'Z';
-  else if (/^[+-]\d{4}$/.test(zone)) zone = `${zone.slice(0, 3)}:${zone.slice(3)}`;
-  return `${p2(h)}:${m[2]}:${m[3] || '00'}${zone}`;
-}
-
-/**
- * Parse one date in the shapes exports use. order: 'mdy' or 'dmy' for
- * all-number dates such as 03/04/2026 (default 'mdy').
- * Returns { iso, date, time, ambiguous, already } or null.
- * `already` is true when the text was an ISO date to begin with.
- */
-export function parseAnyDate(value, { order = 'mdy', compact = false } = {}) {
-  const s = String(value ?? '').trim();
-  if (!s || s.length > 60) return null;
-  let m;
-  const done = (y, mo, d, rest, extra = {}) => {
-    if (!okDate(y, mo, d)) return null;
-    const date = `${y}-${p2(mo)}-${p2(d)}`; const time = timeOf(rest);
-    return { iso: time ? `${date}T${time}` : date, date, time, ambiguous: false, already: false, ...extra };
-  };
-  if ((m = /^(\d{4})-(\d{2})-(\d{2})(.*)$/.exec(s))) {
-    const r = done(+m[1], +m[2], +m[3], m[4]);
-    // A clean ISO date or date-time is left exactly as written.
-    return r && /^(T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:?\d{2})?)?$/.test(m[4]) ? { ...r, iso: s, already: true } : r;
-  }
-  if ((m = /^(\d{4})[/.](\d{1,2})[/.](\d{1,2})(.*)$/.exec(s))) return done(+m[1], +m[2], +m[3], m[4]);
-  if ((m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})(?!\d)(.*)$/.exec(s))) {
-    const a = +m[1], b = +m[2], y = year(m[3]);
-    const dmy = a > 12 ? true : b > 12 ? false : order === 'dmy';
-    return done(y, dmy ? b : a, dmy ? a : b, m[4], { ambiguous: a <= 12 && b <= 12 && a !== b, numeric: true });
-  }
-  const t = s.replace(/^(mon|tue|wed|thu|fri|sat|sun)[a-z]*\.?,?\s+/i, '');
-  if ((m = /^(\d{1,2})(?:st|nd|rd|th)?[\s-]+([A-Za-z]{3,9})\.?,?[\s-]+(\d{4}|\d{2})(?!\d)(.*)$/.exec(t))) { const mo = MONTHS[m[2].toLowerCase().slice(0, 3)]; return mo ? done(year(m[3]), mo, +m[1], m[4]) : null; }
-  if ((m = /^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})(.*)$/.exec(t))) { const mo = MONTHS[m[1].toLowerCase().slice(0, 3)]; return mo ? done(+m[3], mo, +m[2], m[4]) : null; }
-  if (compact && (m = /^(\d{4})(\d{2})(\d{2})$/.exec(s))) return done(+m[1], +m[2], +m[3], '');
-  return null;
-}
-
-/** Work out whether all-number dates in a column are month-first or day-first. Returns 'mdy', 'dmy', 'mixed' or null (cannot tell). */
-export function inferDateOrder(values) {
-  let mdy = false, dmy = false;
-  for (const v of values) {
-    const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4}|\d{2})(?!\d)/.exec(String(v ?? '').trim());
-    if (!m) continue;
-    if (+m[1] > 12 && +m[2] <= 12) dmy = true; else if (+m[2] > 12 && +m[1] <= 12) mdy = true;
-  }
-  return mdy && dmy ? 'mixed' : mdy ? 'mdy' : dmy ? 'dmy' : null;
-}
-
-/**
- * Turn an amount as exports write it ("$1,200.00", "(45.10)", "1.234,56 €",
- * "USD 12", "12-") into a plain decimal string ("1200.00", "-45.10").
- * decimal: '.' or ',' for the decimal mark. Returns null when it is not an amount.
- */
-export function cleanAmount(value, { decimal = '.' } = {}) {
-  let s = String(value ?? '').trim();
-  if (!s) return null;
-  let neg = false;
-  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1).trim(); }
-  s = s.replace(/[\s\u00a0\u2009\u202f']/g, '').replace(/^[A-Za-z]{3}(?=[-+\d.,$€£¥₹])/, '').replace(/(?<=\d)[A-Za-z]{3}$/, '').replace(/[$€£¥₹]/g, '').replace(/\u2212/g, '-');
-  if (s.endsWith('-')) { neg = !neg; s = s.slice(0, -1); }
-  if (s.startsWith('-')) { neg = !neg; s = s.slice(1); } else if (s.startsWith('+')) s = s.slice(1);
-  if (!/^[\d.,]+$/.test(s) || !/\d/.test(s)) return null;
-  const lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(',');
-  let dec = null;
-  if (lastDot >= 0 && lastComma >= 0) dec = lastDot > lastComma ? '.' : ',';
-  else if (lastComma >= 0) dec = decimal === ',' ? ',' : /^\d{1,3}(,\d{3})+$/.test(s) ? null : ',';
-  else if (lastDot >= 0) dec = (decimal === ',' && /^\d{1,3}(\.\d{3})+$/.test(s)) || /^\d{1,3}(\.\d{3}){2,}$/.test(s) ? null : '.';
-  const thousands = dec === '.' ? ',' : dec === ',' ? '.' : lastComma >= 0 ? ',' : '.';
-  let body = s.split(thousands).join('');
-  if (dec === ',') body = body.replace(',', '.');
-  if (!/^\d*\.?\d+$/.test(body) && !/^\d+\.$/.test(body)) return null;
-  if (body.startsWith('.')) body = '0' + body; if (body.endsWith('.')) body = body.slice(0, -1);
-  return (neg && Number(body) !== 0 ? '-' : '') + body;
-}
-
-/** '.' or ',' : the decimal mark a column of amounts uses. */
-export function inferDecimal(values) {
-  let comma = 0, dot = 0;
-  for (const v of values) {
-    const s = String(v ?? '').replace(/[^\d.,]/g, '');
-    const d = s.lastIndexOf('.'), c = s.lastIndexOf(',');
-    if (d >= 0 && c >= 0) { if (d > c) dot += 2; else comma += 2; }
-    else if (c >= 0 && /,\d{1,2}$/.test(s)) comma += 1;
-    else if (d >= 0 && /\.\d{1,2}$/.test(s)) dot += 1;
-  }
-  return comma > dot ? ',' : '.';
-}
 
 const TRUE = /^(y|yes|true|t|1|on|enabled|checked|x|✓)$/i;
 const FALSE = /^(n|no|false|f|0|off|disabled|unchecked)$/i;
@@ -166,10 +67,13 @@ function headersOf(records) {
   return out;
 }
 
+/** Which entry of the column dictionary a field reads: its own name, another concept (fd.translate: 'ledger_debit'), or none (fd.translate: false). */
+export const conceptOf = (f, fd) => (fd && fd.translate === false ? null : fd && typeof fd.translate === 'string' ? fd.translate : f);
+
 const specFrom = (spec) => (typeof spec === 'string' ? [spec] : Array.isArray(spec) ? spec : spec && spec.from !== undefined ? [].concat(spec.from) : []);
 function wordsOf(def) {
   const w = new Set();
-  for (const [f, fd] of Object.entries(def.fields || {})) { w.add(normHeader(f)); for (const a of (fd && fd.aliases) || []) w.add(normHeader(a)); }
+  for (const [f, fd] of Object.entries(def.fields || {})) { w.add(normHeader(f)); for (const a of (fd && fd.aliases) || []) w.add(normHeader(a)); for (const x of translatedNames(conceptOf(f, fd))) w.add(normHeader(x.word)); }
   for (const p of def.profiles || []) { for (const s of p.signature || []) w.add(normHeader(s)); for (const spec of Object.values(p.map || {})) for (const h of specFrom(spec)) w.add(normHeader(h)); }
   w.delete('');
   return w;
@@ -198,6 +102,14 @@ function matchProfile(def, has, headerCount, forced) {
     if (sig.length > bestN) { best = p; bestN = sig.length; }
   }
   return best;
+}
+
+const ENC_LABEL = { 'shift_jis': 'Shift_JIS (Japanese)', 'euc-jp': 'EUC-JP (Japanese)', 'euc-kr': 'EUC-KR (Korean)', gb18030: 'GB18030 (Chinese)', gbk: 'GBK (Chinese)', big5: 'Big5 (Chinese, traditional)', 'windows-1252': 'Windows-1252 (Western European)', 'iso-8859-1': 'ISO-8859-1', 'iso-8859-15': 'ISO-8859-15', 'utf-16le': 'UTF-16', 'utf-16be': 'UTF-16 (big-endian)' };
+/** A warning when the text encoding of a file was guessed (never when it was UTF-8, marked or set). */
+export function encodingWarning(table) {
+  const e = table && table.encoding;
+  if (!e || e.how !== 'guessed') return null;
+  return `The file is not UTF-8; it was read as ${ENC_LABEL[e.name] || e.name} (a guess). If names look wrong, set "encoding" for this file in ${SOURCES_FILE}, for example "shift_jis", "gbk", "euc-kr", "big5" or "windows-1252".`;
 }
 
 const clipName = (s) => { const t = String(s); return t.length > 80 ? t.slice(0, 77) + '…' : t; };
@@ -257,14 +169,28 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
     const alias = (fd.aliases || []).find((a) => has(a) && !nested.has(index.get(normHeader(a))));
     if (alias !== undefined) { const k = index.get(normHeader(alias)); plan.push({ f, fd, spec: {}, from: [alias] }); mapped[f] = k; consumed.add(k); renamed++; }
   }
-  const forced = !!(ov.columns || ov.set || ov.date_order || ov.decimal || ov.profile || ov.skip_rows !== undefined && ov.skip_rows !== null);
+  // Fields still without a column: try their names in German, French, Spanish,
+  // Portuguese, Italian, Japanese, Chinese and Korean, never taking a column that
+  // another field already uses. Files that read before read exactly the same.
+  const translated = {};
+  const usedCols = new Set(plan.flatMap((p) => p.from.map((h) => index.get(normHeader(h)))).filter(Boolean));
+  for (const [f, fd0] of Object.entries(fields)) {
+    if (plan.some((p) => p.f === f)) continue;
+    const fd = fd0 || {};
+    const hit = translatedNames(conceptOf(f, fd)).find((x) => { const k = index.get(normHeader(x.word)); return k !== undefined && !usedCols.has(k) && !nested.has(k); });
+    if (!hit) continue;
+    const k = index.get(normHeader(hit.word));
+    plan.push({ f, fd, spec: {}, from: [k] }); mapped[f] = k; consumed.add(k); usedCols.add(k); renamed++; translated[f] = { column: clipName(k), language: hit.lang };
+  }
+  const forced = !!(ov.columns || ov.set || ov.date_order || ov.decimal || ov.profile || ov.encoding || ov.skip_rows !== undefined && ov.skip_rows !== null);
   const adapted = !!(profile || renamed || forced || headerRow > 0);
-  const base = { arg, kind, file, format: table.format, ...(table.sheet ? { sheet: table.sheet } : {}), profile: profile ? profile.id : null, system: profile ? profile.system : null, export: profile ? profile.label || null : null };
+  const base = { arg, kind, file, format: table.format, ...(table.sheet ? { sheet: table.sheet } : {}), ...(table.encoding && table.encoding.name !== 'utf-8' ? { encoding: table.encoding.name } : {}), profile: profile ? profile.id : null, system: profile ? profile.system : null, export: profile ? profile.label || null : null };
+  const encWarn = encodingWarning(table);
   if (!adapted) {
     // Untouched, but say so when a column the agent needs is nowhere in the file:
     // otherwise the agent would quietly read every row as blank.
     const absent = records.length ? Object.entries(fields).filter(([f, fd]) => fd && fd.required && !has(f)).map(([f]) => f) : [];
-    return { rows: records, report: { ...base, adapted: false, rows: records.length, mapped: {}, unmapped: [], missing: absent, skipped_rows: 0, warnings: absent.length ? [`None of this file's columns was recognised as: ${absent.join(', ')}. Name the columns in ${SOURCES_FILE} (see "inspect").`] : [] } };
+    return { rows: records, report: { ...base, adapted: false, rows: records.length, mapped: {}, unmapped: [], missing: absent, skipped_rows: 0, warnings: [...(encWarn ? [encWarn] : []), ...(absent.length ? [`None of this file's columns was recognised as: ${absent.join(', ')}. Name the columns in ${SOURCES_FILE} (see "inspect").`] : [])] } };
   }
 
   // Column-wide decisions: date order and decimal mark.
@@ -359,6 +285,7 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
   for (const f of provided) if (!(f in mapped)) mapped[f] = '(from the report layout)';
   const missing = Object.entries(fields).filter(([f, fd]) => fd && fd.required && !planFields.has(f) && !provided.has(f)).map(([f]) => f);
   const unmapped = headers.filter((h) => table.matrix || !h.includes('.')).filter((h) => !consumed.has(h) && !consumedParents.has(h) && !planFields.has(h) && !planNorm.has(normHeader(h))).map(clipName);
+  if (encWarn) warnings.push(encWarn);
   if (missing.length) warnings.push(`No column found for: ${missing.join(', ')}. Name the columns in ${SOURCES_FILE} (see "inspect").`);
   if (ambiguousDates && softDmy) warnings.push(`${ambiguousDates} date(s) such as 03.04.2026 could be day-first or month-first; read as day/month/year because the file writes dates with dots. Set "date_order": "mdy" in ${SOURCES_FILE} if the file is month-first.`);
   else if (ambiguousDates) warnings.push(`${ambiguousDates} date(s) such as 03/04/2026 could be month-first or day-first; read as month/day/year. Set "date_order": "dmy" in ${SOURCES_FILE} if the file is day-first.`);
@@ -374,6 +301,7 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
       skipped_rows: skipped + headerRow, ...(headerRow ? { header_row: headerRow + 1 } : {}), ...(rowsIn !== rows.length ? { rows_before_grouping: rowsIn } : {}),
       ...(numericDates ? { dates_read_as: dateOrder === 'dmy' ? 'day/month/year' : dateOrder === 'mixed' ? 'mixed' : 'month/day/year' } : {}), ...(convertedDates ? { dates_converted: convertedDates } : {}),
       ...([...decimals.values()].includes(',') ? { decimal_mark: ',' } : {}),
+      ...(Object.keys(translated).length ? { translated_columns: translated } : {}),
       ...(profile && profile.note ? { note: profile.note } : {}),
       warnings,
     },
@@ -392,6 +320,7 @@ const OVERRIDE = {
     sheet: { type: ['string', 'integer'], description: 'Excel sheet name or 0-based index' },
     skip_rows: { type: 'integer', minimum: 0, maximum: 1000, description: 'Rows above the header row' },
     delimiter: { type: 'string', enum: [',', ';', '\t', '|'] },
+    encoding: { type: 'string', minLength: 3, maxLength: 40, description: `Text encoding of the file when it is not UTF-8: ${ENCODINGS.join(', ')} (also sjis, cp932, cp949, cp936, cp1252)` },
   },
 };
 export const SOURCES_CONFIG_SCHEMA = {
@@ -410,6 +339,7 @@ export function loadSourceOverrides(root) {
   let data;
   try { data = JSON.parse(readFileSync(f, 'utf8')); } catch (e) { throw new Error(`${SOURCES_FILE} is not valid JSON: ${e.message}`); }
   assertValid(SOURCES_CONFIG_SCHEMA, data, `${SOURCES_FILE} is not valid`);
+  for (const group of ['sources', 'files']) for (const [k, v] of Object.entries(data[group] || {})) if (v.encoding && !encodingName(v.encoding)) throw new Error(`${SOURCES_FILE}: ${group}.${k}.encoding "${v.encoding}" is not one of: ${ENCODINGS.join(', ')}`);
   return data;
 }
 

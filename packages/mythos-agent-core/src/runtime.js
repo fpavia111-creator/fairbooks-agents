@@ -14,7 +14,8 @@ import { levenshtein, injectionSignals } from './text.js';
 import { readTable } from './tables.js';
 import { rowsToRecords } from './csv.js';
 import { DomainMemory, memoryFile } from './memory.js';
-import { adaptRecords, loadSourceOverrides, overrideFor, kindsByArg, describeSources, columnShape, findHeaderRow, SOURCES_FILE } from './sources.js';
+import { adaptRecords, loadSourceOverrides, overrideFor, kindsByArg, describeSources, columnShape, findHeaderRow, encodingWarning, SOURCES_FILE } from './sources.js';
+import { normLang } from './lang.js';
 
 // Error text goes back to the model and into logs. A hostile or broken argument
 // (a 200,000-character "path") must not be echoed back whole.
@@ -103,6 +104,8 @@ export class AgentRuntime {
     // Domain memory (only for agents whose manifest declares it): one file per agent
     // under <stateDir>/memory/. Accepted facts are used unless memory: false.
     this.useMemory = options.memory !== false;
+    // Language of reports and pages people read (tool results stay in English).
+    this.lang = normLang(options.lang);
     this.memory = manifest.memory ? new DomainMemory(persist ? memoryFile(this.stateDir, manifest.name) : null, { agent: manifest.name, kinds: manifest.memory.kinds, signer: this.signer, approvals: this.approvals }) : null;
     this.approvalWebhook = options.approvalWebhook || null;
     this.validateInputs = options.validateInputs !== false;
@@ -172,8 +175,13 @@ export class AgentRuntime {
     }
     const rel = relative(root, abs).split('\\').join('/');
     const ov = (o.raw ? null : overrideFor(config === undefined ? loadSourceOverrides(root) : config, kind, rel)) || {};
-    const table = readTable(abs, { sheet: o.sheet ?? ov.sheet ?? null, delimiter: ov.delimiter || null });
-    if (!kind || o.raw) return { rows: table.records || rowsToRecords(table.matrix, Number(ov.skip_rows) || 0), report: null, table };
+    const table = readTable(abs, { sheet: o.sheet ?? ov.sheet ?? null, delimiter: ov.delimiter || null, encoding: ov.encoding || null, lang: this.lang });
+    if (!kind || o.raw) {
+      const rows = table.records || rowsToRecords(table.matrix, Number(ov.skip_rows) || 0);
+      // A file read without column mapping still says when its text encoding was a guess.
+      const w = encodingWarning(table);
+      return { rows, report: w ? { arg: o.arg || '', file: rel, kind: null, format: table.format, encoding: table.encoding.name, adapted: false, rows: rows.length, mapped: {}, unmapped: [], missing: [], skipped_rows: 0, warnings: [w] } : null, table };
+    }
     const r = adaptRecords(table, sources[kind], { override: ov, kind, arg, file: rel });
     return { ...r, table };
   }
@@ -186,6 +194,8 @@ export class AgentRuntime {
     return {
       root,
       manifest: this.manifest,
+      // Language for text people read (reports, summaries written to files): 'en', 'de', 'fr', 'es', 'pt', 'it', 'ja', 'zh' or 'ko'.
+      lang: this.lang,
       // Domain memory. memory is the agent's own store (recall/learn tools use it);
       // memoryFacts(kind) returns the accepted facts of one kind for a check to use,
       // and records them so the result and the audit line say which facts applied.
@@ -305,11 +315,11 @@ export class AgentRuntime {
       const names = [...new Set(recs.slice(0, 200).flatMap((r) => (r && typeof r === 'object' ? Object.keys(r) : [])))].slice(0, 120);
       const result = {
         summary: best && best.profile ? `${args.path} looks like ${best.system}: ${best.export || best.profile} (read as "${best.kind}").` : best && best.adapted ? `${args.path}: no known export recognised; ${Object.keys(best.mapped).length} column(s) matched by name for "${best.kind}".` : kinds.length ? `${args.path} is read as it is (it already uses this agent's column names, or none of them).` : `${args.path}: this agent declares no tabular source kinds; the file is read as it is.`,
-        file: args.path, format: t.format, ...(t.sheets ? { sheet: t.sheet, sheets: t.sheets } : {}), rows: recs.length, ...(headerRow ? { header_row: headerRow + 1 } : {}),
+        file: args.path, format: t.format, ...(t.encoding ? { encoding: t.encoding.name, encoding_read_as: t.encoding.how, ...(t.encoding.candidates ? { encoding_candidates: t.encoding.candidates } : {}) } : {}), ...(t.sheets ? { sheet: t.sheet, sheets: t.sheets } : {}), rows: recs.length, ...(headerRow ? { header_row: headerRow + 1 } : {}),
         columns: names.map((name) => ({ name: clipH(name), looks_like: columnShape(recs.slice(0, 2000).map((r) => (r ? r[name] : ''))) })),
-        readings: readings.map((r) => (r.error ? r : { kind: r.kind, adapted: r.adapted, profile: r.profile, system: r.system, export: r.export, mapped: r.mapped, unmapped: r.unmapped, missing: r.missing, skipped_rows: r.skipped_rows, ...(r.dates_read_as ? { dates_read_as: r.dates_read_as } : {}), ...(r.note ? { note: r.note } : {}), warnings: r.warnings })),
+        readings: readings.map((r) => (r.error ? r : { kind: r.kind, adapted: r.adapted, profile: r.profile, system: r.system, export: r.export, mapped: r.mapped, ...(r.translated_columns ? { translated_columns: r.translated_columns } : {}), unmapped: r.unmapped, missing: r.missing, skipped_rows: r.skipped_rows, ...(r.dates_read_as ? { dates_read_as: r.dates_read_as } : {}), ...(r.decimal_mark ? { decimal_mark: r.decimal_mark } : {}), ...(r.note ? { note: r.note } : {}), warnings: r.warnings })),
         override_file: SOURCES_FILE,
-        how_to_override: `Create ${SOURCES_FILE} in the root, for example {"sources": {"${(best && best.kind) || kinds[0] || 'kind'}": {"columns": {"<agent column>": "<your column name>"}, "date_order": "dmy"}}}. Keys: profile, columns, date_order, decimal, sheet, skip_rows, delimiter. Use "files": {"<path>": {...}} for one file.`,
+        how_to_override: `Create ${SOURCES_FILE} in the root, for example {"sources": {"${(best && best.kind) || kinds[0] || 'kind'}": {"columns": {"<agent column>": "<your column name>"}, "date_order": "dmy"}}}. Keys: profile, columns, date_order, decimal, sheet, skip_rows, delimiter, encoding. Use "files": {"<path>": {...}} for one file.`,
         known_kinds: describeSources(this.manifest).map((k) => ({ kind: k.kind, arguments: k.args, exports: k.exports.map((e) => `${e.system}: ${e.label || e.id}`) })),
       };
       const signals = this.injectionScan ? injectionSignals(JSON.stringify(result).slice(0, 400000)) : [];

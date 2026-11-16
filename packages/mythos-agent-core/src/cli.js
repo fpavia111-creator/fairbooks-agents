@@ -48,6 +48,7 @@ export function runtimeFromFlags(manifest, flags) {
     approvalTtlHours: flags['approval-ttl'] || env.MYTHOS_APPROVAL_TTL_HOURS || undefined,
     approvalWebhook: flags['approval-webhook'] || env.MYTHOS_APPROVAL_WEBHOOK || undefined,
     memory: !(flags['no-memory'] || /^(1|true|yes)$/i.test(env.MYTHOS_NO_MEMORY || '')),
+    lang: flags.lang || env.MYTHOS_LANG || undefined,
   });
 }
 
@@ -92,7 +93,8 @@ Options:
   --signing-key FILE              Ed25519 private key (outside --root): sign every audit line
   --audit-mirror FILE             Also append every audit line to this file
   --approval-ttl HOURS            Approvals expire this long after approval (default 24)
-  --approval-webhook URL          POST pending approvals, HMAC-signed with MYTHOS_WEBHOOK_SECRET${manifest.memory ? `
+  --approval-webhook URL          POST pending approvals, HMAC-signed with MYTHOS_WEBHOOK_SECRET
+  --lang en|de|fr|es|pt|it|ja|zh|ko   Language of reports and the approvals page (MYTHOS_LANG); tool results stay in English${manifest.memory ? `
   --no-memory                     Run without the facts this agent has learned (recall and learn still work)` : ''}
 `;
 }
@@ -135,7 +137,7 @@ export async function runCli(manifest, argv, opts = {}) {
       const port = flags.port !== undefined ? Number(flags.port) : 7457;
       const host = flags.host || '127.0.0.1';
       if (!/^(127\.0\.0\.1|localhost|::1)$/.test(host) && !flags['i-understand-remote']) { out('Refusing to bind beyond localhost. Pass --i-understand-remote to override.'); return 2; }
-      const s2 = await serveApprovals({ stateDir: dir, host, port, ttlHours: flags['approval-ttl'], title: `${manifest.name} approvals` });
+      const s2 = await serveApprovals({ stateDir: dir, host, port, ttlHours: flags['approval-ttl'], agent: manifest.name, lang: flags.lang || process.env.MYTHOS_LANG });
       process.stderr.write(`Approvals page: ${s2.url}  (Ctrl+C to stop)\n`);
       return null;
     }

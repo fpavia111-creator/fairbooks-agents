@@ -3,6 +3,7 @@ import { readFileSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname, basename, join } from 'node:path';
 import { rowsToRecords } from './csv.js';
 import { readTable } from './tables.js';
+import { readNumber } from './intl.js';
 
 export function sha256(s) { return createHash('sha256').update(s).digest('hex'); }
 
@@ -54,19 +55,13 @@ export function readRecords(file, opts) {
   return t.records || rowsToRecords(t.matrix);
 }
 
-export function toNumber(v) {
-  if (v === null || v === undefined) return null;
-  if (typeof v === 'number') return Number.isFinite(v) ? v : null;
-  let s = String(v).trim();
-  if (!s) return null;
-  let neg = false;
-  if (/^\(.*\)$/.test(s)) { neg = true; s = s.slice(1, -1); }
-  s = s.replace(/[$€£¥,\s]/g, '');
-  if (s.endsWith('-')) { neg = true; s = s.slice(0, -1); }
-  if (!/^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(s)) return null;
-  const n = Number(s);
-  return neg ? -n : n;
-}
+/**
+ * A number from a cell, or null. Plain numbers are read as they are; anything
+ * else goes through cleanAmount, so "$1,200.00", "(45)", "1.234,56 €", "12,5"
+ * and "1,200円" all read. decimal: the column's decimal mark when known
+ * (',' makes "1.234" a thousand and more); see numberReader.
+ */
+export function toNumber(v, opts) { return readNumber(v, opts || undefined); }
 
 export const round2 = (n) => Math.round(n * 100) / 100;
 
