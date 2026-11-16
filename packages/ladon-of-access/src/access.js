@@ -47,6 +47,18 @@ function days(from, to) {
 }
 const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const roleRe = (list) => new RegExp(`\\b(${list.map(reEsc).join('|')})\\b`, 'i');
+/**
+ * Privileged-role matcher: the base list (built-in, or the policy file's or argument's
+ * privileged_roles) plus any roles learned and accepted in Ladon's memory. Learned
+ * roles only add to the list; they never remove a built-in or policy role.
+ */
+export function privMatcher(opts = {}) {
+  const base = opts.privileged_roles && opts.privileged_roles.length ? roleRe(opts.privileged_roles) : DEFAULT_PRIV;
+  const extra = (opts.extra_privileged_roles || []).map(n).filter(Boolean);
+  if (!extra.length) return { test: (s) => base.test(s), learned: () => false };
+  const ex = roleRe(extra);
+  return { test: (s) => base.test(s) || ex.test(s), learned: (s) => !base.test(s) && ex.test(s) };
+}
 const NON_HUMAN = ['agent', 'service', 'bot'];
 export const isNonHuman = (r) => NON_HUMAN.includes(r.account_type);
 export function addDays(isoDate, d) { const t = Date.parse(isoDate + 'T00:00:00Z'); return Number.isFinite(t) ? new Date(t + d * 86400000).toISOString().slice(0, 10) : ''; }
@@ -85,7 +97,7 @@ export function reviewAccess(rows, roster, opts = {}) {
   const stale = Number(opts.stale_days ?? 90);
   const rotationMax = Number(opts.rotation_max_days ?? 90);
   const dueDays = Number(opts.due_days ?? 14);
-  const priv = opts.privileged_roles && opts.privileged_roles.length ? roleRe(opts.privileged_roles) : DEFAULT_PRIV;
+  const priv = privMatcher(opts);
   const rotationKnown = rows.some((r) => r.last_rotated !== null && r.last_rotated !== undefined);
   const delegations = (opts.delegations || []).map((d) => ({ from: low(d.from), to: n(d.to), reason: n(d.reason) }));
   const active = rows.filter((r) => r.status !== 'disabled' && r.status !== 'inactive' && r.status !== 'deleted');
@@ -123,8 +135,9 @@ export function reviewAccess(rows, roster, opts = {}) {
     const del = assigned ? delegations.find((d) => d.from === low(assigned)) : null;
     // High-risk lines are due in half the time.
     const due = addDays(asOf, risk === 'high' ? Math.max(1, Math.ceil(dueDays / 2)) : dueDays);
-    const reasons = flags.map(explainFlag);
-    return { ...r, risk, score: Math.min(100, score), flags, reasons, suggested_action: suggested, assigned_reviewer: assigned, delegated_to: del ? del.to : '', delegation_reason: del ? del.reason : '', due_date: due };
+    const learnedPriv = isPriv && priv.learned(r.role);
+    const reasons = flags.map((f) => (f === 'privileged_role' && learnedPriv ? FLAG_TEXT.privileged_role_learned : explainFlag(f)));
+    return { ...r, risk, score: Math.min(100, score), flags, reasons, suggested_action: suggested, assigned_reviewer: assigned, delegated_to: del ? del.to : '', delegation_reason: del ? del.reason : '', due_date: due, ...(learnedPriv ? { privileged_by: 'learned role (Ladon memory)' } : {}) };
   });
   items.sort((a, b) => b.score - a.score || a.system.localeCompare(b.system) || a.row - b.row);
   const count = (k) => items.filter((i) => i.risk === k).length;
@@ -141,6 +154,7 @@ export function reviewAccess(rows, roster, opts = {}) {
 
 const FLAG_TEXT = {
   privileged_role: 'Role looks privileged (admin, full access, payments…).',
+  privileged_role_learned: 'Role is privileged for this customer (a fact a person accepted in Ladon\'s memory).',
   not_in_hr_roster: 'Email not found in the HR roster.',
   terminated_in_hr: 'Person is marked as a leaver in the HR roster.',
   non_human_without_owner: 'Agent or service account with no named owner.',
@@ -175,9 +189,16 @@ export function summaryMarkdown(review, generatedAt) {
   L.push('## Highest risk', '', '| System | User | Role | Risk | Due | Why |', '|---|---|---|---|---|---|');
   for (const i of review.items.filter((x) => x.risk === 'high' || x.risk === 'medium').slice(0, 50)) L.push(`| ${i.system} | ${i.user || i.email} | ${i.role} | ${i.risk} | ${i.due_date} | ${i.reasons.join(' ')} |`);
   if (review.sod_conflicts.length) { L.push('', '## Segregation-of-duties conflicts', ''); for (const c of review.sod_conflicts) L.push(`- **${c.rule}** — ${c.person}: ${c.detail}`); }
+  if (review.memory && (review.memory.used.length || review.memory.skipped.length)) {
+    L.push('', '## Learned facts used', '', 'Facts about this customer that a named person accepted in Ladon\'s memory. They only add roles, rules or delegations; they never remove a check.', '');
+    for (const f of review.memory.used) L.push(`- \`${f.id}\` ${f.kind}: ${memoryText(f)} (accepted by ${f.accepted_by})`);
+    for (const f of review.memory.skipped) L.push(`- \`${f.id}\` ${f.kind}: not used, ${f.why}`);
+  }
   L.push('', 'This sheet supports a review; it is not, by itself, evidence that a review happened or that access is appropriate.', '');
   return L.join('\n');
 }
+
+const memoryText = (f) => (f.kind === 'privileged_role' ? `"${f.value.role}" is privileged` : f.kind === 'sod_rule' ? `rule "${f.value.name}" (${f.value.roles_a.join(', ')} vs ${f.value.roles_b.join(', ')})` : f.kind === 'delegation' ? `${f.value.from} delegates to ${f.value.to}` : JSON.stringify(f.value));
 
 const DECISIONS = ['keep', 'modify', 'revoke'];
 
@@ -236,7 +257,7 @@ export function campaignStatus(rows, { as_of } = {}) {
 
 /** Compare two access exports (previous and current period). Keyed by system + email (or user). */
 export function accessDiff(prevRows, curRows, opts = {}) {
-  const priv = opts.privileged_roles && opts.privileged_roles.length ? roleRe(opts.privileged_roles) : DEFAULT_PRIV;
+  const priv = privMatcher(opts);
   const live = (r) => !['disabled', 'inactive', 'deleted'].includes(r.status);
   const key = (r) => `${low(r.system)}|${r.email || low(r.user)}`;
   const P = new Map(), C = new Map();

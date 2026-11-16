@@ -70,10 +70,35 @@ claude mcp add olympus-of-migration -- npx -y olympus-of-migration@0.2.0 mcp --r
 | `olympus_compare_runs` | **allow** | Compare two `findings.json` files (trial load N vs N+1) |
 | `olympus_readiness_report` | **allow** | Write `readiness-report.md`, `readiness-report.html`, `findings.json` and `exceptions.csv` to `mythos-out/olympus`; records the report hash in the audit log |
 | `olympus_approve_go_live` | **block** | Listed so agents see the refusal. Go-live is a human decision. |
+| `olympus_recall` | **allow** | Search what Olympus has learned about this customer's exports: accepted facts and facts waiting for a person |
+| `olympus_learn` | **allow** | Propose a fact to remember (a column name, an extra field rule, a note). Stored as waiting; changes nothing |
+| `olympus_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
+| `olympus_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
 Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
 
-The MCP prompt `olympus_go_live_readiness` walks a host model through the whole check (compare, tie-out, field rules, run comparison, report) and stops at the human go-live sign-off.
+The MCP prompt `olympus_go_live_readiness` walks a host model through the whole check (recall what Olympus has learned, compare, tie-out, field rules, run comparison, report) and stops at the human go-live sign-off.
+
+## Memory: what Olympus remembers about your exports
+
+Trial loads repeat. Olympus can remember facts about one customer's export files so the next load does not have to be told again. It only remembers what a named person accepts:
+
+| Kind | Example | What an accepted fact changes |
+|---|---|---|
+| `column_setting` | `{"setting": "key", "column": "legacy_id"}` | Names the column for one setting (`key`, `target_key`, `amount_column`, `account_column`, `balance_column`, `subsidiary_column`, `currency_column`) **only when neither the call nor the config names one**. Two accepted facts that disagree are both left out, with the reason. |
+| `field_rule` | `{"id": "terms-known", "column": "terms", "enum": ["Net 30", "Net 60"]}` | Adds the rule to every field check and readiness report. A config rule with the same id wins. Patterns with nested quantifiers like `(a+)+` are refused. |
+| `note` | `{"text": "Sandbox refresh is every Friday"}` | Nothing. Shown by recall only. |
+
+Tolerances, FX rates and the base currency are **never learned**: a remembered number could hide a difference. Pass them each time or keep them in `migration_rules`. Nothing in memory can approve go-live.
+
+```bash
+olympus-of-migration call olympus_learn '{"kind":"column_setting","value":{"setting":"key","column":"legacy_id"}}'
+olympus-of-migration memory list
+olympus-of-migration memory accept MEM-1a2b3c4d5e6f --as "Your Name"
+olympus-of-migration memory verify
+```
+
+Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`); the readiness report and `findings.json` have a "Learned facts used" section. Memory lives in `.mythos/memory/olympus-of-migration.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it.
 
 ## Modes
 
@@ -81,7 +106,7 @@ The MCP prompt `olympus_go_live_readiness` walks a host model through the whole 
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `olympus-of-migration approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`olympus-of-migration kill`).
 
-Every Olympus tool is read or report, so Auto changes nothing here. Go-live stays **blocked** in every mode.
+Every Olympus check is read or report, so Auto changes nothing there. Accepting or retiring a learned fact is `accept_learning`: it stays **one-click even in Auto**, and `--auto olympus_accept_learning` is refused. Go-live stays **blocked** in every mode.
 
 Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Mythos pack.
 

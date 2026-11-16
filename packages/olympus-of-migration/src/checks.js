@@ -335,7 +335,7 @@ export function exceptionRows({ cmp, tb, fields }) {
   return rows.map((r, i) => ({ n: i + 1, owner: '', resolution: '', ...r }));
 }
 
-export function reportMarkdown({ title, cmp, tb, fields, actions, runs, generatedAt, rulesName }) {
+export function reportMarkdown({ title, cmp, tb, fields, actions, runs, generatedAt, rulesName, memory = null, memoryText = (f) => JSON.stringify(f.value) }) {
   const L = [];
   L.push(`# ${title || 'Migration readiness report'}`, '', `Generated ${generatedAt} by olympus-of-migration. Fictional or customer-provided export files only; no live system was queried.${rulesName ? ` Rules: ${rulesName}.` : ''}`, '');
   L.push('## Verdict', '', `- Data status: **${cmp.status.toUpperCase()}**${tb ? ` · Trial balance: **${tb.status.toUpperCase()}**` : ''}${fields ? ` · Field rules: **${fields.status.toUpperCase()}**` : ''}`, '- Go-live: **not approved.** Go-live is a decision for a named human after reviewing this report. Olympus never approves it.', '');
@@ -378,6 +378,11 @@ export function reportMarkdown({ title, cmp, tb, fields, actions, runs, generate
   if (fields) {
     L.push('', '## Field rules (target file)', '', `${fields.violation_count} violation(s) across ${fields.rows} row(s).`, '', '| Rule | Column | Severity | Violations |', '|---|---|---|---:|');
     for (const r of fields.rules) L.push(`| ${r.rule} | ${r.column} | ${r.severity} | ${r.violations} |`);
+  }
+  if (memory && (memory.used.length || memory.skipped.length)) {
+    L.push('', '## Learned facts used', '', 'Facts about this customer\'s exports that a named person accepted in Olympus\'s memory. They fill in column names the call and config left unset, and add field rules; they never remove a check or change a tolerance.', '');
+    for (const f of memory.used) L.push(`- \`${f.id}\` ${memoryText(f)} (accepted by ${f.accepted_by})`);
+    for (const f of memory.skipped) L.push(`- \`${f.id}\` ${memoryText(f)}: not used, ${f.why}`);
   }
   L.push('', '## Limits', '', '- This checks the export files you supplied. It does not prove the books are correct, and it is not accounting, tax or audit advice.', '- FX rates and tolerances come from you; Olympus does not look rates up.', '- Rerun after every trial load. Keep this report with the go-live sign-off.', '');
   return L.join('\n');

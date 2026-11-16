@@ -47,6 +47,7 @@ export function runtimeFromFlags(manifest, flags) {
     auditMirror: flags['audit-mirror'] || env.MYTHOS_AUDIT_MIRROR || undefined,
     approvalTtlHours: flags['approval-ttl'] || env.MYTHOS_APPROVAL_TTL_HOURS || undefined,
     approvalWebhook: flags['approval-webhook'] || env.MYTHOS_APPROVAL_WEBHOOK || undefined,
+    memory: !(flags['no-memory'] || /^(1|true|yes)$/i.test(env.MYTHOS_NO_MEMORY || '')),
   });
 }
 
@@ -71,7 +72,11 @@ Usage:
   ${bin} validate-config <schema> <file>   Check a config file (schemas: see "tools --configs")
   ${bin} sources                  List the export files this pack reads directly, by system
   ${bin} inspect <file> [--as KIND]   Show how a file would be read: export recognised, columns mapped
-  ${bin} kill | unkill            Engage or clear the kill switch (.mythos/KILL)
+  ${bin} kill | unkill            Engage or clear the kill switch (.mythos/KILL)${manifest.memory ? `
+  ${bin} memory [list] [--status S] [--kind K]   What this agent has learned (accepted and waiting)
+  ${bin} memory accept|reject <id> --as "Name" [--reason TEXT]   A person decides on a waiting fact
+  ${bin} memory retire <id> --as "Name" --reason TEXT   A person stops an accepted fact
+  ${bin} memory verify [--pubkey public.pem]   Check the memory file's chain against the audit log` : ''}
   ${bin} license status           Licence for the paid tier: plan, expiry, which tools it unlocks
   ${bin} license install <file>   Check a licence key and copy it to .mythos/license.key
   ${bin} license remove           Delete .mythos/license.key
@@ -87,7 +92,8 @@ Options:
   --signing-key FILE              Ed25519 private key (outside --root): sign every audit line
   --audit-mirror FILE             Also append every audit line to this file
   --approval-ttl HOURS            Approvals expire this long after approval (default 24)
-  --approval-webhook URL          POST pending approvals, HMAC-signed with MYTHOS_WEBHOOK_SECRET
+  --approval-webhook URL          POST pending approvals, HMAC-signed with MYTHOS_WEBHOOK_SECRET${manifest.memory ? `
+  --no-memory                     Run without the facts this agent has learned (recall and learn still work)` : ''}
 `;
 }
 
@@ -206,6 +212,49 @@ export async function runCli(manifest, argv, opts = {}) {
     }
     if (sub === 'remove') { if (existsSync(f)) rmSync(f); out(`Removed ${f}.`); return 0; }
     out(`Usage: ${bin} license status | install <file> | remove`); return 2;
+  }
+  if (cmd === 'memory') {
+    if (!manifest.memory) { out(`${manifest.name} has no domain memory.`); return 2; }
+    const sub = pos[1] || 'list';
+    const rt = runtimeFromFlags(manifest, flags);
+    const p = manifest.memory.prefix;
+    if (sub === 'list') {
+      const r = rt.memory.search({ status: flags.status ? String(flags.status) : 'current', kind: flags.kind ? String(flags.kind) : null, query: flags.query ? String(flags.query) : '', limit: 500 });
+      if (flags.json) { out(r); return r.chain.ok ? 0 : 1; }
+      out(`${manifest.name} memory: ${Object.entries(r.counts).map(([k, n]) => `${n} ${k}`).join(', ') || 'empty'}. File ${r.chain.ok ? 'verifies' : 'DOES NOT VERIFY (no accepted fact is used)'}.`);
+      for (const f of r.entries) out(`  ${f.id}  ${f.status.padEnd(10)} ${f.kind.padEnd(18)} ${JSON.stringify(f.value).slice(0, 100)}${f.accepted_by ? `  (accepted by ${f.accepted_by})` : ''}`);
+      for (const pr of r.problems) out(`  problem: ${pr}`);
+      return r.chain.ok ? 0 : 1;
+    }
+    if (sub === 'accept' || sub === 'reject' || sub === 'retire') {
+      if (!pos[2] || !flags.as || flags.as === true) { out(`Usage: ${bin} memory ${sub} <MEM-id> --as "Your Name"${sub === 'retire' ? ' --reason TEXT' : ' [--reason TEXT]'}`); return 2; }
+      if (sub === 'retire' && (!flags.reason || flags.reason === true)) { out('retire needs --reason'); return 2; }
+      const tool = sub === 'retire' ? `${p}_retire_memory` : `${p}_accept_learning`;
+      const args = sub === 'retire' ? { id: pos[2], reason: String(flags.reason) } : { id: pos[2], decision: sub, ...(flags.reason && flags.reason !== true ? { reason: String(flags.reason) } : {}) };
+      // The same path an agent takes: ask, a person approves (here, by name), the call runs.
+      const first = await rt.call(tool, args);
+      if (first.status !== 'needs_approval') { out(first); return 1; }
+      rt.approvals.approve(first.approval_id, String(flags.as), `memory ${sub} from the command line`, 'cli');
+      const r = await rt.call(tool, args);
+      if (r.status !== 'executed') { out(r); return 1; }
+      out(r.result.summary);
+      return 0;
+    }
+    if (sub === 'verify') {
+      const lines = existsSync(rt.memory.file || '') ? readAudit(rt.memory.file) : [];
+      const chain = verifyChain(lines, { publicKeys: flags.pubkey ? loadPublicKeys(String(flags.pubkey).split(',')) : null });
+      const { facts, problems } = rt.memory.load();
+      // Every accept or retire the audit log says ran must be in the memory file:
+      // lines cut from the end of the memory file show up here.
+      const auditFile = join(rt.stateDir, 'audit.jsonl');
+      const ran = existsSync(auditFile) ? readAudit(auditFile).filter((e) => e && e.status === 'executed' && (e.tool === `${p}_accept_learning` || e.tool === `${p}_retire_memory`) && e.approval_id) : [];
+      const inMem = new Set(lines.map((l) => l && l.approval_id).filter(Boolean));
+      const missing = ran.filter((e) => !inMem.has(e.approval_id)).map((e) => `${e.id} ${e.tool} approved by ${e.approved_by} (approval ${e.approval_id}) is in the audit log but not in the memory file`);
+      const ok = chain.ok && !missing.length && !problems.some((x) => /no matching approval/.test(x));
+      out({ ok, file: rt.memory.file, chain, facts: facts.length, problems, missing_from_memory: missing });
+      return ok ? 0 : 1;
+    }
+    out(`Usage: ${bin} memory list | accept <id> --as "Name" | reject <id> --as "Name" | retire <id> --as "Name" --reason TEXT | verify`); return 2;
   }
   if (cmd === 'inspect') {
     if (!pos[1]) { out(`Usage: ${bin} inspect <file> [--as KIND] [--sheet NAME] [--root DIR]`); return 2; }

@@ -1,6 +1,8 @@
 # Changelog
 
-## 0.2.0 — 2026-11-15
+## 0.2.0 — 2026-11-16
+
+- Memory (handoff ver 5): `ladon_recall`, `ladon_learn`, `ladon_accept_learning` and `ladon_retire_memory`, plus `ladon-of-access memory list|accept|reject|retire|verify`. Ladon can remember extra privileged roles, segregation-of-duties rules and standing reviewer delegations for one customer. A fact applies only after a named person accepts it (one click, never on Auto), and only adds to a check: learned roles are added to the built-in, policy or argument list, and policy-file rules and delegations win over learned ones. Results list the facts used under `memory`; lines privileged only by a learned role carry `privileged_by`, and the recertification summary has a "Learned facts used" section. `--no-memory` runs without it. Requires `mythos-agent-core` ^0.2.0 with domain memory.
 
 - Real exports: Reads Okta, Microsoft Entra ID, Microsoft 365, Google Workspace, Slack, GitHub, AWS IAM credential report and Atlassian user exports, and a BambooHR roster, directly (see "Exports it reads"). When an export has no last-login column, `last_login` is left empty and the flag `last_login_not_in_export` (no score) replaces `never_logged_in`. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 ### Added

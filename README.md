@@ -42,7 +42,8 @@ Version 0.2.0: see [UPGRADE-0.2.0.md](UPGRADE-0.2.0.md) for what changed and [do
 
 - Unknown tools are blocked. The default decision is block.
 - **Auto** is off by default and opt-in per action, with step/spend caps and a kill switch.
-- Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a named person's click, even in Auto.
+- Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a named person's click, even in Auto. So does changing what an agent remembers.
+- Agents with memory (Olympus and Ladon so far) only use facts a named person accepted, say which facts each result used, and cannot learn anything that loosens a check.
 - Every decision goes to a hash-chained JSONL audit log.
 - Text from your files is treated as data. Spreadsheet formulas, raw HTML and `../` in ids are neutralised on the way out, and a result that quotes text aimed at an AI model ("ignore previous instructions") is flagged. The flag is a heuristic, not a filter.
 

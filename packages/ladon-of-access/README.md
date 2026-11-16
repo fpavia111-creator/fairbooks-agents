@@ -99,12 +99,38 @@ claude mcp add ladon-of-access -- npx -y ladon-of-access@0.2.0 mcp --root /path/
 | `ladon_campaign_status` | **allow** | Progress of a filled sheet: overdue, incomplete, self-review, chase list, revoke decisions |
 | `ladon_evidence_pack` | **allow** | Write `recertification-evidence.json/.html` to `mythos-out/ladon/evidence`; hash logged as `output_sha256` |
 | `ladon_request_revocation` | **ask · one-click** | After a named human approves, append a request to `revocation-requests.csv` for the system admin |
+| `ladon_recall` | **allow** | Search what Ladon has learned about this customer: accepted facts and facts waiting for a person |
+| `ladon_learn` | **allow** | Propose a fact to remember (extra privileged role, SoD rule, standing delegation, note). Stored as waiting; changes nothing |
+| `ladon_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
+| `ladon_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
 Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
 
+## Memory: what Ladon remembers about your setup
+
+Ladon can remember facts about one customer's access setup, so the next quarterly review does not have to be told again. It only remembers what a named person accepts, and every kind it can learn **adds** to a check:
+
+| Kind | Example | What an accepted fact changes |
+|---|---|---|
+| `privileged_role` | `{"role": "Vault Keeper"}` | Adds the role to the privileged list in every review and diff (built-in, policy and argument lists stay as they are). MFA is then checked for it, and a move into it counts as privilege gained. |
+| `sod_rule` | `{"name": "vendor-vs-payment", "roles_a": ["Vendor Master"], "roles_b": ["Payment Release"]}` | Adds the rule to the segregation-of-duties check. A policy-file rule with the same name wins. |
+| `delegation` | `{"from": "Ana Ruiz", "to": "Ben Ode", "reason": "on leave"}` | Fills `delegated_to` for lines assigned to "from", unless the policy file delegates for that person. A delegation to oneself is ignored. |
+| `note` | `{"text": "Okta export is pulled on the 1st"}` | Nothing. Shown by recall only. |
+
+Ladon cannot learn a longer stale period, a shorter list of roles, a removed rule, or anything about policy, caps or Auto.
+
+```bash
+ladon-of-access call ladon_learn '{"kind":"privileged_role","value":{"role":"Vault Keeper"},"note":"Can release payments"}'
+ladon-of-access memory list
+ladon-of-access memory accept MEM-1a2b3c4d5e6f --as "Your Name" --reason "Confirmed with IT"
+ladon-of-access memory verify
+```
+
+Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`), lines privileged only by a learned role say so in `reasons` and `privileged_by`, and the recertification summary has a "Learned facts used" section. Memory lives in `.mythos/memory/ladon-of-access.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it. Ladon refuses to store passwords, keys, personal identifiers and text that reads like instructions to an AI.
+
 ## MCP prompt
 
-`ladon_recertification_campaign` (arguments: `access`, `as_of`, optional `roster`, `policy`, `previous`) walks a host model through the whole campaign: review, diff, sheet, status, evidence pack, and revocation requests that wait for a person's click.
+`ladon_recertification_campaign` (arguments: `access`, `as_of`, optional `roster`, `policy`, `previous`) walks a host model through the whole campaign: recall what Ladon has learned, review, diff, sheet, status, evidence pack, and revocation requests that wait for a person's click.
 
 ## Modes
 
@@ -112,7 +138,7 @@ Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `ladon-of-access approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`ladon-of-access kill`).
 
-Revoking access is `revoke_access`: it stays **one-click even in Auto**, and `--auto ladon_request_revocation` is refused. Auto still runs the reviews and sheets without stopping.
+Revoking access is `revoke_access`: it stays **one-click even in Auto**, and `--auto ladon_request_revocation` is refused. Accepting or retiring a learned fact is `accept_learning`, also one-click: `--auto ladon_accept_learning` is refused. Auto still runs the reviews and sheets without stopping.
 
 Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Mythos pack.
 

@@ -1,8 +1,11 @@
 # Changelog
 
-## 0.2.0 — 2026-11-15
+## 0.2.0 — 2026-11-16
 
 Requires `mythos-agent-core` ^0.2.0.
+
+### Added (handoff ver 5)
+- Memory: `olympus_recall`, `olympus_learn`, `olympus_accept_learning` and `olympus_retire_memory`, plus `olympus-of-migration memory list|accept|reject|retire|verify`. Olympus can remember a customer's column names (used only when the call and config leave a setting unset; disagreeing facts are left out) and extra field rules (added after the config's; a config rule with the same id wins; nested-quantifier patterns refused). Tolerances, FX rates and the base currency cannot be learned. A fact applies only after a named person accepts it (one click, never on Auto). Results list the facts used under `memory`; the readiness report (Markdown and HTML) and `findings.json` (`learned_facts`) say which were used. `olympus_check_fields` runs with learned rules alone when no rules or config are given. `--no-memory` runs without it.
 
 ### Added
 - Configurable tolerance (`tolerance`, default 0.005; differences up to and including it tie) on compare, tie-out and the report.

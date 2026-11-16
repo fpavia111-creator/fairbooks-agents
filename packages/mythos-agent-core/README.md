@@ -8,13 +8,14 @@ The shared core for **Mythos Machine domain agents**: small MCP agents that each
   - **Review**: read and report tools only. Everything else is blocked.
   - **Assist** (default): the policy as written. `ask` returns an `approval_id` and waits for a named human.
   - **Auto**: off by default and **opt-in per action** (`--auto tool_a,tool_b`). Only opted-in `ask` actions run without a click. Step and spend caps and a kill switch always apply.
-- **Always one-click, even in Auto**: `go_live`, `revoke_access`, `delete_personal_data`, `move_money`, `binding_send`, `production_deploy`. Trying to put one of these on Auto throws an error. Auto prepares the work; a person clicks.
+- **Always one-click, even in Auto**: `go_live`, `revoke_access`, `delete_personal_data`, `move_money`, `binding_send`, `production_deploy`, and `accept_learning` (changing what an agent remembers). Trying to put one of these on Auto throws an error. Auto prepares the work; a person clicks.
 - **Audit log** — append-only JSONL (`.mythos/audit.jsonl`), one line per decision, hash-chained so edits and removed lines show up. Arguments are stored as a SHA-256 hash, not in full. Field names follow Alethea's record vocabulary (`id`, `type`, `date`, `requirements`) so logs sit cleanly next to an Alethea `.decisions/` folder; this package does not write into `.decisions/`.
 - **Stdio MCP server** — zero-dependency, newline-delimited JSON-RPC 2.0 (`initialize`, `ping`, `tools/list`, `tools/call`, `prompts/list`, `prompts/get`), protocol versions up to `2025-11-25`, tool annotations (`readOnlyHint`, `destructiveHint`, …) derived from each tool's kind, plus a built-in `mythos_info` tool that reports usage and pending approvals.
 - **Input validation** — every call is checked against the tool's `inputSchema` before anything runs or reaches a human. Errors carry JSON-pointer paths (`/vendors/3/tin expected string`).
 - **Signed audit log (opt-in)** — with `--signing-key`, every line is also signed with Ed25519. A re-chained file fails `verify-log --pubkey`. Key rotation is recorded as a signed entry.
 - **Approvals people can actually use** — CLI, a local approvals page on 127.0.0.1, or an HMAC-signed webhook callback. Approvals are single-use, bound to the exact arguments, expire after 24 h by default, and can be rejected.
 - **Caps that survive restarts** — per session, per day and per tool, persisted in `.mythos/usage.json`.
+- **Domain memory (opt-in per agent)** — an agent can remember facts about one customer's setup in its own specialty (a column name, an extra privileged role). Learning only proposes; a fact applies after a named person accepts it, every result says which facts it used, and the file is hash-chained like the audit log. See [Domain memory](#domain-memory).
 - **Private evals** — fixture-based, deterministic test cases, with an offline HTML report and regression highlighting against a baseline.
 - **Shared helpers** — JSON Schema validation, iCalendar, SARIF 2.1.0, unified diff/patch, Jaro-Winkler and name/address normalisation, entropy, a small ZIP/DOCX reader, and a self-contained HTML page template.
 
@@ -81,6 +82,68 @@ Other ways to decide:
 Approvals expire 24 hours after a person approves (`--approval-ttl HOURS`). Names like "agent" or "claude" are refused as approvers. One-click categories can be approved by a person through any of these routes, but never by Auto.
 
 **Honest limit:** approvals are a file. If the agent also has a shell in the same folder, it could write that file itself. For approvals to mean something, give the agent the MCP server only, not a shell, or keep `--state-dir` somewhere the agent cannot write.
+
+## Domain memory
+
+An agent can remember facts about one customer's setup in its own specialty, so the next run does not have to be told again: "their key column is `legacy_id`", "Vault Keeper is a privileged role here". The agent declares which kinds of fact it can learn and what each one changes. Nothing else can be learned.
+
+```js
+import { defineManifest, memoryTools } from 'mythos-agent-core';
+
+const KINDS = {
+  privileged_role: {
+    description: 'A role this customer treats as privileged, e.g. {"role": "Vault Keeper"}.',
+    effect: 'adds the role to the privileged list (more findings, never fewer)',
+    schema: { type: 'object', additionalProperties: false, required: ['role'], properties: { role: { type: 'string', minLength: 2, maxLength: 100 } } },
+    check: (v) => null, // optional: return a reason to refuse a value
+  },
+};
+const mem = memoryTools('acme', KINDS);   // acme_recall, acme_learn, acme_accept_learning, acme_retire_memory
+
+export const manifest = defineManifest({
+  name: 'acme-of-access', /* … */
+  memory: { prefix: 'acme', kinds: KINDS },
+  tools: [
+    { name: 'acme_review', kind: 'read', description: '…', handler: async (a, ctx) => {
+      const extra = ctx.memoryFacts('privileged_role').map((f) => f.value.role); // accepted facts only
+      /* … use them to add checks … */
+    } },
+    ...mem.tools,
+  ],
+  policy: { rules: [{ tool: 'acme_review', decision: 'allow' }, ...mem.rules, { tool: '*', decision: 'block' }] },
+});
+```
+
+| Tool | Kind | Policy | What it does |
+|---|---|---|---|
+| `<prefix>_recall` | read | allow | Search what the agent has learned: accepted facts, facts waiting for a person, and their history. Says whether the file verifies. |
+| `<prefix>_learn` | report | allow | Propose one fact. It is stored as waiting and changes nothing. Records the hash of any `source_files` it came from. |
+| `<prefix>_accept_learning` | action | ask · one-click (`accept_learning`) | A named person accepts or rejects a waiting fact. Never on Auto. |
+| `<prefix>_retire_memory` | action | ask · one-click (`accept_learning`) | A named person stops an accepted fact. The history stays. |
+
+What is enforced in code, not left to the model:
+
+- **One file per agent**: `.mythos/memory/<agent>.jsonl`. The runtime picks it from the manifest name; no tool argument names a file or another agent. Lines written for another agent are ignored and reported.
+- **Only declared kinds**, each checked against its JSON Schema (which must set `additionalProperties: false`) and its optional `check`. A built-in `note` kind is for people and changes no check. Policy, caps, Auto opt-ins and one-click categories are not memory and cannot be learned.
+- **Learning only proposes.** A fact applies from the next call after a named person accepts it. Accepting is the one-click category `accept_learning`, so it always asks, even in Auto.
+- **Each acceptance is checked against the approvals file**: the approval must be by the same person, given before the line was written, for exactly that fact and decision (the approval id is a hash of the tool and its arguments). A properly chained "accepted" line with no such approval is shown as `unverified` and not used. The same check applies to retiring a fact.
+- **Tamper-evident**: the file is hash-chained like the audit log, and signed with the same key when `--signing-key` is set. If it does not verify, no accepted fact is used and every result says so. `<pack> memory verify` also cross-checks the audit log: an acceptance the audit log says ran but the memory file lacks (lines cut from the end) is reported.
+- **Refused values**: private keys, AWS/Stripe/GitHub/Slack tokens, `password: …` patterns, long random-looking strings, US social security numbers, and text that reads like instructions to an AI. At most 200 facts can wait for a person and 5,000 facts are kept.
+- **Every result says what it used**: `memory_applied` on the call result (id, kind, value, who accepted it) and the ids in the audit line. `--no-memory` (or `memory: false`) runs without learned facts; recall and learn still work.
+
+From the command line:
+
+```bash
+npx <pack> memory list                                   # accepted and waiting facts
+npx <pack> memory accept MEM-1a2b3c4d5e6f --as "Your Name" --reason "Checked with the controller"
+npx <pack> memory reject MEM-1a2b3c4d5e6f --as "Your Name"
+npx <pack> memory retire MEM-1a2b3c4d5e6f --as "Your Name" --reason "Role removed in March"
+npx <pack> memory verify [--pubkey public.pem]
+```
+
+`memory accept` takes the same path as the agent: the call asks, the named person approves, the call runs.
+
+**Honest limits:** the same as approvals. If the agent also has a shell in the same folder, it could write the memory and approvals files. Without a signing key, someone with write access can rewrite and re-chain the whole memory file; with `--signing-key` (key kept outside `--root`) that fails `memory verify --pubkey`. Removing lines from the end of an unsigned file is only caught by the audit-log cross-check. Learned facts are what a person accepted, not proof that they are right.
 
 ## Kill switch and caps
 

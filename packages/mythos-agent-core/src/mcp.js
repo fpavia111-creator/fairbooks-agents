@@ -100,6 +100,7 @@ export function createMcpHandler(runtime) {
             tools: runtime.listTools().map(({ name: n, kind, category, tier, decision, reason }) => ({ name: n, kind, category, tier, decision, reason })),
             license: runtime.licenseReport(),
             reads_exports_from: describeSources(m).map((k) => ({ kind: k.kind, arguments: k.args, exports: k.exports.map((e) => `${e.system}: ${e.label || e.id}`) })),
+            ...(runtime.memory ? { memory: (() => { const r = runtime.memory.search({ status: 'all', limit: 0 }); return { in_use: runtime.useMemory && r.chain.ok, file_verifies: r.chain.ok, counts: r.counts, kinds: runtime.memory.kindsInfo(), recall_tool: `${m.memory.prefix}_recall` }; })() } : {}),
           }));
         }
         if (name === 'mythos_inspect_input') { const r = runtime.inspect(params.arguments || {}); return ok(text(r, r.status === 'blocked' || r.status === 'error')); }

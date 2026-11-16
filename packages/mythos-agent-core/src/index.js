@@ -2,6 +2,7 @@ export { defineManifest, matchRule, ManifestError, ONE_CLICK_CATEGORIES, KINDS, 
 export { PolicyEngine } from './policy.js';
 export { AgentRuntime, DEFAULT_CAPS, friendlyError, INSPECT_SCHEMA } from './runtime.js';
 export { AuditLog, readAudit, verifyChain } from './audit.js';
+export { DomainMemory, memoryTools, memoryFile, memoryValueProblem, approvalIdFor, MEMORY_CATEGORY, MEMORY_DIR, NOTE_KIND } from './memory.js';
 export { ApprovalStore, signWebhook, verifyWebhook } from './approvals.js';
 export { serveApprovals } from './approvals-server.js';
 export { UsageStore, capHit } from './usage.js';

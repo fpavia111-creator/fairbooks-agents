@@ -168,6 +168,14 @@ Final run (Node 22, 4-core Linux container): 66 of 68 tools ran at 10,000 rows (
 
 Two outputs change on very large or odd files: Augeas lists a tax id or phone shared by more than 500 rows under `not_compared` instead of pairing them all, and Praxidike lists a receipt shared by more than 200 lines under `not_paired`. Epeius names at most five similar earlier RFIs per RFI and counts the rest. Full table: `docs/bench-2026-11-15.md`. Tests: 670 pass on Node 20, 22 and 24; evals 420 of 420; `npm run hostile:args` 0 findings over 20,670 calls (it caught one hang in the new Penelope code, a huge `date_window` walking every day in the range, now fixed and tested); `npm run release:check` passes.
 
+## Domain memory, handoff ver 5 (16 Nov 2026)
+
+Still 0.2.0 and unpublished. Olympus and Ladon can now remember facts about one customer's setup, built from the idea in Grok's `mythos-domain-memory` package (its code was not used; the handoff's `REVIEW-ver5.md` says why).
+
+- Core: `DomainMemory` and `memoryTools(prefix, kinds)` give an agent `<prefix>_recall` (read), `<prefix>_learn` (report: stores a waiting fact that changes nothing), and `<prefix>_accept_learning` / `<prefix>_retire_memory` in the new one-click category `accept_learning` (always a named person, never on Auto). One hash-chained file per agent under `.mythos/memory/`, signed with the audit key when one is set. Each acceptance must match an approval by the same person for exactly that fact; otherwise it is `unverified` and unused. Credentials, personal identifiers and instruction-like text are refused. Results carry `memory_applied`; audit lines carry the fact ids. CLI: `<agent> memory list|accept|reject|retire|verify` and `--no-memory`.
+- Olympus learns column names (used only when the call and config leave a setting unset) and extra field rules. Ladon learns extra privileged roles, segregation-of-duties rules and standing reviewer delegations. Every kind adds to a check; tolerances, FX rates, stale days and rotation limits cannot be learned, and config or policy entries win over learned ones. Reports list the facts used.
+- Tests: 702 pass on Node 20, 22 and 24 (32 new); evals 434 of 434 (14 new); `npm run hostile:args` 0 findings over 21,138 calls, including the eight memory tools. A Ladon memory file with 2,500 accepted facts loads and verifies in about 0.1 s, and a 10,000-row review using all of them runs in about 0.4 s.
+
 ## Not done
 
 - **Windows** has not run the suite (the CI matrix covers it once the repo is on GitHub).

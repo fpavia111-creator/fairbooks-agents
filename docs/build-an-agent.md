@@ -18,7 +18,7 @@ Check the name is free first: `curl -s -o /dev/null -w '%{http_code}' https://re
 
 - `tools`: each has `name`, `kind` (`read`, `report`, `write`, `action`), `description`, an accurate `inputSchema` (the runtime validates every call against it), an optional `title`, and a `handler(args, ctx)`.
 - `policy.rules`: one rule per tool (`allow`, `ask`, `block`), ending with `{ tool: '*', decision: 'block' }`. Writes and actions can never be `allow`.
-- One-click categories (`go_live`, `revoke_access`, `delete_personal_data`, `move_money`, `binding_send`, `production_deploy`) are `ask` (a named person approves) or `block`. They can never go on Auto.
+- One-click categories (`go_live`, `revoke_access`, `delete_personal_data`, `move_money`, `binding_send`, `production_deploy`, `accept_learning`) are `ask` (a named person approves) or `block`. They can never go on Auto.
 - List refused tools (`send_email`, `erp_post_invoice`, …) as `block` so a host model sees they exist and are refused.
 - `prompts`: an MCP prompt that walks a host model through the workflow.
 - `configSchemas`: a JSON Schema per config file; load configs with `ctx.readJson(path, 'name')`.
@@ -74,6 +74,16 @@ If a tool takes a table, declare it under `sources` so real exports work without
 ## 4c. Paid tools
 
 Mark a tool `tier: 'pro'` (and optionally `feature: 'name'`) only when the owner has decided the tier list and a trusted public key is in `license-keys.js`. The licence gate never changes a policy decision; do not use it as a safety control.
+
+## 4d. Domain memory (optional)
+
+Give an agent memory only when the same customer facts are typed again on every run (a column name, a role that counts as privileged). Declare the kinds in `src/memory.js`:
+
+- Each kind has a `description` with an example, an `effect` that says in plain words what an accepted fact changes, a closed JSON Schema (`additionalProperties: false`) and, if the schema cannot say it, a `check(value)` that returns a reason to refuse.
+- **Only add kinds that add to a check** (another role, another rule) or fill in something the call and config leave unset. Never make a threshold, tolerance, rate or allowlist learnable: a remembered number can hide a difference. Policy, caps and Auto are not memory.
+- Spread `memoryTools('<prefix>', KINDS)` into `tools` and `policy.rules`, and set `memory: { prefix, kinds }` in the manifest. `defineManifest` checks the four tools are there.
+- In handlers, read accepted facts with `ctx.memoryFacts(kind)` after the call's arguments and config are merged, let the arguments and config win, and say which facts were used and which were skipped (and why) in the result and any report. The runtime adds `memory_applied` and the audit ids for you.
+- Test: a waiting fact changes nothing, an accepted one does, the config wins, a loosening kind is refused, and `memory: false` runs without it. Ladon and Olympus are the worked examples.
 
 ## 6. Release checklist
 

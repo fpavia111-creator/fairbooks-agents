@@ -6,7 +6,7 @@ import { checkOpenapi, checkChangelog } from './checks.js';
 
 export const LIMITS = 'Echo compares the docs with the tool list, input schemas and package.json you give it. It checks names, labels, versions, examples and links, not whether the prose is accurate or complete, and it does not run the code. Passing means "no drift found by these checks", not "the docs are complete".';
 const SEV = { error: 0, warning: 1, advisory: 2 };
-const NOT_TOOLS = new Set(['go_live', 'revoke_access', 'delete_personal_data', 'move_money', 'binding_send', 'production_deploy']);
+const NOT_TOOLS = new Set(['go_live', 'revoke_access', 'delete_personal_data', 'move_money', 'binding_send', 'production_deploy', 'accept_learning']);
 
 export function loadTools(json) {
   let list = Array.isArray(json) ? json : json?.tools || json?.result?.tools || json?.result?.structuredContent?.tools;

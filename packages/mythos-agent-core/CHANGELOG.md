@@ -1,6 +1,16 @@
 # Changelog
 
-## 0.2.0 (2026-11-15)
+## 0.2.0 (2026-11-16)
+
+Added (domain memory, handoff ver 5)
+- Domain memory for agents that opt in with manifest `memory: { prefix, kinds }`: `DomainMemory`, `memoryTools(prefix, kinds)` (`<prefix>_recall`, `_learn`, `_accept_learning`, `_retire_memory`), `memoryFile`, `memoryValueProblem`, `approvalIdFor`, `NOTE_KIND`. One hash-chained (optionally signed) file per agent under `.mythos/memory/`. Learning only proposes; a named person accepts. Each acceptance and retirement is checked against the approvals file (same person, before the line, exactly that fact and decision); otherwise it is `unverified` and not used. Refuses credentials, personal identifiers and instruction-like text; caps of 200 waiting and 5,000 kept facts.
+- New one-click category `accept_learning`: changing what an agent remembers always needs a named person, even in Auto.
+- `ctx.memoryFacts(kind)` returns accepted facts for a check to use; results carry `memory_applied` and audit lines the fact ids. `ctx.memory`, `ctx.approvedBy`, `ctx.approvalId` for memory tools.
+- Runtime option `memory: false`, CLI `--no-memory` and `MYTHOS_NO_MEMORY=1`.
+- `mythos_info` shows memory counts, whether the file verifies and the kinds an agent can learn.
+- CLI `<pack> memory list | accept | reject | retire | verify`; `verify` cross-checks the audit log so lines cut from the end of the memory file are reported.
+- `defineManifest` validates `memory`: kinds need a description, an effect and a closed object schema; the four tools must be present with the right kind and category.
+
 
 Added (real exports, licence keys)
 - Table reading: TSV, semicolon- and pipe-separated text (delimiter sniffed), Excel `.xlsx` (`readXlsx`, `writeXlsx`, no dependencies, formulas never evaluated, 5,000,000-cell cap) and JSON envelopes, all through `ctx.records` and `readRecords`.

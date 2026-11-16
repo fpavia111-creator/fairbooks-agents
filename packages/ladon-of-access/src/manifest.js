@@ -3,6 +3,7 @@ import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeAccess, normalizeRoster, reviewAccess, sheetCsv, summaryMarkdown, effectiveOptions, campaignStatus, accessDiff, evidencePack } from './access.js';
 import { SOURCES } from './sources.js';
+import { MEMORY, MEMORY_KINDS, withMemory } from './memory.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -40,11 +41,17 @@ const common = {
   rotation_max_days: { type: 'integer', minimum: 1 },
 };
 const loadPolicy = (a, ctx) => (a.policy ? ctx.readJson(a.policy, 'ladon-policy') : {});
-const run = (a, ctx) => reviewAccess(normalizeAccess(ctx.records(a.access)), a.roster ? normalizeRoster(ctx.records(a.roster)) : null, effectiveOptions(loadPolicy(a, ctx), a));
+const run = (a, ctx) => {
+  const { opts, memory } = withMemory(effectiveOptions(loadPolicy(a, ctx), a), ctx);
+  const r = reviewAccess(normalizeAccess(ctx.records(a.access)), a.roster ? normalizeRoster(ctx.records(a.roster)) : null, opts);
+  return memory ? { ...r, memory } : r;
+};
+const memNote = (r) => (r.memory ? ` ${r.memory.used.length} learned fact(s) used.` : '');
 const OUT = 'mythos-out/ladon';
 
 const PROMPT = `You are running an access recertification with the ladon-of-access tools. Work only on files under --root. Ladon never revokes access; a named person does.
 
+0. Call ladon_recall to see what Ladon has learned about this customer. Accepted facts (extra privileged roles, SoD rules, standing delegations) are applied to every review automatically and listed under "memory" in the results; waiting facts are not applied. If the user tells you something Ladon should remember (for example "Vault Keeper is a privileged role here"), call ladon_learn with the matching kind and tell the user it waits for a named person to accept it ("ladon memory accept <id> --as Name", or ladon_accept_learning, which always asks). Never store passwords, keys or personal identifiers.
 1. Call ladon_review_access with access="{{access}}", roster="{{roster}}" (leave roster out if it is empty) and as_of="{{as_of}}" (add policy="{{policy}}" if a policy file was given). Read by_risk, sod_conflicts, rotation_checked and unassigned_reviewer. Tell the user the top risks in plain words using each item's "reasons".
 2. If a previous export exists ("{{previous}}"), call ladon_access_diff with previous and current to show what changed since the last review (privilege gained, reactivated accounts, new agents). Review those first.
 3. Call ladon_recert_sheet with the same arguments. It writes recertification.csv (assigned_reviewer, delegated_to, due_date, blank decision columns) and a summary. Tell the user where the files are and that each reviewer fills in reviewer_decision (keep / modify / revoke), reviewer_name and review_date. You do not fill in decisions.
@@ -62,6 +69,7 @@ export const manifest = defineManifest({
   model: { provider: 'anthropic', id: 'claude-sonnet-4-5-20250929', note: 'Declared host-model pin. The tools are deterministic and call no model.' },
   caps: { maxSteps: 40, maxSpendUsd: 0 },
   configSchemas: { 'ladon-policy': POLICY_SCHEMA },
+  memory: { prefix: 'ladon', kinds: MEMORY_KINDS },
   prompts: [{
     name: 'ladon_recertification_campaign', title: 'Run an access recertification campaign',
     description: 'Review an access export, write the sheet, chase reviewers, write the evidence pack and route revocations to a human click.',
@@ -79,7 +87,7 @@ export const manifest = defineManifest({
       name: 'ladon_review_access', kind: 'read', title: 'Review access',
       description: 'Flag risky accounts in an access export (optionally against an HR roster and a policy file): leavers, not in roster, stale or never-used logins, privileged roles, privileged without MFA, agents/services without an owner or credential rotation date, segregation-of-duties conflicts, shared and duplicate accounts. Each line gets reasons, an assigned reviewer and a due date.',
       inputSchema: { type: 'object', required: ['access'], additionalProperties: false, properties: common },
-      handler: async (a, ctx) => { const r = run(a, ctx); return { summary: `${r.accounts} account(s): high ${r.by_risk.high}, medium ${r.by_risk.medium}, low ${r.by_risk.low}; ${r.sod_conflicts.length} SoD conflict(s). Suggestions only.`, ...r }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); return { summary: `${r.accounts} account(s): high ${r.by_risk.high}, medium ${r.by_risk.medium}, low ${r.by_risk.low}; ${r.sod_conflicts.length} SoD conflict(s).${memNote(r)} Suggestions only.`, ...r }; },
     },
     {
       name: 'ladon_recert_sheet', kind: 'report', title: 'Write recertification sheet',
@@ -89,7 +97,7 @@ export const manifest = defineManifest({
         const r = run(a, ctx); const out = ctx.outDir(a.out_dir || OUT);
         const csv = sheetCsv(r);
         const files = [ctx.writeFile(out, 'recertification.csv', csv), ctx.writeFile(out, 'recertification-summary.md', summaryMarkdown(r, new Date().toISOString()))];
-        return { summary: `Recertification sheet written for ${r.accounts} account(s).`, files, by_risk: r.by_risk, sod_conflicts: r.sod_conflicts.length, output_sha256: sha256(csv) };
+        return { summary: `Recertification sheet written for ${r.accounts} account(s).${memNote(r)}`, files, by_risk: r.by_risk, sod_conflicts: r.sod_conflicts.length, output_sha256: sha256(csv), ...(r.memory ? { memory: r.memory } : {}) };
       },
     },
     {
@@ -103,10 +111,10 @@ export const manifest = defineManifest({
       description: 'Compare a previous and a current access export: added and removed accounts, role changes, privilege gained, reactivated and deactivated accounts, new agents/service accounts and owner changes, with a review-first list.',
       inputSchema: { type: 'object', required: ['previous', 'current'], additionalProperties: false, properties: { previous: { ...str, description: 'Earlier access export' }, current: { ...str, description: 'Later access export' }, privileged_roles: roleList, policy: common.policy } },
       handler: async (a, ctx) => {
-        const o = effectiveOptions(loadPolicy(a, ctx), a);
+        const { opts: o, memory } = withMemory(effectiveOptions(loadPolicy(a, ctx), a), ctx, ['privileged_role']);
         const d = accessDiff(normalizeAccess(ctx.records(a.previous)), normalizeAccess(ctx.records(a.current)), o);
         const c = d.counts;
-        return { summary: `${c.added} added, ${c.removed} removed, ${c.role_changed} role change(s), ${c.privilege_gained} privilege gain(s), ${c.reactivated} reactivated.`, ...d };
+        return { summary: `${c.added} added, ${c.removed} removed, ${c.role_changed} role change(s), ${c.privilege_gained} privilege gain(s), ${c.reactivated} reactivated.${memory ? ` ${memory.used.length} learned privileged role(s) used.` : ''}`, ...d, ...(memory ? { memory } : {}) };
       },
     },
     {
@@ -135,6 +143,7 @@ export const manifest = defineManifest({
         return { summary: `Revocation request recorded for ${a.user} on ${a.system}. An admin must remove the access in that system.`, file: f };
       },
     },
+    ...MEMORY.tools,
   ],
   policy: { rules: [
     { tool: 'ladon_review_access', decision: 'allow' },
@@ -143,6 +152,7 @@ export const manifest = defineManifest({
     { tool: 'ladon_access_diff', decision: 'allow' },
     { tool: 'ladon_evidence_pack', decision: 'allow' },
     { category: 'revoke_access', decision: 'ask', reason: 'Revoking access needs a named human, one click, even in Auto.' },
+    ...MEMORY.rules,
     { tool: '*', decision: 'block', reason: 'Not on the Ladon allowlist.' },
   ] },
 });

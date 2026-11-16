@@ -108,9 +108,9 @@ claimHits.length ? add('honest copy', 'fail', `${claimHits.length} sentence(s) m
 // ---------- policy guard rails ----------
 const corePath = join(core.dir, 'src', 'index.js');
 const { ONE_CLICK_CATEGORIES } = await import(new URL(`file://${corePath.split('\\').join('/')}`));
-const EXPECTED = ['go_live', 'revoke_access', 'delete_personal_data', 'move_money', 'binding_send', 'production_deploy'];
+const EXPECTED = ['go_live', 'revoke_access', 'delete_personal_data', 'move_money', 'binding_send', 'production_deploy', 'accept_learning'];
 const missingCat = EXPECTED.filter((c) => !ONE_CLICK_CATEGORIES.includes(c));
-missingCat.length ? add('one-click categories', 'fail', `missing from ONE_CLICK_CATEGORIES: ${missingCat.join(', ')}`) : add('one-click categories', 'pass', `${ONE_CLICK_CATEGORIES.length} categories, all six required ones present`);
+missingCat.length ? add('one-click categories', 'fail', `missing from ONE_CLICK_CATEGORIES: ${missingCat.join(', ')}`) : add('one-click categories', 'pass', `${ONE_CLICK_CATEGORIES.length} categories, all ${EXPECTED.length} required ones present`);
 const paid = []; const allowAction = [];
 for (const p of pkgs.filter((x) => x !== core)) {
   const { manifest } = await import(new URL(`file://${join(p.dir, 'src', 'index.js').split('\\').join('/')}`));
