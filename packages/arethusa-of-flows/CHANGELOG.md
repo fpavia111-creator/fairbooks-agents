@@ -2,6 +2,9 @@
 
 ## 0.2.0 — 2026-11-15
 
+Fixed (handoff ver 6)
+- Proposals for flows named in non-Latin scripts all went to `flow.json`; file names keep the script and same-named files are numbered.
+
 ### Added
 - Power Automate / Logic Apps flow definitions and Workato recipe exports. The same checks run on them: `runAfter` builds the step graph (disconnected steps, error routes on `Failed`/`TimedOut`), conditions and Workato `if` blocks count as filters before deletes, Workato `catch` blocks count as error routes, `skip: true` steps are disabled, and Power Automate HTTP triggers open to anyone are reported as `open_webhook`.
 - Secret detection with about 20 known formats, secret-named fields and Shannon entropy. Known formats and secret-named fields stay `hardcoded_secret` (high); entropy-only hits are a new `possible_secret` (medium). Findings name the rule (for example "Slack incoming-webhook URL") and location, never the value. Redaction keeps URL hosts and parameter names and replaces only the secret part.

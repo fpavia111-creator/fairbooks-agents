@@ -2,6 +2,9 @@
 
 ## 0.2.0 (2026-11-15)
 
+Fixed (handoff ver 6)
+- Duplicate-vendor checks now compare Japanese, Chinese and Korean names (they normalized to nothing). Request-draft file names keep the vendor's own script.
+
 - Real exports: Reads NetSuite vendor and transaction searches, QuickBooks Online vendor contact list and grouped "transaction list by vendor" report, and Xero contacts directly. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 Added
 - TIN pattern rules per entity type: never-assigned EIN prefixes, never-issued SSN areas/groups/serials, ITIN ranges, placeholder numbers, and the wrong kind of number for the entity type (`tin_pattern_invalid`, `tin_type_mismatch`). TINs stay masked everywhere. No IRS TIN matching.

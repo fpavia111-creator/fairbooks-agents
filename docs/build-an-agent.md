@@ -48,6 +48,30 @@ The runtime does most of this for you (see "Untrusted data and broken arguments"
 - `test/*.test.js` with `node:test`. Approvals are single-use and bound to arguments, so use different args in each approval test.
 - `evals/cases.json`: tool-level cases with `expect.status`, `contains`, `equals`, `matches`, `min`, `max`, `length`. Run `node bin/<agent>.js eval --report eval-out/` for an offline HTML report; add `--baseline` to fail on regressions.
 
+## 4b. Read the exports people already have
+
+If a tool takes a table, declare it under `sources` so real exports work without hand mapping: the agent's own columns (`fields`, each with a `type` of text, date, datetime, money, number, bool or email, and `aliases`), the arguments that carry that kind of file (`args`), and `profiles` built with `exportProfile('<catalogue id>', { field: 'Their Column' })`. Read files with `ctx.records(a.arg)` (or `ctx.records(path, 'kind')` when the argument name does not say). Add the catalogue entry to `mythos-agent-core/src/exports.js` if the export is new, with `basis: 'documented'`, `source` and `checked` only when you compared its columns with the vendor's documentation; otherwise leave it `recalled`. Put a fictional sample of each export in `fixtures/exports/`, test that it gives the same result as the native fixture, and run `node scripts/sources-doc.mjs` to regenerate the README section. A profile `note` says what the export lacks (no last-login column, no unit cost): say it plainly rather than guess.
+
+Files from other markets come for free: the core decodes legacy encodings, reads local amounts and dates, and fills still-unmatched fields from its column-name dictionary (eight languages, about 100 concepts, keyed by field name). Name your fields after a concept in `mythos-agent-core/src/i18n/columns.js` (`amount`, `email`, `vendor`...) to get those names; set `translate: 'ledger_debit'` to borrow another concept's names, or `translate: false` when a field's local names would mislead (a bank's money-out column is not a ledger debit). If a new concept is needed, add it with names in all eight languages; the core test fails on a missing one. Compare names and words with `normalizeName`, `foldText` and `normHeader`, never with `[^a-z0-9]`, which deletes Japanese, Chinese and Korean text, and build file names with `safeFileName` or `slugify` plus `uniqueNames`. A regex with `\b` never matches next to CJK characters; see `roleRe` in Ladon for a version that does.
+
+## 4c. Pages people read, in their language
+
+If the agent writes a report or page for people, keep its words in a catalog (`{ key: { en, de, fr, es, pt, it, ja, zh, ko } }`) and read them through `makeText(catalog, lang)`, with `lang = normLang(a.language || ctx.lang)`. Offer a `language` argument (`enum: LANGS`) on the report tool. Keep codes, CSV columns, JSON and anything a later run reads in English, keep every limitation sentence in every language, and add the catalog's `translation_note` to non-English output. Test that every key exists in all nine languages with the same `{placeholders}`, and that the English output did not change. Olympus (`src/text.js`) and Ladon are the worked examples.
+
+## 4d. Paid tools
+
+Mark a tool `tier: 'pro'` (and optionally `feature: 'name'`) only when the owner has decided the tier list and a trusted public key is in `license-keys.js`. The licence gate never changes a policy decision; do not use it as a safety control.
+
+## 4e. Domain memory (optional)
+
+Give an agent memory only when the same customer facts are typed again on every run (a column name, a role that counts as privileged). Declare the kinds in `src/memory.js`:
+
+- Each kind has a `description` with an example, an `effect` that says in plain words what an accepted fact changes, a closed JSON Schema (`additionalProperties: false`) and, if the schema cannot say it, a `check(value)` that returns a reason to refuse.
+- **Only add kinds that add to a check** (another role, another rule) or fill in something the call and config leave unset. Never make a threshold, tolerance, rate or allowlist learnable: a remembered number can hide a difference. Policy, caps and Auto are not memory.
+- Spread `memoryTools('<prefix>', KINDS)` into `tools` and `policy.rules`, and set `memory: { prefix, kinds }` in the manifest. `defineManifest` checks the four tools are there.
+- In handlers, read accepted facts with `ctx.memoryFacts(kind)` after the call's arguments and config are merged, let the arguments and config win, and say which facts were used and which were skipped (and why) in the result and any report. The runtime adds `memory_applied` and the audit ids for you.
+- Test: a waiting fact changes nothing, an accepted one does, the config wins, a loosening kind is refused, and `memory: false` runs without it. Ladon and Olympus are the worked examples.
+
 ## 5. Connect a host
 
 ```jsonc
@@ -66,24 +90,6 @@ The runtime does most of this for you (see "Untrusted data and broken arguments"
 ```
 
 Give the host the MCP server only, not a shell in the same folder, so approvals mean something. For stronger evidence, start the server with `--signing-key` (a key kept outside `--root`) and keep an `--audit-mirror`.
-
-## 4b. Read the exports people already have
-
-If a tool takes a table, declare it under `sources` so real exports work without hand mapping: the agent's own columns (`fields`, each with a `type` of text, date, datetime, money, number, bool or email, and `aliases`), the arguments that carry that kind of file (`args`), and `profiles` built with `exportProfile('<catalogue id>', { field: 'Their Column' })`. Read files with `ctx.records(a.arg)` (or `ctx.records(path, 'kind')` when the argument name does not say). Add the catalogue entry to `mythos-agent-core/src/exports.js` if the export is new, with `basis: 'documented'`, `source` and `checked` only when you compared its columns with the vendor's documentation; otherwise leave it `recalled`. Put a fictional sample of each export in `fixtures/exports/`, test that it gives the same result as the native fixture, and run `node scripts/sources-doc.mjs` to regenerate the README section. A profile `note` says what the export lacks (no last-login column, no unit cost): say it plainly rather than guess.
-
-## 4c. Paid tools
-
-Mark a tool `tier: 'pro'` (and optionally `feature: 'name'`) only when the owner has decided the tier list and a trusted public key is in `license-keys.js`. The licence gate never changes a policy decision; do not use it as a safety control.
-
-## 4d. Domain memory (optional)
-
-Give an agent memory only when the same customer facts are typed again on every run (a column name, a role that counts as privileged). Declare the kinds in `src/memory.js`:
-
-- Each kind has a `description` with an example, an `effect` that says in plain words what an accepted fact changes, a closed JSON Schema (`additionalProperties: false`) and, if the schema cannot say it, a `check(value)` that returns a reason to refuse.
-- **Only add kinds that add to a check** (another role, another rule) or fill in something the call and config leave unset. Never make a threshold, tolerance, rate or allowlist learnable: a remembered number can hide a difference. Policy, caps and Auto are not memory.
-- Spread `memoryTools('<prefix>', KINDS)` into `tools` and `policy.rules`, and set `memory: { prefix, kinds }` in the manifest. `defineManifest` checks the four tools are there.
-- In handlers, read accepted facts with `ctx.memoryFacts(kind)` after the call's arguments and config are merged, let the arguments and config win, and say which facts were used and which were skipped (and why) in the result and any report. The runtime adds `memory_applied` and the audit ids for you.
-- Test: a waiting fact changes nothing, an accepted one does, the config wins, a loosening kind is refused, and `memory: false` runs without it. Ladon and Olympus are the worked examples.
 
 ## 6. Release checklist
 

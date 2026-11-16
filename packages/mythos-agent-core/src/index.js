@@ -11,7 +11,7 @@ export { generateSigningKey, loadSigner, loadPublicKeys, keyId, verifySignature 
 export { issueLicense, checkLicense, parseLicense, readLicenseToken, licenseHas, licenseView, licenseKeyMap, trustedLicenseKeys, LICENSE_PREFIX, LICENSE_FILE, TIERS } from './license.js';
 export { LICENSE_PUBLIC_KEYS, LICENSE_REVOKED_IDS } from './license-keys.js';
 export { toIcs, validateIcs, toSarif, validateSarif, unifiedDiff, applyUnifiedDiff, escapeHtml, htmlPage, accessibleTables, safeFileName, slugify, uniqueNames, safeMarkdown } from './formats.js';
-export { levenshtein, jaroWinkler, normalizeName, normalizeAddress, stripLegalForms, tokenSetSimilarity, nameSimilarity, shannonEntropy, maskValue, injectionSignals } from './text.js';
+export { levenshtein, jaroWinkler, normalizeName, normalizeAddress, stripLegalForms, stripLegalTail, tokenSetSimilarity, nameSimilarity, shannonEntropy, maskValue, injectionSignals } from './text.js';
 export { readZip, writeZip, docxText } from './zip.js';
 export { writeEvalReport, evalReportHtml } from './eval-report.js';
 export { createMcpHandler, serveStdio, annotationsFor } from './mcp.js';
@@ -21,7 +21,7 @@ export { parseCsv, parseCsvRows, rowsToRecords, sniffDelimiter, toCsv, neutralis
 export { readXlsx, writeXlsx, xlsxSheets, excelSerialToIso, isDateFormat } from './xlsx.js';
 export { readTable, TABLE_EXTENSIONS } from './tables.js';
 export { EXPORTS, exportProfile, carryGroup, firstRowPer, fullName, EXPORTS_BASIS_NOTE } from './exports.js';
-export { adaptRecords, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, normHeader, findHeaderRow, encodingWarning, conceptOf, describeSources, loadSourceOverrides, overrideFor, kindsByArg, columnShape, SOURCES_CONFIG_SCHEMA, SOURCES_FILE, FIELD_TYPES } from './sources.js';
+export { adaptRecords, readYesNo, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, normHeader, findHeaderRow, encodingWarning, conceptOf, describeSources, loadSourceOverrides, overrideFor, kindsByArg, columnShape, SOURCES_CONFIG_SCHEMA, SOURCES_FILE, FIELD_TYPES } from './sources.js';
 export { sha256, sha256File, canonical, safePath, readRecords, toNumber, round2 } from './util.js';
 export { demoRuntime, printStep } from './demo.js';
 export { foldText, readNumber, numberReader } from './intl.js';

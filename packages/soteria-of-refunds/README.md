@@ -47,6 +47,10 @@ Columns named differently? Run `npx soteria-of-refunds inspect <file>` to see ho
 Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
 <!-- sources:end -->
 
+### Disputes from other markets
+
+When a dispute has no known reason code, Soteria classifies it from the reason text. That text can be in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`Ware nicht erhalten`, `Cobro duplicado`, `商品が届いていない`, `重复扣款`, `환불되지 않았습니다`...). Network names are read in other scripts too (ビザ, 마스터카드, 美国运通). JCB and UnionPay are recognised by name, but their reason codes are not in Soteria's table, so their disputes are always classified from the text and the result says so. The word lists are short and a person still checks the category.
+
 ## Install
 
 ```bash

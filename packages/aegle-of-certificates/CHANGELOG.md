@@ -2,6 +2,9 @@
 
 ## 0.2.0 (2026-11-15)
 
+Fixed (handoff ver 6)
+- Chase drafts for vendors named in Japanese, Chinese or Korean all went to `vendor.md`, each overwriting the last; file names now keep the name's script and same-named files are numbered.
+
 - Real exports: Reads `aws acm list-certificates` JSON (ids from the ARN, key from KeyAlgorithm, auto-renew only for Amazon-issued certificates eligible for renewal, epoch timestamps from AWS CLI v1) and crt.sh JSON (latest certificate per name; a CT log shows what was issued, not what is installed). COI trackers map common column names. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 Added
 - `aegle_tls_live_check`: opt-in live TLS expiry check (one read-only handshake per listed host, at most 25). Reports expiry, chain trust, hostname match, self-signed and key; compares with the inventory (`inventory_mismatch`, `not_in_inventory`); writes `live-tls.csv`. Policy `ask`, blocked in review mode, MCP `openWorldHint`. Tested with an injected transport and a local TLS server only.

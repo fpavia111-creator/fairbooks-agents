@@ -2,6 +2,10 @@
 
 ## 0.2.0
 
+Fixed (handoff ver 6)
+- A dispute reason written in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean was always `general`. The reason-text fallback now knows each category in those languages (on folded text, so accents and full-width forms do not matter).
+- Network names in other scripts (ビザ, 마스터카드, 美国运通...) were not recognised. JCB and UnionPay are now recognised by name; their reason codes are not in the table, so their disputes are classified from the reason text and say so. The `network` argument of `soteria_reason_code` accepts `jcb` and `unionpay`.
+
 - Real exports: Reads Stripe payments/disputes and Shopify orders exports directly (one row per order for Shopify line-item exports). Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Card-network reason-code mapping (Visa, Mastercard, Amex, Discover) to dispute categories, with a reason-text fallback and `reason_code_overrides` in the policy. New `soteria_reason_code` lookup tool.
 - New `soteria_evidence_pack`: per-dispute evidence checklist that differs by category, items marked on file / missing / attach from your exports, an explained readiness score, earlier undisputed orders 120-365 days back for fraud disputes, a citation for every source row used, `evidence-index.json` (its SHA-256 is written to the audit line as `output_sha256`) and `dispute-deadlines.ics`.

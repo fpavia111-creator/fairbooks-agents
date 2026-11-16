@@ -2,6 +2,20 @@
 
 ## 0.2.0 (2026-11-16)
 
+Added (other markets and languages, handoff ver 6)
+- Text encodings: `decodeText`, `encodingName`, `ENCODINGS`. BOM, strict UTF-8, UTF-16 without a BOM, then a scored guess among Shift_JIS, EUC-KR, GB18030, Big5 and Windows-1252; a guess is named in `warnings`. `mythos-sources.json` takes `encoding` per file. `readTable` returns `encoding`; `inspect` shows it.
+- Amounts and dates from other markets (`intl.js`): `cleanAmount` (currency words and symbols at either end, R$, 円, ￥, ₩, △/▲ negatives, Indian grouping, NFKC), `inferDecimal`, `readNumber`, `numberReader` (one decimal mark per column), `parseAnyDate` (month names in seven European languages, 年月日, 년월일, Japanese era years, 民國 years, 午前/午後), `normHeader` and `foldText` for headers and text in any script.
+- Column names in eight languages (`COLUMN_WORDS`, about 100 concepts; `translatedNames`, `namesFor`). Used only for still-unmatched fields; results list `translated_columns`. Field option `translate: false | '<concept>'`.
+- Output language: `LANGS`, `normLang`, `makeText`, `mergeCatalogs`, `coreText`, `HTML_LANG`; `--lang` / `MYTHOS_LANG`; `ctx.lang`; the approvals page in nine languages with a switcher; `htmlPage({ lang })`.
+- `stripLegalForms`, `stripLegalTail`, `slugify`, `uniqueNames`. `normalizeName` drops legal forms that only count at the end of a name: S.L., S.L.U., S.A.U., S.A. de C.V. and its variants, S/A, ME, EPP, S.n.c. and SE.
+- `readYesNo(v)`: a yes/no cell in any of the nine languages as true, false or null (used by Nausicaa for consent values).
+- `parseAnyDate` reads month words between slashes, as Mexican and Brazilian bank exports write them: `14/NOV/2026`, `03/ene/2026`, `14/out/2026`.
+
+Changed
+- `toNumber("12,5")` is 12.5 and `toNumber("1.234,56")` is 1234.56 (they were 125 and 1.23456).
+- `normalizeName`, `normalizeAddress` and `safeFileName` keep letters of every script; `normalizeName` also drops European and CJK legal forms (AG, KG, SARL, S.p.A., Ltda, 株式会社, 有限公司, 주식회사...).
+- Yes/no columns read the nine languages and ○/×.
+
 Added (domain memory, handoff ver 5)
 - Domain memory for agents that opt in with manifest `memory: { prefix, kinds }`: `DomainMemory`, `memoryTools(prefix, kinds)` (`<prefix>_recall`, `_learn`, `_accept_learning`, `_retire_memory`), `memoryFile`, `memoryValueProblem`, `approvalIdFor`, `NOTE_KIND`. One hash-chained (optionally signed) file per agent under `.mythos/memory/`; fact ids are content hashes, so a value edited in place is ignored. Learning only proposes; a named person accepts. Each acceptance and retirement is checked against the approvals file (same person, before the line, exactly that fact and decision); otherwise it is `unverified` and not used. Refuses credentials, personal identifiers and instruction-like text; caps of 200 waiting and 5,000 kept facts.
 - New one-click category `accept_learning`: changing what an agent remembers always needs a named person, even in Auto.

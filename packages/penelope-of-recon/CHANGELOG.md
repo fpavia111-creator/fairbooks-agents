@@ -2,6 +2,11 @@
 
 ## 0.2.0 (2026-11-15)
 
+Added (handoff ver 6)
+- SWIFT MT940 statements (.sta, .mt940, .940), including the German structured :86: text; the EREF+ end-to-end reference becomes the line's reference.
+- Text statements are decoded like other files, so a Windows-1252 MT940 or OFX keeps its accents.
+- Ledger debit and credit columns read Soll/Haben, 借方/貸方 and the like.
+
 - Real exports: Bank statements in table form now go through the core reader: TSV and Excel are accepted (`bank_format` gains `tsv` and `xlsx`), and Chase (checking and card), Bank of America (summary block skipped), Wells Fargo (no header row), Capital One 360 (sign from the transaction type), Mercury (failed rows skipped) and Xero statement downloads are recognised. GL detail from NetSuite, QuickBooks Online (Transaction Detail by Account) and Xero (Account Transactions) is recognised, with headings, balances and totals skipped. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Bank file formats: CAMT.053 (XML), BAI2 and OFX/QFX through small built-in parsers (no dependencies). Format is detected from the extension, then the content, or set with `bank_format`. The file's closing balance is used for the tie-out when `bank_balance` is left out. Account numbers are masked to the last 4.
 - New tool `penelope_read_statement`: show the parsed lines and check opening + lines = closing.

@@ -54,7 +54,7 @@ export const manifest = defineManifest({
     {
       name: 'soteria_reason_code', kind: 'read', title: 'Look up a dispute reason code',
       description: 'Map a card-network dispute reason code (Visa, Mastercard, Amex, Discover) or reason text to a dispute category and its evidence checklist. A working guide, not the networks\' rules.',
-      inputSchema: { type: 'object', properties: { code: { ...str, description: 'e.g. 13.1, 4853, C08, UA02' }, network: { type: 'string', enum: ['visa', 'mastercard', 'amex', 'discover'] }, reason: { ...str, description: 'Free-text reason, used when there is no known code' } } },
+      inputSchema: { type: 'object', properties: { code: { ...str, description: 'e.g. 13.1, 4853, C08, UA02' }, network: { type: 'string', enum: ['visa', 'mastercard', 'amex', 'discover', 'jcb', 'unionpay'] }, reason: { ...str, description: 'Free-text reason, used when there is no known code' } } },
       handler: async (a) => {
         if (!a.code && !a.reason) throw new Error('give a code or a reason');
         const c = classifyDispute({ reason_code: a.code, network: a.network, reason: a.reason });

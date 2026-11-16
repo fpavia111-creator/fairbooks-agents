@@ -2,6 +2,12 @@
 
 ## 0.2.0 (2026-11-15)
 
+Added (handoff ver 6)
+- Receipts in yen and won (no decimals), yuan, reais and euros: total, subtotal, tax and tip labels in nine languages; dates such as 2026年11月14日, 令和8年11月14日, 2026년 11월 14일 and 14 novembre 2026; d/m/yyyy when the currency is not USD or CAD; merchant lines in any script.
+
+Fixed
+- "Sous-total" and "Sub-total" were counted as totals.
+
 - Real exports: Reads Ramp transaction exports (layout checked against Ramp's documentation on 2026-11-15) and the Expensify default CSV directly. New policy field `category_aliases` maps a card or expense system's category names onto policy categories. Staging a reimbursement from a company card export is refused (the company already paid). Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - New `praxidike_read_receipts`: normalises receipt text (US, European decimal comma, month-name dates, "amount due", "grand total") into merchant, total, date, currency, tax, tip and a content hash. Receipt text is still never returned. No OCR.
 - Per diem by location and date (`per_diem.rates` with a `"*"` fallback, categories with `per_diem: "meals"` and `per: "day"`, a `days` and `location` column) and dated mileage rates (`mileage_rates`).

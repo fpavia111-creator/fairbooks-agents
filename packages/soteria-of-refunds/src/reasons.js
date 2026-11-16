@@ -1,6 +1,7 @@
 // Card-network dispute reason codes -> dispute category -> evidence checklist.
 // A working map for triage, not the networks' rulebooks: codes and evidence rules
 // change, and your processor's dispute guide is the one that counts.
+import { foldText } from 'mythos-agent-core';
 
 /** code -> [category, label]. Keys are upper-case. */
 export const REASON_CODES = Object.freeze({
@@ -34,13 +35,28 @@ const TEXT = [
   ['not_received', /not.?received|never.?arrived|non.?receipt|missing|not delivered|not provided/i],
   ['not_as_described', /not as described|defective|damaged|counterfeit|quality|wrong item|misrepresent/i],
 ];
+// The same categories in German, French, Spanish, Portuguese, Italian, Japanese, Chinese
+// and Korean, matched on folded text (lowercase, no accents), so a reason written in the
+// cardholder's language is not left as "general".
+const TEXT_INTL = {
+  fraud: /betrug|nicht autorisiert|nicht genehmigt|fraude|non autoris|non reconnu|no autoriz|no reconoc|nao autoriz|nao reconhec|frode|non autorizzat|non riconosciut|不正|身に覚えのない|盗難|欺诈|盗刷|未授权|未經授權|未经授权|詐騙|부정 ?사용|도용|사기|승인하지 않/,
+  duplicate: /doppelt|zweimal|en double|doublon|deux fois|duplicad|dos veces|cobro doble|duas vezes|em duplicidade|duplicat|due volte|doppio addebito|二重|重複|重复|이중|중복/,
+  credit_not_processed: /gutschrift nicht|nicht erstattet|keine erstattung|remboursement non|pas ete rembourse|non rembourse|reembolso no|no reembolsad|reembolso nao|nao reembolsad|estorno nao|rimborso non|non rimborsat|返金されて(い)?ない|返金未|返金がない|未退款|退款未|没有退款|沒有退款|환불(되지| 안|받지)|미환불/,
+  cancelled_recurring: /abonnement|wiederkehrend|recurrent|suscripcion|recurrente|assinatura|recorrente|abbonamento|ricorrente|定期|サブスク|継続課金|订阅|訂閱|自动续费|自動續費|구독|정기 ?결제|자동 ?결제/,
+  not_received: /nicht erhalten|nicht geliefert|nie angekommen|non recu|pas recu|jamais recu|non livre|no recibid|no entregad|nunca lleg|nao recebid|nao entregue|nunca cheg|non ricevut|non consegnat|mai arrivat|届(か|い(て|と)い)ない|未着|未配達|未收到|没收到|沒收到|未送达|받지 못|미수령|배송되지 않|미배송/,
+  not_as_described: /beschadigt|defekt|nicht wie beschrieben|falscher artikel|falschung|defectueux|endommage|non conforme|contrefacon|defectuos|danad|no coincide|falsificad|defeituos|danificad|diferente do anunciado|difettos|danneggiat|contraffatt|破損|不良品|説明と異なる|偽物|商品違い|损坏|損壞|质量问题|品質問題|与描述不符|與描述不符|假货|假貨|파손|불량|설명과 다른|가품|오배송/,
+};
 
 export function detectNetwork(code, network) {
-  const n = String(network || '').trim().toLowerCase().replace(/[^a-z]/g, '');
-  if (/^visa/.test(n)) return 'visa';
-  if (/^(mastercard|mc)/.test(n)) return 'mastercard';
-  if (/^(amex|americanexpress)/.test(n)) return 'amex';
+  const n = foldText(network).replace(/ /g, '');
+  if (/^(visa|ビザ|비자|维萨|維薩)/.test(n)) return 'visa';
+  if (/^(mastercard|mc|マスターカード|마스터카드|万事达|萬事達)/.test(n)) return 'mastercard';
+  if (/^(amex|americanexpress|アメックス|アメリカンエキスプレス|아멕스|아메리칸익스프레스|美国运通|美國運通)/.test(n)) return 'amex';
   if (/^discover/.test(n)) return 'discover';
+  // JCB and UnionPay are recognised by name only: their reason codes are not in the
+  // table, so their disputes are classified from the reason text.
+  if (/^(jcb|ジェーシービー)/.test(n)) return 'jcb';
+  if (/^(unionpay|chinaunionpay|cup|银联|銀聯|中国银联|中國銀聯)/.test(n)) return 'unionpay';
   const c = String(code || '').trim().toUpperCase();
   if (/^1[0-3]\.\d(\.\d)?$/.test(c)) return 'visa';
   if (/^48\d\d$/.test(c)) return 'mastercard';
@@ -57,9 +73,10 @@ export function classifyDispute({ reason_code: code, network, reason }, override
   const c = String(code || '').trim().toUpperCase();
   if (c && overrides[c]) return { category: overrides[c], source: 'policy_override', network: detectNetwork(c, network), code: c, label: 'Mapped in your policy file' };
   const net = detectNetwork(c, network);
-  const hit = net && REASON_CODES[net][c];
+  const hit = net && REASON_CODES[net]?.[c];
   if (hit) return { category: hit[0], source: 'reason_code', network: net, code: c, label: hit[1] };
-  const t = TEXT.find(([, re]) => re.test(String(reason || '')));
+  const folded = foldText(reason);
+  const t = TEXT.find(([, re]) => re.test(String(reason || ''))) || TEXT.find(([cat]) => TEXT_INTL[cat].test(folded));
   return { category: t ? t[0] : 'general', source: t ? 'reason_text' : 'none', network: net, code: c || null, label: c ? 'Unknown code; classified from the reason text' : 'No reason code; classified from the reason text' };
 }
 

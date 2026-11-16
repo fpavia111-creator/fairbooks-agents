@@ -2,6 +2,9 @@
 
 ## 0.2.0 (2026-11-15)
 
+Fixed (handoff ver 6)
+- RFIs written in Japanese, Chinese or Korean had no words to compare, so duplicates were never flagged; such text is compared by character pairs.
+
 - Real exports: Reads Procore RFI exports directly (layout checked against Procore's documentation on 2026-11-15); submittal and document logs map common column names. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - New `epeius_ball_in_court` (read): open RFIs and submittals per responsible party in 0-7, 8-14, 15-30 and 31+ day buckets, overdue counts, oldest item, and a chase list ordered by days overdue with a reason per item. The submittal log can carry an optional `ball_in_court` column.
 - New `epeius_diff_logs` (read): compares an earlier RFI log export with the current one (new, closed, reopened, status, due-date and ball-in-court changes, newly overdue, removed).

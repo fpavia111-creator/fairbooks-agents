@@ -35,6 +35,12 @@ Optional `augeas-rules` JSON (unknown keys, wrong types and unknown rule names a
 
 Rules: `survivor_fill_blank` (keep the survivor's value, fill it if blank), `survivor`, `most_complete`/`longest`, `most_common`, `most_recent` (needs `date_column`), `never`.
 
+### Masters from other markets
+
+Names in Japanese, Chinese and Korean are compared as written, and legal forms are ignored when comparing: `株式会社架空商事` and `架空商事(株)` read as one name, as do `(주)가상상사` and `가상상사 주식회사`, and `Beispiel AG` and `Beispiel`. The half-width bank form `ｶ)ｶｸｳｼｮｳｼﾞ` becomes `カクウショウジ`, which matches other katakana spellings of the name but not the kanji one. Id, name, tax id, phone, address and status columns are found by their names in eight languages (`仕入先コード`, `法人番号`, `사업자등록번호`, `Partita IVA`...). Two records with different tax ids are never put in one proposal.
+
+Spanish, Mexican, Brazilian and Italian forms at the end of a name are ignored too (`Ejemplo S.L.`, `Ejemplo, S.A. de C.V.`, `Exemplo Ltda.`, `Exemplo ME`, `Esempio S.r.l.`). Tax ids that many unrelated parties share on purpose never link two records: Mexico's generic RFCs `XAXX010101000` and `XEXX010101000`, and all-same-digit values such as `000000000`. The result counts them under `not_compared`.
+
 ## Install
 
 ```bash

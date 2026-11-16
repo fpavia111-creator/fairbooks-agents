@@ -2,6 +2,9 @@
 
 ## 0.2.0 (2026-11-15)
 
+Changed (handoff ver 6)
+- `slug` keeps letters of every script.
+
 - Real exports: Reads BambooHR employee exports directly. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Per-role templates: a template `roles` section adds or removes tasks per role (optionally tied to a type). `unknown_role` when a role has no template (base checklist used); `access_outside_role` when access the role leaves out is marked granted.
 - New `eos_offboarding`: offboarding mirror checklist from the end date (`remove-<task>` for granted access, `return-<task>` for equipment, plus `offboarding` tasks from the template) with `access_removal_overdue` and `equipment_not_returned` flags.

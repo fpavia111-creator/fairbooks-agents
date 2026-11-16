@@ -199,7 +199,7 @@ const ERAS = { 令和: [2018, '2019-05-01', null], R: [2018, '2019-05-01', null]
  * Parse one date in the shapes exports use. order: 'mdy' or 'dmy' for
  * all-number dates such as 03/04/2026 (default 'mdy').
  * Reads ISO dates, 03/04/2026, 03.04.2026, 2026/04/03, "3 Nov 2026",
- * "Nov 3, 2026", "14. November 2026", "14 de noviembre de 2026",
+ * "Nov 3, 2026", "14. November 2026", "14 de noviembre de 2026", "14/NOV/2026",
  * "2026年11月14日", "2026년 11월 14일", "2026. 11. 14.", Japanese era dates
  * (令和8年11月14日, R8.11.14) and Taiwan's 民國 years, with an optional time.
  * Returns { iso, date, time, ambiguous, already } or null.
@@ -234,7 +234,7 @@ export function parseAnyDate(value, { order = 'mdy', compact = false } = {}) {
   }
   const words = (t) => {
     let w;
-    if ((w = /^(\d{1,2})(?:st|nd|rd|th|er|º|°|\.)?(?:\s+de)?[\s-]+(\p{L}{3,12})\.?,?(?:\s+de)?[\s-]+(\d{4}|\d{2})(?!\d)(.*)$/u.exec(t))) { const mo = monthOf(w[2]); return mo ? done(year2(w[3]), mo, +w[1], w[4]) : null; }
+    if ((w = /^(\d{1,2})(?:st|nd|rd|th|er|º|°|\.)?(?:\s+de)?[\s/-]+(\p{L}{3,12})\.?,?(?:\s+de)?[\s/-]+(\d{4}|\d{2})(?!\d)(.*)$/u.exec(t))) { const mo = monthOf(w[2]); return mo ? done(year2(w[3]), mo, +w[1], w[4]) : null; }
     if ((w = /^(\p{L}{3,12})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})(?!\d)(.*)$/u.exec(t))) { const mo = monthOf(w[1]); return mo ? done(+w[3], mo, +w[2], w[4]) : null; }
     return null;
   };

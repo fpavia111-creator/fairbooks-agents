@@ -2,6 +2,10 @@
 
 ## 0.2.0
 
+Fixed (handoff ver 6)
+- Consent, status and bounce values written in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`ja`, `oui`, `はい`, `동의`, `widerrufen`, `配信停止`, `Abgemeldet`, `ハードバウンス`...) were read as unknown, so a withdrawn consent was not suppressed. They are read now; English values read as before.
+- Role mailboxes in those languages (`kontakt@`, `ventas@`, `contato@`, `amministrazione@`, romanized `eigyo@`...) are flagged as role addresses.
+
 - Real exports: Reads HubSpot contacts, Salesforce report and Data Loader exports, and Mailchimp audience exports directly. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - New `nausicaa_merge_plan`: for each duplicate group, a survivor chosen by stated rules (S1-S4) and a winner per field with the rule that picked it (F1-F6). Opt-outs and hard bounces always carry over. Writes `merge-plan.csv` with blank reviewer columns.
 - New `nausicaa_consent_provenance`: flags opted-in or subscribed contacts with no consent source, no date, an unreadable or future date, or a source not on your allowed list. Exports may add a `consent_source` column.

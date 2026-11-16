@@ -55,6 +55,25 @@ const KANA_LEGAL_HEAD = /^\s*\(?(?:カ|ユ|ド)\)\s*/u;
 const KANA_LEGAL_TAIL = /\s*\((?:カ|ユ|ド)\)?\s*$/u;
 const KANA_LEGAL_WORDS = /(カブシキガイシヤ|カブシキガイシャ|カブシキカイシヤ|カブシキカイシャ|ユウゲンガイシヤ|ユウゲンガイシャ|ゴウドウガイシヤ|ゴウドウガイシャ)/gu;
 const NON_ASCII = /[^\x00-\x7f]/;
+// Legal forms that are only removed at the END of a name, because as words elsewhere they
+// could be part of the name itself: Spanish S.L., S.L.U., S.A.U.; Italian S.n.c., S.a.p.a.;
+// European SE; Brazilian ME, EPP and S/A; and the Mexican "S.A. de C.V." family.
+const LSEP = '[.\\s]*';
+const spelled = (w) => w.split('').join(LSEP);
+const LATAM_CV = new RegExp(`\\s(?:${['sapi', 'sab', 'sderl', 'srl', 'sa', 'sc'].map(spelled).join('|')})${LSEP}de${LSEP}${spelled('cv')}[.\\s]*$`);
+const LATIN_TAIL = new RegExp(`\\s(?:${['slu', 'sl', 'sau', 'snc', 'sapa', 'sa', 'se', 'me', 'epp'].map(spelled).join('|')})[.\\s]*$`);
+
+/**
+ * Remove legal forms that only count at the end of a lowercase name: S.L., S.L.U., S.A.U.,
+ * S.n.c., SE, ME, EPP, S/A and "S.A. de C.V.". Dots and spaces between the letters are
+ * allowed ("s.a. de c.v.", "s a de c v"). A name that is only the form is left alone.
+ */
+export function stripLegalTail(s) {
+  let t = String(s ?? '');
+  t = t.replace(LATAM_CV, ' ');
+  for (let i = 0; i < 3; i++) { const n = t.replace(LATIN_TAIL, ' '); if (n === t) break; t = n; }
+  return t;
+}
 
 /**
  * Remove Japanese, Chinese and Korean legal forms from a name (株式会社, (株), 有限公司,
@@ -69,7 +88,7 @@ export function stripLegalForms(s) {
 
 /**
  * Lowercase, strip accents, punctuation and legal suffixes (Inc, LLC, Ltd, GmbH, AG,
- * SARL, 株式会社, 有限公司, 주식회사…). Letters of every script are kept, so names in
+ * SARL, S.L., S.A. de C.V., Ltda, 株式会社, 有限公司, 주식회사…). Letters of every script are kept, so names in
  * Japanese, Chinese, Korean, Greek or Cyrillic compare too (they used to become empty).
  */
 export function normalizeName(s, { stripEntity = true } = {}) {
@@ -81,7 +100,7 @@ export function normalizeName(s, { stripEntity = true } = {}) {
     if (stripEntity) t = stripLegalForms(t);
     t = t.replace(/[^\p{L}\p{N}\s.]/gu, ' ');
   }
-  if (stripEntity) t = t.replace(ENTITY, ' ');
+  if (stripEntity) t = stripLegalTail(t).replace(ENTITY, ' ');
   return t.replace(/\./g, ' ').split(/\s+/).filter((w) => w && !STOP.has(w)).join(' ');
 }
 

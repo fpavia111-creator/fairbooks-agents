@@ -8,7 +8,7 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   AgentRuntime, defineManifest, normHeader, cleanAmount, inferDecimal, toNumber, numberReader, parseAnyDate, readTable, adaptRecords,
-  decodeText, encodingName, translatedNames, namesFor, COLUMN_WORDS, COLUMN_LANGUAGES, foldText, normLang, makeText, CORE_TEXT, LANGS, htmlPage, serveApprovals, ApprovalStore,
+  decodeText, encodingName, translatedNames, namesFor, COLUMN_WORDS, COLUMN_LANGUAGES, foldText, normLang, makeText, CORE_TEXT, LANGS, htmlPage, serveApprovals, ApprovalStore, normalizeName, stripLegalTail,
 } from '../src/index.js';
 import { tmp } from './helpers.js';
 
@@ -219,4 +219,12 @@ test('the approvals page speaks the approver\'s language and keeps the one-click
     const en = await (await fetch(`${s.url}?lang=en`)).text();
     assert.match(en, /Approve once/); assert.doesNotMatch(en, /Claude による/);
   } finally { await s.close(); }
+});
+
+test('Latin American and Southern European details: month words between slashes, legal forms at the end', () => {
+  for (const [v, want] of [['14/NOV/2026', '2026-11-14'], ['03/ene/2026', '2026-01-03'], ['14/out/2026', '2026-10-14'], ['14-Nov-26', '2026-11-14']]) assert.equal(parseAnyDate(v)?.date, want, v);
+  assert.equal(parseAnyDate('14/xyz/2026'), null, 'an unknown word is not a month');
+  for (const n of ['Ejemplo S.L.', 'Ejemplo, S.A. de C.V.', 'Ejemplo S. de R.L. de C.V.', 'Exemplo S/A', 'Exemplo EPP', 'Beispiel SE']) assert.ok(['ejemplo', 'exemplo', 'beispiel'].includes(normalizeName(n)), n);
+  assert.equal(normalizeName('SL Green Realty'), 'sl green realty', 'S.L. only counts at the end');
+  assert.equal(stripLegalTail('acme s.a. de c.v.').trim(), 'acme');
 });

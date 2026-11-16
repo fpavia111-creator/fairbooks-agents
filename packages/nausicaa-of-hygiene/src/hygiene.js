@@ -1,4 +1,4 @@
-import { toCsv } from 'mythos-agent-core';
+import { toCsv, readYesNo, foldText } from 'mythos-agent-core';
 
 const s = (v) => String(v ?? '').trim();
 function col(row, names) {
@@ -6,9 +6,34 @@ function col(row, names) {
   for (const want of names) { const k = keys.find((x) => x.toLowerCase().replace(/[^a-z0-9]/g, '') === want); if (k !== undefined) return row[k]; }
   return '';
 }
-const yes = (v) => /^(yes|true|1|y|opted.?in|granted|subscribed)$/i.test(s(v));
-const no = (v) => /^(no|false|0|n|opted.?out|withdrawn|unsubscribed|none)$/i.test(s(v));
-export const ROLE = ['admin', 'administrator', 'info', 'sales', 'support', 'help', 'contact', 'office', 'billing', 'accounts', 'hr', 'jobs', 'careers', 'marketing', 'noreply', 'no-reply', 'donotreply', 'webmaster', 'postmaster', 'abuse', 'team', 'hello', 'enquiries', 'inquiries'];
+// Consent and status words as CRMs in Germany, France, Spain, Brazil, Italy, Japan, China
+// and Korea write them; matched on folded text (lowercase, no accents).
+const YES_WORDS = /^(eingewilligt|erteilt|zugestimmt|abonniert|consenti|accepte|abonne|inscrit|aceptado|acepta|consentido|suscrito|aceito|consentiu|inscrito|assinante|accettato|consenso dato|iscritto|同意|同意済|同意済み|同意あり|購読中|已同意|同意订阅|동의|수신 ?동의|구독)$/;
+const NO_WORDS = /^(widerrufen|abgemeldet|abbestellt|abgelehnt|keine einwilligung|refuse|retire|desabonne|desinscrit|rechazado|retirado|baja|dado de baja|recusado|descadastrado|revogado|revocato|rifiutato|disiscritto|拒否|配信停止|撤回|未同意|同意なし|不同意|拒绝|拒絕|退订|退訂|已退订|거부|미동의|수신 ?거부|철회)$/;
+const yes = (v) => /^(yes|true|1|y|opted.?in|granted|subscribed)$/i.test(s(v)) || YES_WORDS.test(foldText(v)) || readYesNo(v) === true;
+const no = (v) => /^(no|false|0|n|opted.?out|withdrawn|unsubscribed|none)$/i.test(s(v)) || NO_WORDS.test(foldText(v)) || readYesNo(v) === false;
+const STATUS_WORDS = [
+  ['unsubscribed', /^(abgemeldet|abbestellt|desabonne|desinscrit|dado de baja|baja|descadastrado|disiscritto|配信停止|配信解除|退订|已退订|退訂|수신 ?거부|구독 ?취소)$/],
+  ['bounced', /^(unzustellbar|rebondi|rebotado|devolvido|rimbalzato|不達|退信|반송)$/],
+  ['subscribed', /^(abonniert|angemeldet|abonne|inscrit|suscrito|inscrito|assinante|iscritto|配信中|購読中|已订阅|訂閱中|구독 ?중|수신 ?동의)$/],
+  ['active', /^(aktiv|actif|activo|ativo|attivo|有効|启用|啟用|활성)$/],
+];
+/** Subscription status in any of the nine languages, as the English word Nausicaa uses; other values are kept lowercased. */
+export function statusOf(v) {
+  const t = s(v).toLowerCase(); if (!t) return t;
+  const f = foldText(t); const hit = STATUS_WORDS.find(([, re]) => re.test(f));
+  return hit ? hit[0] : t;
+}
+const HARD_INTL = /\b(hart|dauerhaft|definitif|dur|permanente|duro|rigido|definitivo)\b|ハード|恒久|永続|硬退回|硬退信|永久|하드|영구/;
+const SOFT_INTL = /\b(weich|vorubergehend|temporaire|temporal|temporario|temporaneo)\b|ソフト|一時|软退回|软退信|暂时|暫時|소프트|일시/;
+export const ROLE = ['admin', 'administrator', 'info', 'sales', 'support', 'help', 'contact', 'office', 'billing', 'accounts', 'hr', 'jobs', 'careers', 'marketing', 'noreply', 'no-reply', 'donotreply', 'webmaster', 'postmaster', 'abuse', 'team', 'hello', 'enquiries', 'inquiries',
+  // The same mailboxes in German, French, Spanish, Portuguese and Italian, and romanized Japanese, Chinese and Korean ones.
+  'kontakt', 'vertrieb', 'verkauf', 'buchhaltung', 'rechnung', 'rechnungen', 'bewerbung', 'bewerbungen', 'karriere', 'empfang', 'zentrale', 'kundenservice', 'presse', 'datenschutz', 'einkauf',
+  'compta', 'comptabilite', 'facturation', 'commercial', 'recrutement', 'emploi', 'accueil', 'rh', 'secretariat',
+  'contacto', 'ventas', 'comercial', 'administracion', 'facturacion', 'contabilidad', 'rrhh', 'empleo', 'atencion', 'compras',
+  'contato', 'vendas', 'financeiro', 'faturamento', 'contabilidade', 'atendimento', 'sac', 'suporte',
+  'contatti', 'commerciale', 'amministrazione', 'fatturazione', 'contabilita', 'vendite', 'segreteria', 'ufficio', 'assistenza', 'acquisti',
+  'soumu', 'somu', 'jinji', 'eigyo', 'keiri', 'otoiawase', 'kefu', 'kf'];
 export const DISPOSABLE = ['mailinator.com', 'guerrillamail.com', '10minutemail.com', 'tempmail.com', 'temp-mail.org', 'yopmail.com', 'trashmail.com', 'sharklasers.com', 'getnada.com', 'dispostable.com'];
 const EMAIL = /^[^\s@"(),:;<>[\]\\]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)*\.[A-Za-z]{2,}$/;
 const TYPO = { 'gmial.com': 'gmail.com', 'gmai.com': 'gmail.com', 'gmail.co': 'gmail.com', 'hotmial.com': 'hotmail.com', 'yaho.com': 'yahoo.com', 'outlok.com': 'outlook.com' };
@@ -20,7 +45,7 @@ export function canonical(email) {
   let local = u.split('+')[0]; if (dom === 'gmail.com') local = local.replace(/\./g, '');
   return `${local}@${dom}`;
 }
-export const normContacts = (rows) => rows.map((r, i) => ({ row: i + 2, id: s(col(r, ['id', 'contactid', 'recordid'])) || `row-${i + 2}`, email: s(col(r, ['email', 'emailaddress', 'mail'])), name: s(col(r, ['name', 'fullname', 'contactname', 'firstname'])), company: s(col(r, ['company', 'account', 'organization'])), last_activity: s(col(r, ['lastactivity', 'lastactive', 'lastengaged', 'lastopened', 'lastcontacted', 'updatedat'])), bounce: s(col(r, ['bounce', 'bounced', 'bouncestatus', 'bouncetype'])).toLowerCase(), consent: s(col(r, ['consent', 'marketingconsent', 'optin', 'emailoptin'])), consent_date: s(col(r, ['consentdate', 'optindate'])), consent_source: s(col(r, ['consentsource', 'optinsource', 'consentmethod', 'optinmethod', 'consentorigin'])), unsubscribed: s(col(r, ['unsubscribed', 'optedout', 'unsubscribe'])), status: s(col(r, ['status', 'subscriptionstatus', 'emailstatus'])).toLowerCase() }));
+export const normContacts = (rows) => rows.map((r, i) => ({ row: i + 2, id: s(col(r, ['id', 'contactid', 'recordid'])) || `row-${i + 2}`, email: s(col(r, ['email', 'emailaddress', 'mail'])), name: s(col(r, ['name', 'fullname', 'contactname', 'firstname'])), company: s(col(r, ['company', 'account', 'organization'])), last_activity: s(col(r, ['lastactivity', 'lastactive', 'lastengaged', 'lastopened', 'lastcontacted', 'updatedat'])), bounce: s(col(r, ['bounce', 'bounced', 'bouncestatus', 'bouncetype'])).toLowerCase(), consent: s(col(r, ['consent', 'marketingconsent', 'optin', 'emailoptin'])), consent_date: s(col(r, ['consentdate', 'optindate'])), consent_source: s(col(r, ['consentsource', 'optinsource', 'consentmethod', 'optinmethod', 'consentorigin'])), unsubscribed: s(col(r, ['unsubscribed', 'optedout', 'unsubscribe'])), status: statusOf(col(r, ['status', 'subscriptionstatus', 'emailstatus'])) }));
 
 const days = (a, b) => { const x = Date.parse(a), y = Date.parse(b); return Number.isFinite(x) && Number.isFinite(y) ? Math.floor((y - x) / 86400000) : null; };
 
@@ -43,8 +68,9 @@ export function audit(contacts, opts = {}) {
       if (disposable.has(dom)) flags.push('disposable_domain');
       const k = canonical(e); if (first.has(k)) flags.push(`duplicate_of_${first.get(k)}`); else first.set(k, c.id);
     }
-    if (/hard|permanent|invalid|5\d\d/.test(c.bounce) || c.status === 'bounced') flags.push('hard_bounce');
-    else if (/soft|temporary|4\d\d/.test(c.bounce)) flags.push('soft_bounce');
+    const fb = foldText(c.bounce);
+    if (/hard|permanent|invalid|5\d\d/.test(c.bounce) || c.status === 'bounced' || (fb && HARD_INTL.test(fb))) flags.push('hard_bounce');
+    else if (/soft|temporary|4\d\d/.test(c.bounce) || (fb && SOFT_INTL.test(fb))) flags.push('soft_bounce');
     if (supp.has(e) || (dom && supp.has(dom))) flags.push('on_suppression_list');
     const unsub = yes(c.unsubscribed) || c.status === 'unsubscribed';
     const subscribed = c.status === 'subscribed' || c.status === 'active';

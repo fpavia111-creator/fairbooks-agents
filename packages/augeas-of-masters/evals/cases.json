@@ -238,6 +238,29 @@
           "result.proposals.0.survivor": "V001"
         }
       }
+    },
+    {
+      "id": "mexican-vendors-generic-rfc",
+      "tool": "augeas_find_duplicates",
+      "args": {
+        "path": "fixtures/intl/mx-vendors.csv"
+      },
+      "expect": {
+        "status": "executed",
+        "contains": [
+          "P001",
+          "P002",
+          "generic or placeholder tax id"
+        ],
+        "not_contains": [
+          "P003",
+          "P005"
+        ],
+        "equals": {
+          "result.proposals.0.survivor": "P001",
+          "result.clusters": 1
+        }
+      }
     }
   ]
 }

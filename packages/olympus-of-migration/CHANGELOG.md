@@ -2,6 +2,13 @@
 
 ## 0.2.0 — 2026-11-16
 
+Added (handoff ver 6)
+- Readiness report (Markdown and HTML) in nine languages: `language` argument or `--lang`. Codes, findings.json and exceptions.csv stay in English; translated reports say they are Claude translations pending native review.
+- Key, amount, account and balance columns found by their names in eight languages; Shift_JIS, GBK, EUC-KR and Windows-1252 exports read.
+
+Fixed
+- "1.234" in a column with decimal commas was read as 1.234; each column now has one decimal mark. Japanese headers no longer all compare as the same empty name.
+
 Requires `mythos-agent-core` ^0.2.0.
 
 ### Added (handoff ver 5)

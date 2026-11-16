@@ -2,6 +2,16 @@
 
 ## 0.2.0 — 2026-11-15
 
+Fixed (handoff ver 6)
+- Vendor and item names in Japanese, Chinese or Korean normalized to nothing, so their duplicates were never found. Names keep every script, and legal forms such as 株式会社, (株), 有限公司, 주식회사, (주), AG, SARL, S.p.A. and Ltda are dropped.
+- Merge previews showed no conflict between two different CJK values.
+- Tax ids keep letters after the first digit (Chinese credit codes, codice fiscale, NIE), so two companies differing only there are not joined.
+- Mexico's generic RFCs (XAXX010101000 for the general public, XEXX010101000 for foreign parties) and all-same-digit tax ids such as 000000000 made unrelated vendors one cluster. They are no longer used to pair records, and the result says how many records carry one under `not_compared`. A Mexican RFC keeps its leading letters. `isPlaceholderTax` is exported.
+- Spanish, Mexican, Brazilian, Italian and European legal forms at the end of a name (S.L., S.L.U., S.A.U., S.A. de C.V., S. de R.L. de C.V., S/A, ME, EPP, S.n.c., SE) were kept, so `Ejemplo S.L.` and `Ejemplo` did not compare as the same name.
+
+Added
+- Id, name, tax id, phone, address and status columns are found by their names in eight languages.
+
 ### Added
 - Better matching: word-by-word Jaro-Winkler (Monge-Elkan) on normalized names, with each word weighted by how rare it is in the file; normalized tax ids / UPCs; normalized postal addresses (same house number required); phone and email-domain support. Each pair now carries explainable `signals`.
 - Clusters never contain two different tax ids, even through a record with none (`kept_apart` lists the links that were refused). A similar name with a different address and a different phone is not merged on its own.

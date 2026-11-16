@@ -46,6 +46,10 @@ Columns named differently? Run `npx nausicaa-of-hygiene inspect <file>` to see h
 Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
 <!-- sources:end -->
 
+### Lists from other markets
+
+Consent, status and bounce values are read in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese and Korean: `ja` and `widerrufen`, `oui` and `désabonné`, `はい` and `配信停止`, `동의` and `수신거부`, `ハードバウンス`, `rebote temporal`. Role mailboxes in those languages (`kontakt@`, `ventas@`, `contato@`, `amministrazione@`, romanized `eigyo@`) count as role addresses. These are short word lists; a value Nausicaa does not know is left as unknown, never guessed. Nothing here is a statement about any country's consent rules.
+
 ## Install
 
 ```bash

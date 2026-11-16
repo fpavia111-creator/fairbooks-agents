@@ -54,6 +54,10 @@ Columns named differently? Run `npx penelope-of-recon inspect <file>` to see how
 Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
 <!-- sources:end -->
 
+### MT940 and statements from other markets
+
+Besides CSV, Excel, CAMT.053, BAI2 and OFX, Penelope reads SWIFT MT940 statements (`.sta`, `.mt940`, `.940`), as German and other European banks send them: balances, reversals and the structured `:86:` text, with the SEPA end-to-end reference (`EREF+`) used as the line's reference. Statement files in Windows-1252 keep their accents. GL exports with `Soll`/`Haben`, `借方`/`貸方` or `차변`/`대변` columns and amounts such as `1.250,00` are read as ledger debits and credits. Japanese Zengin and other national bank formats are not read yet; export CSV from the bank instead.
+
 ## Install
 
 ```bash

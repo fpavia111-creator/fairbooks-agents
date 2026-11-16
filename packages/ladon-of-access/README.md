@@ -66,6 +66,12 @@ Columns named differently? Run `npx ladon-of-access inspect <file>` to see how a
 Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
 <!-- sources:end -->
 
+### Exports and summaries in other languages
+
+Ladon reads access exports and HR rosters with column names in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`ユーザー`, `権限`, `最終ログイン`, `Benutzer`, `Rolle`...), in legacy encodings such as Shift_JIS. Admin and owner roles (`管理者`, `관리자`, `Administrateur`...), disabled and deleted statuses (`無効`, `gesperrt`, `desativado`...), leavers (`退職`, `ausgeschieden`...) and "no" in an MFA column (`いいえ`, `아니요`, `nein`...) are recognised. Role names in policy files and learned roles can be written in any script.
+
+`recertification-summary.md` and the evidence page can be written in those languages: pass `"language": "de"` (or `--lang de`). `recertification.csv`, the flag codes, the decision words (keep / modify / revoke) and the evidence JSON stay in English, and the evidence hash is the same in every language. A translated page says it is a Claude translation that a native speaker has not reviewed yet.
+
 ## Install
 
 ```bash

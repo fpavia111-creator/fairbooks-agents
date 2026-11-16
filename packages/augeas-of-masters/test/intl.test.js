@@ -2,7 +2,7 @@
 // number and address here is fictional.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { findDuplicates, normName, normTax, mergePreview } from '../src/index.js';
+import { findDuplicates, normName, normTax, isPlaceholderTax, mergePreview } from '../src/index.js';
 import { normalizeName, normalizeAddress, nameSimilarity } from 'mythos-agent-core';
 
 test('legal forms in Japanese, Chinese, Korean and European names are removed; the name itself is kept', () => {
@@ -12,6 +12,12 @@ test('legal forms in Japanese, Chinese, Korean and European names are removed; t
   assert.equal(normName('(주)가상상사'), '가상상사'); assert.equal(normName('가상상사 주식회사'), '가상상사'); assert.equal(normName('㈜가상상사'), '가상상사');
   assert.equal(normName('Beispiel AG'), 'beispiel'); assert.equal(normName('Muster GmbH & Co. KG'), 'muster'); assert.equal(normName('Esempio S.p.A.'), 'esempio'); assert.equal(normName('Exemplo Ltda.'), 'exemplo');
   assert.equal(normName('Acme Supply, Inc.'), 'acme supply', 'English names as before');
+  // Forms that only count at the end of a name: Spain, Mexico, Brazil, Italy, the EU.
+  for (const n of ['Ejemplo S.L.', 'Ejemplo, S.L.U.', 'Ejemplo S.A.U.', 'Ejemplo, S.A. de C.V.', 'Ejemplo SA de CV', 'Ejemplo S. de R.L. de C.V.', 'Ejemplo S.A.P.I. de C.V.']) assert.equal(normName(n), 'ejemplo', n);
+  for (const n of ['Exemplo S/A', 'Exemplo ME', 'Exemplo EPP']) assert.equal(normName(n), 'exemplo', n);
+  assert.equal(normName('Esempio s.n.c.'), 'esempio'); assert.equal(normName('Beispiel SE'), 'beispiel');
+  assert.equal(normName('SL Green Realty'), 'sl green realty', 'only at the end: a name that starts with SL keeps it');
+  assert.equal(normalizeName('Señor Café S.L.'), 'senor cafe'); assert.equal(normalizeName('SE'), 'se', 'a name that is only the form is kept');
   // The shared core helpers behave the same way.
   assert.equal(normalizeName('株式会社架空商事'), '架空商事'); assert.equal(normalizeName('Société Exemple SARL'), 'societe exemple');
   assert.equal(normalizeAddress('東京都千代田区架空町1-1'), '東京都千代田区架空町1 1'); assert.equal(normalizeAddress('123 Main Street'), '123 main st');
@@ -57,4 +63,21 @@ test('a merge preview shows a conflict between two different Japanese addresses'
   const p = mergePreview(rows, { survivor: 'A', merge: ['B'] });
   const addr = p.fields.find((f) => f.field === 'address');
   assert.equal(addr.conflict, true, 'both used to compare as "11", so no conflict was shown');
+});
+
+test('Mexico: the generic RFCs for the public and for foreign parties never link two vendors; a real RFC keeps its letters', () => {
+  const r = findDuplicates([
+    { id: 'M1', name: 'Proveedora Norte, S.A. de C.V.', rfc: 'PNO010203AB1', address: 'Calle 1, Monterrey' },
+    { id: 'M2', name: 'Global Parts Inc', rfc: 'XEXX010101000', address: '1 Main St, Austin' },
+    { id: 'M3', name: 'Euro Teile GmbH', rfc: 'XEXX010101000', address: 'Hauptstr. 5, Köln' },
+    { id: 'M4', name: 'Cliente Mostrador', rfc: 'XAXX010101000', address: '' },
+    { id: 'M5', name: 'Venta Publico General', rfc: 'XAXX010101000', address: '' },
+    { id: 'M6', name: 'Proveedora Norte SA de CV', rfc: 'PNO-010203-AB1', address: 'Calle 1, Monterrey' },
+  ]);
+  assert.deepEqual(r.proposals.map((p) => p.records.map((x) => x.id).sort()), [['M1', 'M6']], 'only the real duplicate; the four generic-RFC vendors used to be one cluster');
+  assert.match(r.not_compared.join(' '), /4 records have a generic or placeholder tax id/);
+  assert.equal(normTax('PNO010203AB1'), 'pno010203ab1', 'the letters of an RFC count');
+  assert.notEqual(normTax('ABC010203AB1'), normTax('XYZ010203AB1'));
+  for (const v of ['XAXX010101000', 'xexx-010101-000', '000000000', '000-00-0000', '999-99-9999', 'DE000000000']) assert.ok(isPlaceholderTax(v), v);
+  for (const v of ['PNO010203AB1', '12.345.678/0001-90', '123-45-67890', '91310000000000001X']) assert.ok(!isPlaceholderTax(v), v);
 });

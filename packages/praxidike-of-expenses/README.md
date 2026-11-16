@@ -41,6 +41,10 @@ Columns named differently? Run `npx praxidike-of-expenses inspect <file>` to see
 Where a layout says "checked", its column names were compared with the vendor's documentation on that date. The other layouts were written from knowledge of the export and were not checked. None was tested against a live account. If a real export does not match, the result says which columns were missing; please report it.
 <!-- sources:end -->
 
+### Receipts from other markets
+
+Receipt text in yen and won (no decimals), yuan, reais and euros is read: totals under `合計`, `合计`, `합계`, `Total TTC`, `Zu zahlen`, `Total a pagar` or `Totale`; subtotal, tax and tip labels in nine languages; dates such as `2026年11月14日`, `令和8年11月14日`, `2026년 11월 14일` and `14 novembre 2026`; `03/11/2026` read day first when the receipt is not in US or Canadian dollars. Cash handed over (`お預り`) and item counts (`3点`) are never taken as the total. Praxidike still does no OCR and says nothing about any country's tax rules.
+
 ## Install
 
 ```bash

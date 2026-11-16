@@ -1,4 +1,4 @@
-import { toCsv, jaroWinkler, normalizeAddress, tokenSetSimilarity, stripLegalForms, normHeader, namesFor, COLUMN_LANGUAGES } from 'mythos-agent-core';
+import { toCsv, jaroWinkler, normalizeAddress, tokenSetSimilarity, stripLegalForms, stripLegalTail, normHeader, namesFor, COLUMN_LANGUAGES } from 'mythos-agent-core';
 
 // Legal forms and filler words: English plus the common European forms (GmbH, AG, KG,
 // SARL, SRL, S.p.A., Ltda, Oy, ApS...). Punctuation is already spaces here, so dotted
@@ -13,9 +13,11 @@ const NON_ASCII = /[^\x00-\x7f]/;
  */
 export function normName(s) {
   const raw = String(s ?? '');
-  if (!NON_ASCII.test(raw)) return raw.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
+  // Forms that only count at the end (S.L., S.A. de C.V., SE, ME, EPP...) go first, while
+  // the name still ends with them.
+  if (!NON_ASCII.test(raw)) return stripLegalTail(raw.toLowerCase().replace(/&/g, ' and ').replace(/[^a-z0-9 ]/g, ' ')).replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
   const t = stripLegalForms(raw.normalize('NFKD').replace(/[\u0300-\u036f]/g, '').normalize('NFC').toLowerCase().replace(/ß/g, 'ss'));
-  return t.replace(/&/g, ' and ').replace(/[^\p{L}\p{N} ]/gu, ' ').replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
+  return stripLegalTail(t.replace(/&/g, ' and ').replace(/[^\p{L}\p{N} ]/gu, ' ')).replace(SUFFIX, ' ').replace(/\s+/g, ' ').trim();
 }
 const digits = (s) => String(s ?? '').replace(/\D/g, '');
 const domain = (e) => { const m = String(e ?? '').toLowerCase().match(/@([a-z0-9.-]+)$/); return m && !/^(gmail|yahoo|outlook|hotmail|icloud|aol)\./.test(m[1]) ? m[1] : ''; };
@@ -60,11 +62,23 @@ export const DEFAULT_THRESHOLD = 0.92;
  * digit keep their letters: a Chinese unified credit code (…0001X), an Italian codice
  * fiscale or a Spanish NIE differ only there, and dropping them could join two companies.
  */
+// Tax ids that many unrelated parties share on purpose: Mexico's generic RFCs for the
+// general public and for foreign parties. They never make two records the same vendor.
+const GENERIC_TAX = new Set(['xaxx010101000', 'xexx010101000']);
+/** True when a tax id is a generic or placeholder value (XAXX010101000, XEXX010101000, 000000000, 999-99-9999). */
+export function isPlaceholderTax(v) {
+  const alnum = String(v ?? '').normalize('NFKC').toLowerCase().replace(/[^a-z0-9]/g, '');
+  const d = alnum.replace(/\D/g, '');
+  return GENERIC_TAX.has(alnum) || (d.length >= 5 && d === alnum.replace(/^[a-z]{2}/, '') && /^(\d)\1+$/.test(d));
+}
 export function normTax(v) {
   const s = String(v ?? '').normalize('NFKC').trim();
   const alnum = s.toLowerCase().replace(/[^a-z0-9]/g, '');
+  if (isPlaceholderTax(alnum)) return '';
   const d = alnum.replace(/\D/g, '');
   if (d.length < 5) return alnum;
+  // A Mexican RFC starts with three or four letters from the name: they count.
+  if (/^[a-z]{3,4}\d{6}[a-z0-9]{3}$/.test(alnum)) return alnum;
   return /\d[^a-z]*[a-z]/.test(alnum) ? alnum : d;
 }
 
@@ -121,7 +135,7 @@ export function prepare(rows, opts = {}) {
     const id = String((opts.id_column ? r[opts.id_column] : col(r, F.id, I.id)) || `row-${i + 2}`).trim();
     const name = String((opts.name_column ? r[opts.name_column] : col(r, F.name, I.name)) || '').trim();
     const nn = normName(name);
-    return { i, id, name, nn, ts: tokenSort(nn), tax: normTax(col(r, F.tax, I.tax)), email: domain(col(r, F.email, I.email)), phone: digits(col(r, F.phone, I.phone)).slice(-10), addr: normalizeAddress(col(r, F.addr, I.addr)), inactive: isInactive(r), raw: r };
+    return { i, id, name, nn, ts: tokenSort(nn), tax: normTax(col(r, F.tax, I.tax)), taxRaw: col(r, F.tax, I.tax), email: domain(col(r, F.email, I.email)), phone: digits(col(r, F.phone, I.phone)).slice(-10), addr: normalizeAddress(col(r, F.addr, I.addr)), inactive: isInactive(r), raw: r };
   });
 }
 
@@ -241,9 +255,14 @@ export function findDuplicates(rows, opts = {}) {
       pairs: ps.map((p) => ({ a: p.a, b: p.b, score: p.score, signals: p.signals })),
     };
   }).sort((x, y) => y.confidence - x.confidence || x.survivor.localeCompare(y.survivor)).map((c, n) => ({ cluster: `C${String(n + 1).padStart(3, '0')}`, ...c }));
+  const generic = recs.filter((r) => !r.tax && isPlaceholderTax(r.taxRaw)).length;
+  const notCompared = [
+    ...(cand.skipped || []).map((x) => `${x.records} records share one ${x.key}; it looks like a placeholder, so they were not paired on it (they are still compared on name, address and email)`),
+    ...(generic ? [`${generic} record${generic === 1 ? ' has' : 's have'} a generic or placeholder tax id (such as XAXX010101000 or 000000000), so it was not used to pair them`] : []),
+  ];
   return {
     kind, threshold, records: recs.length, compared_pairs: cand.pairs.length, blocking: cand.blocking,
-    ...(cand.skipped && cand.skipped.length ? { not_compared: cand.skipped.map((x) => `${x.records} records share one ${x.key}; it looks like a placeholder, so they were not paired on it (they are still compared on name, address and email)`) } : {}), clusters: clusters.length, records_in_clusters: clusters.reduce((s, c) => s + c.records.length, 0),
+    ...(notCompared.length ? { not_compared: notCompared } : {}), clusters: clusters.length, records_in_clusters: clusters.reduce((s, c) => s + c.records.length, 0),
     proposals: clusters, weak_pairs: pairs.filter((p) => p.score < 0.75),
     kept_apart: blocked.map((p) => ({ a: p.a, b: p.b, score: p.score, reason: 'linking them would put two different tax ids in one cluster' })),
     note: 'Proposals only. Check open transactions, balances, bank details and 1099/tax status before merging anything in the ERP.',

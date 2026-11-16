@@ -39,6 +39,11 @@ export const SOURCES_FILE = 'mythos-sources.json';
 // ○ / × marks Japanese and Korean forms use.
 const TRUE = /^(y|yes|true|t|1|on|enabled|active|checked|x|✓|✔|ja|wahr|aktiv|aktiviert|oui|vrai|activé|actif|s[iíì]|sim|verdadero|verdadeiro|activo|ativo|attivo|abilitato|はい|有効|あり|済|○|◯|是|有|启用|已启用|啟用|已啟用|예|네|사용|활성|활성화)$/iu;
 const FALSE = /^(n|no|false|f|0|off|disabled|inactive|unchecked|nein|falsch|inaktiv|deaktiviert|non|faux|désactivé|inactif|falso|n[aã]o|inactivo|desactivado|desativado|inativo|disattivato|disabilitato|inattivo|いいえ|無効|なし|未|×|✕|✗|否|无|無|未启用|未啟用|关闭|關閉|停用|아니요|아니오|미사용|비활성|비활성화)$/iu;
+/** Read a yes/no cell in any of the nine languages (ja, oui, sí, sim, sì, はい, 是, 예, ○...). Returns true, false or null. */
+export function readYesNo(v) {
+  const t = String(v ?? '').trim();
+  return t === '' ? null : TRUE.test(t) ? true : FALSE.test(t) ? false : null;
+}
 
 /** Read a value by header name (tolerant of case and punctuation) or by dot path into nested JSON. */
 function getter(row, index) {

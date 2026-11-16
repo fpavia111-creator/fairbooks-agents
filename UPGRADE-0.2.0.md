@@ -176,10 +176,45 @@ Still 0.2.0 and unpublished. Olympus and Ladon can now remember facts about one 
 - Olympus learns column names (used only when the call and config leave a setting unset) and extra field rules. Ladon learns extra privileged roles, segregation-of-duties rules and standing reviewer delegations. Every kind adds to a check; tolerances, FX rates, stale days and rotation limits cannot be learned, and config or policy entries win over learned ones. Reports list the facts used.
 - Tests: 704 pass on Node 20, 22 and 24 (34 new); evals 434 of 434 (14 new); `npm run hostile:args` 0 findings over 21,138 calls, including the eight memory tools. A Ladon memory file with 2,500 accepted facts loads and verifies in about 0.1 s, and a 10,000-row review using all of them runs in about 0.4 s.
 
+## Other markets and languages, handoff ver 6 (16 Nov 2026)
+
+Still 0.2.0 and unpublished. The question was whether the agents work for the largest software markets in their own languages, and what else they miss there.
+
+**Which markets.** By 2024 software spending (S&P Global via WIPO): United States 368.5, China 61.8, Germany 22.2, United Kingdom 20.3 and France 19.3 billion USD, of a world total of 675. By 2025 software plus IT services (IDC, quoted by ABES): US 1,082; UK 121; Germany 113; China 113; Japan 91; France 79; Canada 57; Australia 43; Italy 39; India 35; Brazil 35; Netherlands 35; Spain 29; Switzerland 28; Sweden 20; Korea 19; Mexico 19 billion USD. Grouped by the language people work in, the top seven are English, German, Chinese (Simplified), Japanese, French, Spanish and Portuguese (Brazil). Italian and Korean were added as blind spots: sizeable markets where English-only tools are a poor fit and the file formats differ (`₩`, `2026. 11. 14.`). Dutch buyers mostly work in English; Arabic is not in IDC's top 17. Sources: [WIPO, global software spending](https://www.wipo.int/en/web/global-innovation-index/w/blogs/2025/global-software-spending); [ABES study with IDC figures (PDF)](https://set.org.br/wp-content/uploads/2026/04/ABES-Estudo-Mercado-Brasileiro-de-Software-2026-Previsoes_v2-4.pdf); [ABES ranking](https://abes.org.br/en/software-brasileiro-cresceu-185-ano-passado-e-mantem-a-10a-posicao-no-ranking-mundial/); [ITPro on European software spending](https://www.itpro.com/software/european-software-spending-is-set-to-surge-in-2026-heres-why).
+
+**Blind spots found and fixed.**
+
+| What went wrong | Where | Now |
+|---|---|---|
+| Japanese, Chinese and Korean files in their usual encodings (Shift_JIS, GB18030, Big5, EUC-KR) and UTF-16 exports read as gibberish | core | Decoded; a guessed encoding is named in the warnings; `encoding` can be set per file |
+| `12,5` read as 125 and `1.234,56` as 1.23456 | core `toNumber`, Olympus | Read as 12.5 and 1234.56; one decimal mark per column |
+| `R$`, `円`, `￥`, `₩`, `△300`, Indian grouping not read | core | Read |
+| Dates such as `14. November 2026`, `2026年11月14日`, `令和8年`, `2026년 11월 14일`, `14/NOV/2026` not read | core, Praxidike | Read, with month names in seven European languages |
+| Column names matched in English only; CJK headers all became "" and collided | core, all agents that read tables | About 100 columns known in eight more languages; headers in any script compare |
+| Names in Japanese, Chinese or Korean normalized to nothing, so their duplicates were never found | core, Augeas, Ananke, Auxo | Every script kept; legal forms such as 株式会社, (株), 有限公司, 주식회사, GmbH, SARL, S.L., S.A. de C.V., Ltda., S.r.l. ignored |
+| Mexico's generic RFCs (XAXX010101000, XEXX010101000) made unrelated vendors one merge proposal | Augeas | Never used to pair; counted under `not_compared` |
+| Chinese credit codes lost their final letter, so two companies could be joined | Augeas | Kept |
+| Privileged roles, SoD rules and leaver words in CJK never matched (`\b` does not match next to CJK) | Ladon | Matched; status words (退職, ausgeschieden, 퇴사...) read |
+| Receipts in other languages: totals, tax, dates and currencies missed; yen and won read with decimals | Praxidike | Read; `Sous-total` is no longer a total |
+| No MT940 bank statements, the common format in Germany | Penelope | Read, including German structured `:86:` fields |
+| Refund disputes written in other languages were always "general"; JCB and UnionPay unknown | Soteria | Classified from the text in eight more languages; JCB and UnionPay recognised by name |
+| Consent, status and bounce values in other languages read as unknown, so a withdrawn consent was not suppressed | Nausicaa | Read; role mailboxes such as `kontakt@` and `ventas@` flagged |
+| Yes/no columns read English only | core | Nine languages and form marks (○, ×) |
+| File names from Japanese, Chinese or Korean ids became empty or collided | core, Aegle, Arethusa, Auxo, Eos, Helios | Kept, with numbered duplicates |
+| RFI titles in CJK never matched as similar | Epeius | Character pairs compared |
+| Merge previews showed no conflict between two different CJK addresses | Augeas | Shown |
+
+**Pages people read, in their language.** `--lang de|fr|es|pt|it|ja|zh|ko` (or `MYTHOS_LANG`) writes the approvals page, the Olympus readiness report and the Ladon recertification summary and evidence page in that language. Results, codes, JSON and CSV stay in English so scripts and audits read the same everywhere; the evidence record and its hash do not change with the language. The root README is in all nine languages.
+
+**Verification.** TESTS_LINE
+
+**Honest limits.** Every translation was written by Claude and has not been reviewed by a native speaker. The word lists (dispute reasons, consent values, status words, receipt labels) are short and will miss phrasings; a value that is not recognised is left as unknown, never guessed. Nothing in this pass makes any claim about a country's laws, tax rules, consent rules or filing formats.
+
 ## Not done
 
 - **Windows** has not run the suite (the CI matrix covers it once the repo is on GitHub).
-- **The injection check is a short pattern list.** It will miss paraphrased or non-English attempts. The protection that does not depend on it is that go-live, money, access, deletion, binding sends and deploys need a named person.
+- **Not covered from the market work (ver 6):** Japanese Zengin fixed-width bank files; scanned receipts (there is no OCR, only receipt text); Eucleia's footer and send-window checks follow English-language outreach habits; JCB and UnionPay reason codes; two-digit-year dates such as `26/11/14`, which are read day-first, so a Japanese or Korean year-first short date is misread; reports other than the approvals page, Olympus and Ladon are in English.
+- **The injection check is a short pattern list.** It will miss paraphrased or non-English attempts. Its phrases are English. The protection that does not depend on it is that go-live, money, access, deletion, binding sends and deploys need a named person.
 
 - **Live connectors (A3):** agents read exported files, not live APIs. The export profiles cover the same systems offline; none was tested against a real account.
 - **Real customer volumes:** the scale test uses generated fictional rows; real exports can be messier (very long text, many columns).

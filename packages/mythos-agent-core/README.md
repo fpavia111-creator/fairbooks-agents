@@ -234,6 +234,25 @@ When a file does not match, put `mythos-sources.json` in the root (checked again
 
 How far to trust the layouts: two (Procore RFIs, Ramp transactions) were compared with the vendor's documentation on 2026-11-15. The others were written from knowledge of each export and not checked. None was tested against a live account. `<pack> sources` marks which is which.
 
+## Files and reports from other markets
+
+The core reads exports the way systems in Germany, France, Spain, Brazil, Italy, Japan, China, Korea and the English-speaking countries write them. These nine languages cover the largest business-software markets (sources in the ver 6 review).
+
+- **Text encodings.** A file is decoded by the first of: the `encoding` set for it in `mythos-sources.json`; a byte-order mark (UTF-8, UTF-16); strict UTF-8; UTF-16 without a mark; a scored guess among Shift_JIS, EUC-KR, GB18030, Big5 and Windows-1252 (known header words count most, and `--lang` breaks ties). A guessed encoding is named in the result's warnings with how to fix it. Names you can set: `utf-8`, `utf-16le`, `utf-16be`, `shift_jis`, `euc-jp`, `euc-kr`, `gb18030`, `gbk`, `big5`, `windows-1252`, `iso-8859-1`, `iso-8859-15` and common aliases (`sjis`, `cp932`, `cp949`, `cp936`, `latin1`...).
+- **Amounts.** `1.234,56`, `1 234,56`, `1'234.56`, `12,5`, `R$ 1.234,56`, `1,200円`, `￥1,200`, `₩15,000`, Japanese negatives `△300` and `▲300`, `(45.10)`, a trailing minus and Indian grouping `12,34,567`. A whole column decides whether the comma is the decimal mark, so `1.234` in a column that also holds `2.500,50` reads as 1234. `toNumber("12,5")` is 12.5 (before ver 6 it was 125).
+- **Dates.** Month names in English, German, French, Spanish, Portuguese, Italian and Dutch, also between slashes (`14/NOV/2026`, as Mexican and Brazilian bank exports write them); `2026年11月14日`, `2026년 11월 14일`, `2026. 11. 14.`; Japanese era years (`令和8年11月14日`, `R8.11.14`) and Taiwan 民國 years; 午前/午後 and 오전/오후 times.
+- **Column names.** About 100 common columns are known in German, French, Spanish, Portuguese, Italian, Japanese, Chinese and Korean (`Betrag`, `Montant`, `Importe`, `Valor`, `Importo`, `金額`, `金额`, `금액`...). They fill only columns still unmatched after the English names and never take a column already used; the result lists them under `translated_columns`. A field can opt out with `translate: false` or point at another concept, for example `translate: 'ledger_debit'` so a general-ledger debit reads `Soll` or `借方` rather than a bank's money-out column.
+- **Yes and no.** Yes/no columns read `ja`, `oui`, `sí`, `sim`, `sì`, `はい`, `有効`, `是`, `예`, `○` and their opposites.
+- **Names.** `normalizeName`, `normalizeAddress`, `safeFileName` and the new `slugify` keep letters of every script (they used to drop them, so Japanese, Chinese and Korean names compared as empty). `normalizeName` and `stripLegalForms` remove legal forms such as GmbH, AG, KG, SARL, S.p.A., Ltda, 株式会社, (株), 有限公司, 주식회사, (주) and the half-width カ) of Japanese bank-transfer names. `stripLegalTail` removes forms that only count at the end of a name (S.L., S.L.U., S.A.U., S.A. de C.V., S/A, ME, EPP, S.n.c., SE), so a vendor called `SL Green` keeps its name.
+
+```json
+{ "files": { "exports/仕訳.csv": { "encoding": "shift_jis", "decimal": "." } } }
+```
+
+**Output language.** `--lang de|fr|es|pt|it|ja|zh|ko` (or `MYTHOS_LANG`) sets the language of the pages and reports people read: the approvals page (which also has a language switcher), the Olympus readiness report, and the Ladon recertification summary and evidence page; a tool argument `language` overrides it per call where offered. Tool results, codes, CSV columns and JSON stay in English, so scripts and later runs read them the same. Any string not yet translated falls back to English. Use `makeText(catalog, lang)` and `coreText(lang)` for a pack's own pages.
+
+**Limits.** The translations were written by Claude and have not been reviewed by native speakers; every translated page says so. The encoding guess can be wrong on very short files; set `encoding` when names look garbled. The column dictionaries cover common names, not every system's labels. The agents make no claim about any country's laws, tax rules or filing formats.
+
 ## Paid tier (licence keys)
 
 A tool marked `tier: 'pro'` (optionally with a `feature` name) runs only with a valid licence key. Without one it returns `status: 'needs_license'` with the reason; free tools keep working. The check runs after the policy, so a blocked tool stays blocked, an `ask` tool still asks, nothing is put on Auto and one-click categories are untouched; no approval is requested for a call that cannot run.

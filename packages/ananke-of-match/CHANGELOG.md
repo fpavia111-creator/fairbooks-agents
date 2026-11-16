@@ -2,6 +2,9 @@
 
 ## 0.2.0 (2026-11-15)
 
+Changed (handoff ver 6)
+- The same vendor written two ways (ACME, Inc. / Acme Inc; 株式会社架空商事 / 架空商事(株)) is no longer a `vendor_mismatch`.
+
 - Real exports: Reads NetSuite transaction saved searches for purchase orders, receipts and bills, and Xero bills, directly; lines are joined by item code. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.
 - Partial receipts and several invoices per PO line: invoices are allocated to receipts first-in, first-out and each line lists the receipts it matched (`receipts`).
 - Per-vendor tolerance profiles (`tolerance_profile`, config schema `tolerances`, `validate-config tolerances <file>`). Each line reports the tolerance used and its source.

@@ -37,6 +37,12 @@ Put your settings in one JSON file and pass it as `config` to any tool. Argument
 
 `tolerance`: differences up to and including it count as tied (default 0.005). Typos fail with a JSON pointer instead of being ignored; check a file with `olympus-of-migration validate-config migration_rules rules.json`.
 
+### Exports and reports in other languages
+
+Olympus reads exports from systems set up in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean: files in Shift_JIS, GBK, Big5, EUC-KR or Windows-1252 (a guessed encoding is named in the warnings), key, amount, account and balance columns by their local names (`伝票番号`, `金額`, `Konto`, `Saldo`, `Valor`...), amounts such as `1.234,56`, `R$ 1.234,56`, `1,200円` and `△300`, with one decimal mark per column.
+
+The readiness report can be written in any of those languages plus English: pass `"language": "ja"` (or start the server with `--lang ja`). Codes, `findings.json` and `exceptions.csv` stay in English so later runs and scripts read them the same; a translated report says it is a Claude translation that a native speaker has not reviewed yet.
+
 ## Install
 
 ```bash
