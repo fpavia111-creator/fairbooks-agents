@@ -1,4 +1,4 @@
-import { defineManifest, toCsv, sha256 } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, LANGS, normLang } from 'mythos-agent-core';
 import { readFileSync, existsSync, appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { normalizeAccess, normalizeRoster, reviewAccess, sheetCsv, summaryMarkdown, effectiveOptions, campaignStatus, accessDiff, evidencePack } from './access.js';
@@ -48,6 +48,7 @@ const run = (a, ctx) => {
 };
 const memNote = (r) => (r.memory ? ` ${r.memory.used.length} learned fact(s) used.` : '');
 const OUT = 'mythos-out/ladon';
+const language = { type: 'string', enum: LANGS, description: 'Language of the summary or evidence page: en, de, fr, es, pt, it, ja, zh, ko (default: the --lang setting, else English). The CSV, codes and JSON stay in English.' };
 
 const PROMPT = `You are running an access recertification with the ladon-of-access tools. Work only on files under --root. Ladon never revokes access; a named person does.
 
@@ -92,12 +93,13 @@ export const manifest = defineManifest({
     {
       name: 'ladon_recert_sheet', kind: 'report', title: 'Write recertification sheet',
       description: 'Write recertification.csv (assigned_reviewer, delegated_to, due_date, and blank reviewer_decision / reviewer_name / review_date columns) and recertification-summary.md into out_dir (default mythos-out/ladon).',
-      inputSchema: { type: 'object', required: ['access'], additionalProperties: false, properties: { ...common, out_dir: str } },
+      inputSchema: { type: 'object', required: ['access'], additionalProperties: false, properties: { ...common, out_dir: str, language } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const out = ctx.outDir(a.out_dir || OUT);
         const csv = sheetCsv(r);
-        const files = [ctx.writeFile(out, 'recertification.csv', csv), ctx.writeFile(out, 'recertification-summary.md', summaryMarkdown(r, new Date().toISOString()))];
-        return { summary: `Recertification sheet written for ${r.accounts} account(s).${memNote(r)}`, files, by_risk: r.by_risk, sod_conflicts: r.sod_conflicts.length, output_sha256: sha256(csv), ...(r.memory ? { memory: r.memory } : {}) };
+        const lang = normLang(a.language || ctx.lang);
+        const files = [ctx.writeFile(out, 'recertification.csv', csv), ctx.writeFile(out, 'recertification-summary.md', summaryMarkdown(r, new Date().toISOString(), lang))];
+        return { summary: `Recertification sheet written for ${r.accounts} account(s).${memNote(r)}`, files, language: lang, by_risk: r.by_risk, sod_conflicts: r.sod_conflicts.length, output_sha256: sha256(csv), ...(r.memory ? { memory: r.memory } : {}) };
       },
     },
     {
@@ -120,13 +122,14 @@ export const manifest = defineManifest({
     {
       name: 'ladon_evidence_pack', kind: 'report', title: 'Write campaign evidence pack',
       description: 'From a filled recertification.csv, write recertification-evidence.json and .html into out_dir (default mythos-out/ladon/evidence): totals, decisions, reviewers, exceptions and the sha256 of the sheet. The record hash is logged in the audit line as output_sha256. Records what the sheet says; it is not proof the reviews happened.',
-      inputSchema: { type: 'object', required: ['sheet'], additionalProperties: false, properties: { sheet: { ...str, description: 'Filled recertification.csv' }, as_of: date, campaign: { ...str, description: 'Campaign name, e.g. "Q4 2026 access review"' }, out_dir: str } },
+      inputSchema: { type: 'object', required: ['sheet'], additionalProperties: false, properties: { sheet: { ...str, description: 'Filled recertification.csv' }, as_of: date, campaign: { ...str, description: 'Campaign name, e.g. "Q4 2026 access review"' }, out_dir: str, language } },
       handler: async (a, ctx) => {
         const s = campaignStatus(ctx.records(a.sheet), a);
-        const p = evidencePack(s, { sheet_sha256: ctx.hashFile(a.sheet), sheet_path: a.sheet, campaign: a.campaign });
+        const lang = normLang(a.language || ctx.lang);
+        const p = evidencePack(s, { sheet_sha256: ctx.hashFile(a.sheet), sheet_path: a.sheet, campaign: a.campaign, lang });
         const out = ctx.outDir(a.out_dir || `${OUT}/evidence`);
         const files = [ctx.writeFile(out, 'recertification-evidence.json', p.json), ctx.writeFile(out, 'recertification-evidence.html', p.html)];
-        return { summary: `Evidence pack written: ${s.decided}/${s.lines} decided, ${s.overdue} overdue, complete=${p.record.complete}.`, files, complete: p.record.complete, totals: p.record.totals, sheet_sha256: p.record.sheet.sha256, output_sha256: p.record_sha256 };
+        return { summary: `Evidence pack written: ${s.decided}/${s.lines} decided, ${s.overdue} overdue, complete=${p.record.complete}.`, files, language: lang, complete: p.record.complete, totals: p.record.totals, sheet_sha256: p.record.sheet.sha256, output_sha256: p.record_sha256 };
       },
     },
     {

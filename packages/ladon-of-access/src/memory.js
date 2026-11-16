@@ -44,7 +44,7 @@ export function withMemory(opts, ctx, kinds = ['privileged_role', 'sod_rule', 'd
   if (rules.length) {
     const names = new Set((o.sod_rules || []).map((r) => low(r.name)));
     const add = [];
-    for (const f of rules) { if (names.has(low(f.value.name))) skipped.push({ ...f, why: `the policy file has a rule named "${f.value.name}"` }); else { names.add(low(f.value.name)); add.push(f.value); used.push(f); } }
+    for (const f of rules) { if (names.has(low(f.value.name))) skipped.push({ ...f, why: `the policy file has a rule named "${f.value.name}"`, why_code: 'policy_rule', why_params: { name: f.value.name } }); else { names.add(low(f.value.name)); add.push(f.value); used.push(f); } }
     if (add.length) o.sod_rules = [...(o.sod_rules || []), ...add];
   }
   const dels = facts('delegation');
@@ -52,8 +52,8 @@ export function withMemory(opts, ctx, kinds = ['privileged_role', 'sod_rule', 'd
     const from = new Set((o.delegations || []).map((d) => low(d.from)));
     const add = [];
     for (const f of dels) {
-      if (low(f.value.from) === low(f.value.to)) skipped.push({ ...f, why: 'a person cannot delegate to themselves' });
-      else if (from.has(low(f.value.from))) skipped.push({ ...f, why: `the policy file already delegates for ${f.value.from}` });
+      if (low(f.value.from) === low(f.value.to)) skipped.push({ ...f, why: 'a person cannot delegate to themselves', why_code: 'self' });
+      else if (from.has(low(f.value.from))) skipped.push({ ...f, why: `the policy file already delegates for ${f.value.from}`, why_code: 'policy_del', why_params: { from: f.value.from } });
       else { from.add(low(f.value.from)); add.push({ from: f.value.from, to: f.value.to, reason: f.value.reason || 'standing delegation (Ladon memory)' }); used.push(f); }
     }
     if (add.length) o.delegations = [...(o.delegations || []), ...add];

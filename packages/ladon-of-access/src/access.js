@@ -1,9 +1,34 @@
-import { toCsv, htmlPage, escapeHtml, sha256, canonical } from 'mythos-agent-core';
+import { toCsv, htmlPage, escapeHtml, sha256, canonical, foldText } from 'mythos-agent-core';
+import { ladonText } from './text.js';
 
 const n = (s) => String(s ?? '').trim();
 const low = (s) => n(s).toLowerCase();
 const DEFAULT_PRIV = /\b(admin|administrator|full ?access|owner|super ?user|root|superadmin|global admin|finance approver|payments?|treasury|security admin)\b/i;
 const SHARED = /^(admin|administrator|shared|generic|test|temp|service|info|accounts?|ops)[@._-]/i;
+// The same idea in the other eight languages, matched on folded text (lowercase, no
+// accents). Latin words need word edges; Japanese, Chinese and Korean words do not have them.
+const PRIV_LATIN = /\b(administrator|admin|vollzugriff|superuser|zahlungen|zahlungsfreigabe|administrateur|acces complet|controle total|proprietaire|paiements|tresorerie|administrador|acceso total|control total|propietario|pagos|tesoreria|acesso total|proprietario|pagamentos|tesouraria|amministratore|accesso completo|controllo completo|pagamenti|tesoreria)\b/;
+const PRIV_CJK = /(管理者|特権|全権限|フルアクセス|スーパーユーザー|所有者|オーナー|支払|管理员|超级管理员|完全访问|完全控制|所有者|付款|支付审批|管理員|超級管理員|관리자|최고 관리자|전체 접근|전체 권한|소유자|지급|자금)/;
+const privIntl = (role) => { const f = foldText(role); return !!f && (PRIV_LATIN.test(f) || PRIV_CJK.test(f)); };
+
+// Account and HR status words from exports in the nine report languages, folded
+// (lowercase, no accents). Anything not listed keeps its own value.
+const STATUS_WORDS = [
+  ['deleted', /^(deleted|removed|geloscht|entfernt|supprime|eliminado|borrado|excluido|removido|eliminato|cancellato|rimosso|削除|削除済|削除済み|已删除|删除|已刪除|刪除|삭제|삭제됨)$/],
+  ['disabled', /^(disabled|suspended|locked|blocked|deaktiviert|gesperrt|desactive|suspendu|bloque|desactivado|deshabilitado|suspendido|bloqueado|desativado|suspenso|disattivato|disabilitato|sospeso|bloccato|無効|停止|利用停止|停止中|ロック|禁用|已禁用|停用|已停用|冻结|凍結|비활성|비활성화|정지|사용 중지|사용중지|잠김)$/],
+  ['inactive', /^(inactive|inaktiv|inactif|inactivo|inativo|inattivo|休止|休止中|非アクティブ|未激活|非活动|非活動|휴면)$/],
+  ['active', /^(active|aktiv|actif|activo|ativo|attivo|有効|在職|在籍|启用|在职|已启用|활성|재직)$/],
+];
+export function statusWord(v) {
+  const f = foldText(v);
+  if (!f) return '';
+  for (const [code, re] of STATUS_WORDS) if (re.test(f)) return code;
+  return low(v);
+}
+// A leaver in an HR roster, in any of the nine languages.
+const LEAVER = /terminat|left|inactive|leaver|ausgeschieden|gekundigt|ausgetreten|parti|sorti|depart|licencie|demission|baja|cesad|despedid|desligad|demitid|cessat|dimess|licenziat|退職|退社|離職|离职|퇴사|퇴직/;
+// "No" in an MFA column, in any of the nine languages (the core reader also maps these to "no").
+const MFA_OFF = /^(no|false|0|off|disabled|nein|aus|deaktiviert|non|desactive|nao|desactivado|desativado|disattivato|いいえ|無効|なし|×|否|无|無|未启用|关闭|停用|아니요|아니오|미사용|비활성)$/;
 
 function colKey(row, names) {
   const keys = Object.keys(row);
@@ -25,7 +50,7 @@ export function normalizeAccess(rows) {
     owner: n(col(r, ['owner', 'manager', 'accountowner', 'sponsor'])),
     // null when the export has no last-login column at all (staleness then cannot be checked).
     last_login: colKey(r, LOGIN_COLS) ? n(col(r, LOGIN_COLS)) : null,
-    status: low(col(r, ['status', 'state'])) || 'active',
+    status: statusWord(col(r, ['status', 'state'])) || 'active',
     mfa: low(col(r, ['mfa', '2fa', 'mfaenabled', 'twofactor'])),
     // null when the export has no rotation column at all (rotation then cannot be checked).
     last_rotated: colKey(r, ROTATION_COLS) ? n(col(r, ROTATION_COLS)) : null,
@@ -36,7 +61,7 @@ export function normalizeRoster(rows) {
   const m = new Map();
   for (const r of rows) {
     const email = low(col(r, ['email', 'mail', 'workemail']));
-    if (email) m.set(email, { status: low(col(r, ['status', 'employmentstatus', 'state'])) || 'active', termination_date: n(col(r, ['terminationdate', 'enddate', 'leftdate'])), manager: n(col(r, ['manager'])) });
+    if (email) m.set(email, { status: statusWord(col(r, ['status', 'employmentstatus', 'state'])) || 'active', termination_date: n(col(r, ['terminationdate', 'enddate', 'leftdate'])), manager: n(col(r, ['manager'])) });
   }
   return m;
 }
@@ -46,14 +71,18 @@ function days(from, to) {
   return Number.isFinite(a) && Number.isFinite(b) ? Math.floor((b - a) / 86400000) : null;
 }
 const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-const roleRe = (list) => new RegExp(`\\b(${list.map(reEsc).join('|')})\\b`, 'i');
+// Whole-word match for Latin-script roles ("Admin" is not inside "Badminton"), but a
+// plain substring match next to Japanese, Chinese or Korean text, which has no spaces
+// ("経理管理者" holds "管理者"). \b alone never matches next to those characters.
+const EDGE = 'A-Za-z0-9\\u00C0-\\u024F';
+const roleRe = (list) => new RegExp(`(?<![${EDGE}])(${list.map(reEsc).join('|')})(?![${EDGE}])`, 'iu');
 /**
  * Privileged-role matcher: the base list (built-in, or the policy file's or argument's
  * privileged_roles) plus any roles learned and accepted in Ladon's memory. Learned
  * roles only add to the list; they never remove a built-in or policy role.
  */
 export function privMatcher(opts = {}) {
-  const base = opts.privileged_roles && opts.privileged_roles.length ? roleRe(opts.privileged_roles) : DEFAULT_PRIV;
+  const base = opts.privileged_roles && opts.privileged_roles.length ? roleRe(opts.privileged_roles) : { test: (s) => DEFAULT_PRIV.test(s) || privIntl(s) };
   const extra = (opts.extra_privileged_roles || []).map(n).filter(Boolean);
   if (!extra.length) return { test: (s) => base.test(s), learned: () => false };
   const ex = roleRe(extra);
@@ -113,7 +142,7 @@ export function reviewAccess(rows, roster, opts = {}) {
     if (isPriv) { flags.push('privileged_role'); score += 20; }
     if (!nonHuman && roster) {
       if (!hr) { flags.push('not_in_hr_roster'); score += 30; }
-      else if (/terminat|left|inactive|leaver/.test(hr.status)) { flags.push('terminated_in_hr'); score += 60; }
+      else if (LEAVER.test(foldText(hr.status))) { flags.push('terminated_in_hr'); score += 60; }
     }
     if (nonHuman && !r.owner) { flags.push('non_human_without_owner'); score += 40; }
     if (nonHuman && rotationKnown) {
@@ -123,7 +152,7 @@ export function reviewAccess(rows, roster, opts = {}) {
     if (r.last_login === null) flags.push('last_login_not_in_export');
     else if (!r.last_login || /^never$/i.test(r.last_login)) { flags.push('never_logged_in'); score += 15; }
     else { const d = days(r.last_login, asOf); if (d === null) { flags.push('last_login_unreadable'); score += 5; } else if (d > stale) { flags.push(`stale_${d}_days`); score += 20; } }
-    if (isPriv && r.mfa && /^(no|false|0|off|disabled)$/.test(r.mfa)) { flags.push('privileged_without_mfa'); score += 30; }
+    if (isPriv && r.mfa && MFA_OFF.test(foldText(r.mfa))) { flags.push('privileged_without_mfa'); score += 30; }
     if (SHARED.test(r.email || r.user)) { flags.push('shared_or_generic_account'); score += 15; }
     for (const rule of sodByRow.get(r.row) || []) { flags.push(`sod_conflict:${rule}`); score += 30; }
     const key = `${low(r.system)}|${r.email || low(r.user)}`;
@@ -166,13 +195,14 @@ const FLAG_TEXT = {
   privileged_without_mfa: 'Privileged account without MFA.',
   shared_or_generic_account: 'Looks like a shared or generic account.',
 };
-export function explainFlag(f) {
-  if (FLAG_TEXT[f]) return FLAG_TEXT[f];
+/** Plain-language reason for a flag code. Pass a translator (ladonText(lang)) for another language. */
+export function explainFlag(f, t = null) {
+  if (FLAG_TEXT[f]) return t ? t(`fl_${f}`) : FLAG_TEXT[f];
   let m;
-  if ((m = /^stale_(\d+)_days$/.exec(f))) return `No login for ${m[1]} days.`;
-  if ((m = /^credential_not_rotated_(\d+)_days$/.exec(f))) return `Credential not rotated for ${m[1]} days.`;
-  if ((m = /^sod_conflict:(.+)$/.exec(f))) return `Segregation-of-duties rule "${m[1]}": the same person holds both sides.`;
-  if ((m = /^duplicate_of_row_(\d+)$/.exec(f))) return `Same system and person as row ${m[1]}.`;
+  if ((m = /^stale_(\d+)_days$/.exec(f))) return t ? t('fl_stale', { days: m[1] }) : `No login for ${m[1]} days.`;
+  if ((m = /^credential_not_rotated_(\d+)_days$/.exec(f))) return t ? t('fl_not_rotated', { days: m[1] }) : `Credential not rotated for ${m[1]} days.`;
+  if ((m = /^sod_conflict:(.+)$/.exec(f))) return t ? t('fl_sod', { rule: m[1] }) : `Segregation-of-duties rule "${m[1]}": the same person holds both sides.`;
+  if ((m = /^duplicate_of_row_(\d+)$/.exec(f))) return t ? t('fl_dup', { row: m[1] }) : `Same system and person as row ${m[1]}.`;
   return f;
 }
 
@@ -182,23 +212,36 @@ export function sheetCsv(review) {
   return toCsv(review.items.map((i) => ({ ...i, last_rotated: i.last_rotated ?? '', flags: i.flags.join('; '), reviewer_decision: '', reviewer_name: '', review_date: '', notes: i.delegated_to ? `Delegated by ${i.assigned_reviewer}${i.delegation_reason ? ': ' + i.delegation_reason : ''}` : '' })), SHEET_COLUMNS);
 }
 
-export function summaryMarkdown(review, generatedAt) {
-  const L = ['# Access recertification', '', `Generated ${generatedAt} by ladon-of-access. As of ${review.as_of}; stale after ${review.stale_days} days; lines due ${review.due_days} days after (high risk: half that).`, ''];
-  L.push(`- Active accounts reviewed: ${review.accounts} (${review.skipped_disabled} disabled rows skipped)`, `- Risk: high ${review.by_risk.high}, medium ${review.by_risk.medium}, low ${review.by_risk.low}, none ${review.by_risk.none}`, `- Agents and service accounts: ${review.agents_and_services} (credential rotation ${review.rotation_checked ? `checked, max ${review.rotation_max_days} days` : 'not checked: no rotation column'})`, `- HR roster checked: ${review.roster_checked ? 'yes' : 'no (pass "roster" to find leavers)'}`, `- Segregation-of-duties conflicts: ${review.sod_conflicts.length}`, `- Lines with no reviewer assigned: ${review.unassigned_reviewer}`, '');
-  L.push('## How to use the sheet', '', 'Open `recertification.csv`. For every line, the assigned reviewer (or the person in `delegated_to`) fills in `reviewer_decision` (keep / modify / revoke), `reviewer_name` and `review_date` by `due_date`. Ladon\'s `suggested_action` is a hint, not a decision. Revocations are carried out by an admin in each system. Run `ladon_campaign_status` on the filled sheet to see overdue and incomplete lines.', '');
-  L.push('## Highest risk', '', '| System | User | Role | Risk | Due | Why |', '|---|---|---|---|---|---|');
-  for (const i of review.items.filter((x) => x.risk === 'high' || x.risk === 'medium').slice(0, 50)) L.push(`| ${i.system} | ${i.user || i.email} | ${i.role} | ${i.risk} | ${i.due_date} | ${i.reasons.join(' ')} |`);
-  if (review.sod_conflicts.length) { L.push('', '## Segregation-of-duties conflicts', ''); for (const c of review.sod_conflicts) L.push(`- **${c.rule}** — ${c.person}: ${c.detail}`); }
+/**
+ * recertification-summary.md. `lang` picks the language of the prose (en, de, fr, es,
+ * pt, it, ja, zh, ko); column names, codes and the CSV stay in English.
+ */
+export function summaryMarkdown(review, generatedAt, lang = 'en') {
+  const t = ladonText(lang); const en = !lang || lang === 'en';
+  const reasons = (i) => (en ? i.reasons : i.flags.map((f) => (f === 'privileged_role' && i.privileged_by ? t('fl_privileged_role_learned') : explainFlag(f, t))));
+  const L = [`# ${t('title')}`, '', t('generated', { at: generatedAt, as_of: review.as_of, stale: review.stale_days, due: review.due_days }), ''];
+  if (!en) L.push(`_${t('translation_note')}_`, '');
+  L.push(
+    `- ${t('accounts_line', { n: review.accounts, skipped: review.skipped_disabled })}`,
+    `- ${t('risk_line', review.by_risk)}`,
+    `- ${t('agents_line', { n: review.agents_and_services, rotation: review.rotation_checked ? t('rotation_checked', { days: review.rotation_max_days }) : t('rotation_not') })}`,
+    `- ${t('roster_line', { v: review.roster_checked ? t('roster_yes') : t('roster_no') })}`,
+    `- ${t('sod_line', { n: review.sod_conflicts.length })}`,
+    `- ${t('unassigned_line', { n: review.unassigned_reviewer })}`, '');
+  L.push(`## ${t('how_title')}`, '', t('how_body'), '');
+  L.push(`## ${t('highest')}`, '', `| ${t('th_system')} | ${t('th_user')} | ${t('th_role')} | ${t('th_risk')} | ${t('th_due')} | ${t('th_why')} |`, '|---|---|---|---|---|---|');
+  for (const i of review.items.filter((x) => x.risk === 'high' || x.risk === 'medium').slice(0, 50)) L.push(`| ${i.system} | ${i.user || i.email} | ${i.role} | ${t(`risk_${i.risk}`)} | ${i.due_date} | ${reasons(i).join(' ')} |`);
+  if (review.sod_conflicts.length) { L.push('', `## ${t('sod_title')}`, ''); for (const c of review.sod_conflicts) L.push(`- **${c.rule}** — ${c.person}: ${c.detail}`); }
   if (review.memory && (review.memory.used.length || review.memory.skipped.length)) {
-    L.push('', '## Learned facts used', '', 'Facts about this customer that a named person accepted in Ladon\'s memory. They only add roles, rules or delegations; they never remove a check.', '');
-    for (const f of review.memory.used) L.push(`- \`${f.id}\` ${f.kind}: ${memoryText(f)} (accepted by ${f.accepted_by})`);
-    for (const f of review.memory.skipped) L.push(`- \`${f.id}\` ${f.kind}: not used, ${f.why}`);
+    L.push('', `## ${t('mem_title')}`, '', t('mem_intro'), '');
+    for (const f of review.memory.used) L.push(`- \`${f.id}\` ${f.kind}: ${memoryText(f, t)} (${t('accepted_by', { who: f.accepted_by })})`);
+    for (const f of review.memory.skipped) L.push(`- \`${f.id}\` ${f.kind}: ${t('not_used', { why: en || !f.why_code ? f.why : t(`why_${f.why_code}`, f.why_params || {}) })}`);
   }
-  L.push('', 'This sheet supports a review; it is not, by itself, evidence that a review happened or that access is appropriate.', '');
+  L.push('', t('closing'), '');
   return L.join('\n');
 }
 
-const memoryText = (f) => (f.kind === 'privileged_role' ? `"${f.value.role}" is privileged` : f.kind === 'sod_rule' ? `rule "${f.value.name}" (${f.value.roles_a.join(', ')} vs ${f.value.roles_b.join(', ')})` : f.kind === 'delegation' ? `${f.value.from} delegates to ${f.value.to}` : JSON.stringify(f.value));
+const memoryText = (f, t) => (f.kind === 'privileged_role' ? t('mem_priv', { role: f.value.role }) : f.kind === 'sod_rule' ? t('mem_sod', { name: f.value.name, a: f.value.roles_a.join(', '), b: f.value.roles_b.join(', ') }) : f.kind === 'delegation' ? t('mem_del', { from: f.value.from, to: f.value.to }) : JSON.stringify(f.value));
 
 const DECISIONS = ['keep', 'modify', 'revoke'];
 
@@ -213,26 +256,27 @@ export function campaignStatus(rows, { as_of } = {}) {
     const g = (k) => n(r[k]);
     const decision = low(r.reviewer_decision);
     const reviewer = g('delegated_to') || g('assigned_reviewer');
-    const issues = [];
+    const issues = []; const codes = [];
+    const issue = (text, code, params = {}) => { issues.push(text); codes.push({ code, params }); };
     let state;
     if (!decision) {
       const d = g('due_date') ? days(g('due_date'), asOf) : null;
       state = d !== null && d > 0 ? 'overdue' : 'open';
-      if (state === 'overdue') issues.push(`overdue by ${d} day(s) (due ${g('due_date')})`);
-      if (!g('due_date')) issues.push('no due date');
-    } else if (!DECISIONS.includes(decision)) { state = 'invalid'; issues.push(`decision "${r.reviewer_decision}" is not keep, modify or revoke`); }
+      if (state === 'overdue') issue(`overdue by ${d} day(s) (due ${g('due_date')})`, 'overdue', { days: d, due: g('due_date') });
+      if (!g('due_date')) issue('no due date', 'no_due');
+    } else if (!DECISIONS.includes(decision)) { state = 'invalid'; issue(`decision "${r.reviewer_decision}" is not keep, modify or revoke`, 'bad_decision', { d: r.reviewer_decision }); }
     else {
       state = 'decided';
-      if (!g('reviewer_name')) issues.push('decision has no reviewer_name');
-      if (!g('review_date')) issues.push('decision has no review_date');
-      else if (g('due_date') && days(g('due_date'), g('review_date')) > 0) issues.push(`signed after the due date (${g('review_date')} > ${g('due_date')})`);
+      if (!g('reviewer_name')) issue('decision has no reviewer_name', 'no_name');
+      if (!g('review_date')) issue('decision has no review_date', 'no_date');
+      else if (g('due_date') && days(g('due_date'), g('review_date')) > 0) issue(`signed after the due date (${g('review_date')} > ${g('due_date')})`, 'late', { date: g('review_date'), due: g('due_date') });
       const who = low(g('reviewer_name'));
       const local = low(g('email')).split('@')[0].replace(/[._-]+/g, ' ');
-      if (who && (who === low(g('user')) || (local && who.replace(/\s*\(.*\)$/, '') === local))) issues.push('self-review: the reviewer is the account holder');
-      if (who && reviewer && who !== low(reviewer) && who !== low(g('assigned_reviewer'))) issues.push(`signed by ${g('reviewer_name')}, not the assigned reviewer (${reviewer})`);
+      if (who && (who === low(g('user')) || (local && who.replace(/\s*\(.*\)$/, '') === local))) issue('self-review: the reviewer is the account holder', 'self');
+      if (who && reviewer && who !== low(reviewer) && who !== low(g('assigned_reviewer'))) issue(`signed by ${g('reviewer_name')}, not the assigned reviewer (${reviewer})`, 'wrong_signer', { name: g('reviewer_name'), reviewer });
       if (issues.length) state = 'incomplete';
     }
-    return { line: i + 2, system: g('system'), user: g('user') || g('email'), risk: low(r.risk), reviewer: reviewer || '(unassigned)', delegated: !!g('delegated_to'), due_date: g('due_date'), decision: decision || '', state, issues };
+    return { line: i + 2, system: g('system'), user: g('user') || g('email'), risk: low(r.risk), reviewer: reviewer || '(unassigned)', delegated: !!g('delegated_to'), due_date: g('due_date'), decision: decision || '', state, issues, issue_codes: codes };
   });
   const by = (s) => lines.filter((l) => l.state === s).length;
   const reviewers = new Map();
@@ -292,7 +336,7 @@ export function accessDiff(prevRows, curRows, opts = {}) {
  * sheet it was built from) and a self-contained HTML page. Deterministic: no clock time,
  * only the as_of date, so the same sheet always gives the same hash.
  */
-export function evidencePack(status, { sheet_sha256, sheet_path, campaign }) {
+export function evidencePack(status, { sheet_sha256, sheet_path, campaign, lang = 'en' }) {
   const record = {
     kind: 'ladon-recertification-evidence', campaign: campaign || 'access recertification', as_of: status.as_of,
     sheet: { path: sheet_path, sha256: sheet_sha256 },
@@ -303,17 +347,24 @@ export function evidencePack(status, { sheet_sha256, sheet_path, campaign }) {
     note: 'Records what the sheet says on the as_of date. It does not prove that the reviews took place or that access is appropriate, and it is not an audit opinion.',
   };
   const json = JSON.stringify(record, null, 2) + '\n';
-  const t = (cells, th) => `<tr>${cells.map((c) => `<${th ? 'th' : 'td'}>${escapeHtml(c)}</${th ? 'th' : 'td'}>`).join('')}</tr>`;
+  // The page is in `lang`; the record above (and so its hash) is the same in every language.
+  const t = ladonText(lang); const en = !lang || lang === 'en';
+  const name = campaign || (en ? record.campaign : t('title'));
+  const state = (s) => (en ? s : t(`st_${s}`));
+  const byLine = new Map(status.exceptions.map((e) => [e.line, e]));
+  const issues = (e) => (en || !byLine.get(e.line)?.issue_codes ? e.issues : byLine.get(e.line).issue_codes.map((c) => t(`is_${c.code}`, c.params)));
+  const tr = (cells, th) => `<tr>${cells.map((c) => `<${th ? 'th' : 'td'}>${escapeHtml(c)}</${th ? 'th' : 'td'}>`).join('')}</tr>`;
   const body = [
-    `<h1>${escapeHtml(record.campaign)}</h1>`,
-    `<p class="mut">As of ${escapeHtml(record.as_of)} · sheet <code>${escapeHtml(sheet_path)}</code> · sha256 <code>${escapeHtml(sheet_sha256)}</code></p>`,
-    `<div class="tiles"><div class="tile">Lines<b>${status.lines}</b></div><div class="tile">Decided<b class="ok">${status.decided}</b></div><div class="tile">Overdue<b class="bad">${status.overdue}</b></div><div class="tile">Open<b>${status.open}</b></div><div class="tile">Needs fixing<b class="warn">${status.incomplete + status.invalid}</b></div><div class="tile">Complete<b>${status.percent_complete}%</b></div></div>`,
-    `<h2>Decisions</h2><p>keep ${status.decisions.keep} · modify ${status.decisions.modify} · revoke ${status.decisions.revoke}</p>`,
-    `<h2>Reviewers</h2><div class="wrap"><table>${t(['Reviewer', 'Lines', 'Decided', 'Open', 'Overdue', 'Needs fixing', 'Delegated'], true)}${status.reviewers.map((r) => t([r.reviewer, r.total, r.decided, r.open, r.overdue, r.needs_fix, r.delegated])).join('')}</table></div>`,
-    `<h2>Exceptions</h2>${record.exceptions.length ? `<div class="wrap"><table>${t(['Line', 'System', 'User', 'State', 'Issues'], true)}${record.exceptions.map((e) => t([e.line, e.system, e.user, e.state, e.issues.join('; ')])).join('')}</table></div>` : '<p class="ok">None.</p>'}`,
-    `<h2>Revocations to request</h2>${status.revocations_to_request.length ? `<ul>${status.revocations_to_request.map((r) => `<li>${escapeHtml(r.system)}: ${escapeHtml(r.user)} (line ${r.line})</li>`).join('')}</ul><p class="mut">Each goes through ladon_request_revocation: one named human click.</p>` : '<p>None.</p>'}`,
-    `<p class="mut">${escapeHtml(record.note)}</p>`,
+    `<h1>${escapeHtml(name)}</h1>`,
+    `<p class="mut">${escapeHtml(t('ev_as_of', { date: record.as_of }))} · ${escapeHtml(t('ev_sheet'))} <code>${escapeHtml(sheet_path)}</code> · sha256 <code>${escapeHtml(sheet_sha256)}</code></p>`,
+    ...(en ? [] : [`<p class="mut"><em>${escapeHtml(t('translation_note'))}</em></p>`]),
+    `<div class="tiles"><div class="tile">${t('ev_lines')}<b>${status.lines}</b></div><div class="tile">${t('ev_decided')}<b class="ok">${status.decided}</b></div><div class="tile">${t('ev_overdue')}<b class="bad">${status.overdue}</b></div><div class="tile">${t('ev_open')}<b>${status.open}</b></div><div class="tile">${t('ev_needs_fixing')}<b class="warn">${status.incomplete + status.invalid}</b></div><div class="tile">${t('ev_complete')}<b>${status.percent_complete}%</b></div></div>`,
+    `<h2>${t('ev_decisions')}</h2><p>keep ${status.decisions.keep} · modify ${status.decisions.modify} · revoke ${status.decisions.revoke}</p>`,
+    `<h2>${t('ev_reviewers')}</h2><div class="wrap"><table>${tr([t('ev_reviewer'), t('ev_lines'), t('ev_decided'), t('ev_open'), t('ev_overdue'), t('ev_needs_fixing'), t('ev_delegated')], true)}${status.reviewers.map((r) => tr([r.reviewer, r.total, r.decided, r.open, r.overdue, r.needs_fix, r.delegated])).join('')}</table></div>`,
+    `<h2>${t('ev_exceptions')}</h2>${record.exceptions.length ? `<div class="wrap"><table>${tr([t('ev_line'), t('th_system'), t('th_user'), t('ev_state'), t('ev_issues')], true)}${record.exceptions.map((e) => tr([e.line, e.system, e.user, state(e.state), issues(e).join('; ')])).join('')}</table></div>` : `<p class="ok">${t('ev_none')}</p>`}`,
+    `<h2>${t('ev_revocations')}</h2>${status.revocations_to_request.length ? `<ul>${status.revocations_to_request.map((r) => `<li>${escapeHtml(r.system)}: ${escapeHtml(r.user)} (${escapeHtml(t('ev_rev_line', { n: r.line }))})</li>`).join('')}</ul><p class="mut">${escapeHtml(t('ev_each_click'))}</p>` : `<p>${t('ev_none')}</p>`}`,
+    `<p class="mut">${escapeHtml(en ? record.note : t('ev_note'))}</p>`,
   ].join('\n');
-  const html = htmlPage({ title: `${record.campaign} — evidence`, bodyHtml: body, footer: `ladon-of-access · evidence sha256 ${sha256(canonical(record))}` });
+  const html = htmlPage({ title: t('ev_title', { campaign: name }), bodyHtml: body, footer: `ladon-of-access · evidence sha256 ${sha256(canonical(record))}`, lang });
   return { record, json, html, record_sha256: sha256(canonical(record)) };
 }

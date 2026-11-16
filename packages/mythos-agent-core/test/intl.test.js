@@ -148,6 +148,15 @@ test('translated names only fill fields that are still empty, and never take a u
   assert.ok(translatedNames('amount').some((x) => x.word === '금액' && x.lang === 'ko')); assert.ok(translatedNames('description').some((x) => x.word === '摘要' && x.lang === 'ja, zh')); assert.deepEqual(namesFor('balance', 'ja'), ['残高', '期末残高']);
 });
 
+test('yes and no in a yes/no column, in all nine languages and as form marks', () => {
+  const DEF = { fields: { user: { required: true, aliases: ['User Name'] }, mfa: { type: 'bool', aliases: ['MFA Enabled'] } } };
+  const yes = ['yes', 'Ja', 'oui', 'Sí', 'sim', 'sì', 'はい', '有効', '○', '是', '已启用', '예', '사용'];
+  const no = ['no', 'Nein', 'non', 'não', 'いいえ', '無効', '×', '否', '未启用', '아니요', '미사용'];
+  const t = { format: 'csv', matrix: [['User Name', 'MFA Enabled'], ...yes.map((v) => ['a', v]), ...no.map((v) => ['b', v]), ['c', 'vielleicht']] };
+  const r = adaptRecords(t, DEF, {});
+  assert.deepEqual(r.rows.map((x) => x.mfa), [...yes.map(() => 'yes'), ...no.map(() => 'no'), 'vielleicht'], 'an unknown word is kept as it is');
+});
+
 test('mythos-sources.json can set a file\'s encoding; an unknown one is refused', async () => {
   const root = tmp(); copyFileSync(join(FX, 'zh-gbk.csv'), join(root, 'a.csv'));
   const m = defineManifest({
