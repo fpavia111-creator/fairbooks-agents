@@ -1,6 +1,6 @@
-import { defineManifest, toCsv, sha256, canonical, htmlPage, escapeHtml } from 'mythos-agent-core';
+import { defineManifest, toCsv, sha256, canonical, htmlPage, escapeHtml, LANGS, normLang } from 'mythos-agent-core';
 import { readFileSync } from 'node:fs';
-import { compareExports, tieOutBalances, checkFields, compareRuns, actionList, exceptionRows, reportMarkdown } from './checks.js';
+import { compareExports, tieOutBalances, checkFields, compareRuns, actionList, exceptionRows, reportMarkdown, reportWords } from './checks.js';
 import { migrationRulesSchema, fieldRuleSchema } from './schemas.js';
 import { MEMORY, MEMORY_KINDS, withMemory, memoryText } from './memory.js';
 
@@ -30,18 +30,21 @@ const memOut = (s) => (s.memory ? { memory: s.memory } : {});
 
 const tbOpts = (s, a = {}) => ({ tolerance: s.tolerance, subsidiary_column: s.subsidiary_column, currency_column: s.currency_column, fx_rates: s.fx_rates, base_currency: s.base_currency, account_column: a.account_column ?? s.account_column, balance_column: a.balance_column ?? s.balance_column });
 
-function reportHtml({ title, cmp, tb, fields, actions, generatedAt, memory = null }) {
-  const e = escapeHtml;
+function reportHtml({ title, cmp, tb, fields, actions, generatedAt, memory = null, lang = 'en' }) {
+  const e = escapeHtml; const w = reportWords(lang, memoryText); const { t } = w;
   const rows = (list, cols) => `<table><thead><tr>${cols.map((c) => `<th>${e(c[0])}</th>`).join('')}</tr></thead><tbody>${list.map((r) => `<tr>${cols.map((c) => `<td>${e(String(c[1](r) ?? ''))}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
-  let b = `<p>Generated ${e(generatedAt)} by olympus-of-migration from local export files. No live system was queried.</p>`;
-  b += `<h2>Verdict</h2><ul><li>Data status: <strong>${e(cmp.status.toUpperCase())}</strong>${tb ? ` · Trial balance: <strong>${e(tb.status.toUpperCase())}</strong>` : ''}${fields ? ` · Field rules: <strong>${e(fields.status.toUpperCase())}</strong>` : ''}</li><li>Go-live: <strong>not approved</strong>. A named person decides after reading this report.</li></ul>`;
-  if (actions.length) b += `<h2>Next actions</h2>${rows(actions, [['#', (r) => r.n], ['Priority', (r) => `P${r.priority}`], ['Why', (r) => r.why], ['Suggested action', (r) => r.action]])}`;
-  b += `<h2>Findings</h2>${cmp.findings.length ? rows(cmp.findings, [['Severity', (r) => r.severity], ['Code', (r) => r.code], ['Message', (r) => r.message]]) : '<p>No findings.</p>'}`;
-  if (tb && tb.not_tied.length) b += `<h2>Trial balance lines that do not tie</h2>${rows(tb.not_tied, [['Line', (r) => [r.subsidiary, r.account, r.currency].filter(Boolean).join(' · ')], ['Source', (r) => r.source ?? 'unknown'], ['Target', (r) => r.target ?? 'unknown'], ['Difference', (r) => r.difference ?? 'n/a'], ['State', (r) => r.state]])}`;
-  if (memory && (memory.used.length || memory.skipped.length)) b += `<h2>Learned facts used</h2><p>Facts about this customer's exports that a named person accepted in Olympus's memory.</p><ul>${memory.used.map((f) => `<li><code>${e(f.id)}</code> ${e(memoryText(f))} (accepted by ${e(f.accepted_by)})</li>`).join('')}${memory.skipped.map((f) => `<li><code>${e(f.id)}</code> ${e(memoryText(f))}: not used, ${e(f.why)}</li>`).join('')}</ul>`;
-  b += '<h2>Limits</h2><p>This checks the export files supplied. It does not prove the books are correct and is not accounting, tax or audit advice.</p>';
-  return htmlPage({ title: title || 'Migration readiness report', bodyHtml: b, footer: 'olympus-of-migration · local files only' });
+  let b = `<p>${e(t('generated_html', { at: generatedAt }))}</p>`;
+  b += `<h2>${e(t('verdict'))}</h2><ul><li>${e(t('data_status'))}: <strong>${e(w.loud(cmp.status))}</strong>${tb ? ` · ${e(t('tb_status'))}: <strong>${e(w.loud(tb.status))}</strong>` : ''}${fields ? ` · ${e(t('fr_status'))}: <strong>${e(w.loud(fields.status))}</strong>` : ''}</li><li>${e(t('go_live'))}: <strong>${e(t('not_approved'))}</strong>. ${e(t('go_live_note'))}</li></ul>`;
+  if (actions.length) b += `<h2>${e(t('next_actions'))}</h2>${rows(actions, [[t('col_n'), (r) => r.n], [t('col_priority'), (r) => `P${r.priority}`], [t('col_why'), (r) => w.why(r)], [t('col_action'), (r) => w.action(r)]])}`;
+  b += `<h2>${e(t('findings'))}</h2>${cmp.findings.length ? rows(cmp.findings, [[t('severity'), (r) => w.word(r.severity)], [t('code'), (r) => r.code], [t('message'), (r) => w.finding(r)]]) : `<p>${e(t('no_findings'))}</p>`}`;
+  if (tb && tb.not_tied.length) b += `<h2>${e(t('tb_not_tied'))}</h2>${rows(tb.not_tied, [[t('line'), (r) => [r.subsidiary, r.account, r.currency].filter(Boolean).join(' · ')], [t('source'), (r) => r.source ?? t('unknown')], [t('target'), (r) => r.target ?? t('unknown')], [t('difference'), (r) => r.difference ?? t('na')], [t('state'), (r) => w.word(r.state)]])}`;
+  if (memory && (memory.used.length || memory.skipped.length)) b += `<h2>${e(t('learned_heading'))}</h2><p>${e(t('learned_intro'))}</p><ul>${memory.used.map((f) => `<li><code>${e(f.id)}</code> ${e(w.fact(f))} (${e(t('accepted_by', { name: f.accepted_by }))})</li>`).join('')}${memory.skipped.map((f) => `<li><code>${e(f.id)}</code> ${e(w.fact(f))}: ${e(w.notUsed(f))}</li>`).join('')}</ul>`;
+  b += `<h2>${e(t('limits'))}</h2><ul><li>${e(t('limit_1'))}</li><li>${e(t('limit_2'))}</li><li>${e(t('limit_3'))}</li></ul>`;
+  if (!w.en) b += `<p class="mut"><em>${e(t('translation_note'))}</em></p>`;
+  return htmlPage({ title: title || t('report_title'), bodyHtml: b, footer: t('footer'), lang });
 }
+
+const language = { type: 'string', enum: LANGS, description: 'Language of the report text: en, de, fr, es, pt (Brazil), it, ja, zh (simplified) or ko. Default: the agent\'s --lang, else English. Codes, findings.json and exceptions.csv stay in English.' };
 
 export const manifest = defineManifest({
   name: 'olympus-of-migration',
@@ -97,7 +100,7 @@ export const manifest = defineManifest({
     {
       name: 'olympus_readiness_report', kind: 'report', title: 'Write readiness report',
       description: 'Write readiness-report.md, readiness-report.html, findings.json and exceptions.csv into an output folder (default mythos-out/olympus), with a prioritised action list. Records the report hash in the audit log. Does not change any input file.',
-      inputSchema: { type: 'object', required: ['source', 'target'], properties: { source: str, target: str, key: str, amount_column: str, subsidiary_column: str, source_tb: str, target_tb: str, currency_column: str, fx_rates: fxRates, base_currency: base, tolerance, config, previous_findings: { ...str, description: 'findings.json from an earlier run, to show what changed' }, out_dir: str, title: str } },
+      inputSchema: { type: 'object', required: ['source', 'target'], properties: { source: str, target: str, key: str, amount_column: str, subsidiary_column: str, source_tb: str, target_tb: str, currency_column: str, fx_rates: fxRates, base_currency: base, tolerance, config, previous_findings: { ...str, description: 'findings.json from an earlier run, to show what changed' }, out_dir: str, title: str, language } },
       handler: async (a, ctx) => {
         const s = settings(a, ctx);
         const cmp = compareExports(ctx.records(a.source), ctx.records(a.target), s);
@@ -109,9 +112,10 @@ export const manifest = defineManifest({
         const runs = a.previous_findings ? compareRuns(ctx.readJson(a.previous_findings), findings) : null;
         if (runs) findings.change_since_previous = runs;
         const dir = ctx.outDir(a.out_dir || 'mythos-out/olympus');
+        const lang = normLang(a.language || ctx.lang);
         const texts = {
-          'readiness-report.md': reportMarkdown({ title: a.title, cmp, tb, fields, actions, runs, generatedAt, rulesName: s.name, memory: s.memory, memoryText }),
-          'readiness-report.html': reportHtml({ title: a.title, cmp, tb, fields, actions, generatedAt, memory: s.memory }),
+          'readiness-report.md': reportMarkdown({ title: a.title, cmp, tb, fields, actions, runs, generatedAt, rulesName: s.name, memory: s.memory, memoryText, lang }),
+          'readiness-report.html': reportHtml({ title: a.title, cmp, tb, fields, actions, generatedAt, memory: s.memory, lang }),
           'findings.json': JSON.stringify(findings, null, 2),
           'exceptions.csv': toCsv(exceptionRows({ cmp, tb, fields }), ['n', 'type', 'key', 'column', 'source', 'target', 'detail', 'owner', 'resolution']),
         };
@@ -120,7 +124,7 @@ export const manifest = defineManifest({
         const outputSha = sha256(canonical(hashes));
         return {
           summary: `Report written (${cmp.status}${tb ? ', TB ' + tb.status : ''}${fields ? ', fields ' + fields.status : ''}; ${actions.length} action(s)). Report hash ${outputSha.slice(0, 12)}.${memNote(s)} Go-live not approved.`,
-          status: cmp.status, go_live: 'not_approved', files, file_sha256: hashes, output_sha256: outputSha, actions, ...memOut(s),
+          status: cmp.status, go_live: 'not_approved', language: lang, files, file_sha256: hashes, output_sha256: outputSha, actions, ...memOut(s),
         };
       },
     },

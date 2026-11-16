@@ -49,8 +49,8 @@ export function withMemory(s, ctx, { fields = true } = {}) {
   for (const f of cols) { if (!bySetting.has(f.value.setting)) bySetting.set(f.value.setting, []); bySetting.get(f.value.setting).push(f); }
   for (const [setting, list] of bySetting) {
     const distinct = new Set(list.map((f) => f.value.column));
-    if (out[setting] !== undefined && out[setting] !== null && out[setting] !== '') { for (const f of list) skipped.push({ ...f, why: `the call or the config already sets ${setting}` }); continue; }
-    if (distinct.size > 1) { for (const f of list) skipped.push({ ...f, why: `accepted facts disagree on ${setting} (${[...distinct].join(', ')}); retire one` }); continue; }
+    if (out[setting] !== undefined && out[setting] !== null && out[setting] !== '') { for (const f of list) skipped.push({ ...f, why: `the call or the config already sets ${setting}`, why_code: 'already_set', why_params: { setting } }); continue; }
+    if (distinct.size > 1) { for (const f of list) skipped.push({ ...f, why: `accepted facts disagree on ${setting} (${[...distinct].join(', ')}); retire one`, why_code: 'disagree', why_params: { setting, values: [...distinct].join(', ') } }); continue; }
     out[setting] = list[0].value.column; used.push(...list);
   }
   if (fields) {
@@ -60,7 +60,7 @@ export function withMemory(s, ctx, { fields = true } = {}) {
       const add = [];
       for (const f of rules) {
         const id = f.value.id || f.id;
-        if (ids.has(id)) { skipped.push({ ...f, why: `the config has a field rule with id "${id}"` }); continue; }
+        if (ids.has(id)) { skipped.push({ ...f, why: `the config has a field rule with id "${id}"`, why_code: 'rule_id', why_params: { id } }); continue; }
         ids.add(id); add.push({ ...f.value, id }); used.push(f);
       }
       if (add.length) out.field_rules = [...(out.field_rules || []), ...add];
@@ -69,4 +69,5 @@ export function withMemory(s, ctx, { fields = true } = {}) {
   return { settings: out, memory: used.length || skipped.length ? { used, skipped } : null };
 }
 
-export const memoryText = (f) => (f.kind === 'column_setting' ? `${f.value.setting} is column "${f.value.column}"` : f.kind === 'field_rule' ? `field rule ${f.value.id || f.id} on "${f.value.column}"` : JSON.stringify(f.value));
+/** One line on a fact, in English or (with t from the report's language) translated. */
+export const memoryText = (f, t = null) => (f.kind === 'column_setting' ? (t ? t('mem_column', { setting: f.value.setting, column: f.value.column }) : `${f.value.setting} is column "${f.value.column}"`) : f.kind === 'field_rule' ? (t ? t('mem_rule', { id: f.value.id || f.id, column: f.value.column }) : `field rule ${f.value.id || f.id} on "${f.value.column}"`) : JSON.stringify(f.value));
