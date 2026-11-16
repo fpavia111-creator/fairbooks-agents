@@ -228,3 +228,13 @@ test('Latin American and Southern European details: month words between slashes,
   assert.equal(normalizeName('SL Green Realty'), 'sl green realty', 'S.L. only counts at the end');
   assert.equal(stripLegalTail('acme s.a. de c.v.').trim(), 'acme');
 });
+
+test('Windows-1252 bytes 0x80-0x9F decode to the euro sign, quotes and dashes on every Node version', () => {
+  const buf = Buffer.from([0x42, 0x65, 0x74, 0x72, 0x61, 0x67, 0x3b, 0x80, 0x20, 0x93, 0x78, 0x94, 0x20, 0x96, 0x20, 0xe9, 0x0a]);
+  const set = decodeText(buf, { encoding: 'windows-1252' });
+  assert.equal(set.text, 'Betrag;€ “x” – é\n');
+  assert.equal(decodeText(buf, { encoding: 'latin1' }).text, set.text, 'ISO-8859-1 reads as browsers read it');
+  const guessed = decodeText(buf, { lang: 'de' });
+  assert.equal(guessed.encoding, 'windows-1252'); assert.equal(guessed.text, set.text);
+  assert.equal(cleanAmount('1.234,56 ' + set.text[7]), '1234.56');
+});

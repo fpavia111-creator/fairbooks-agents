@@ -31,8 +31,29 @@ export function encodingName(label) {
 
 const strict = (enc) => new TextDecoder(enc, { fatal: true });
 
+// Windows-1252 is decoded here rather than by TextDecoder: Node 20 decodes bytes
+// 0x80-0x9F as control characters, so "1.234,56 €" lost its euro sign and quotes
+// and dashes from Word turned into invisible characters. ISO-8859-1 is read the same
+// way, as browsers do.
+const CP1252_HIGH = [0x20ac, 0x81, 0x201a, 0x192, 0x201e, 0x2026, 0x2020, 0x2021, 0x2c6, 0x2030, 0x160, 0x2039, 0x152, 0x8d, 0x17d, 0x8f, 0x90, 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 0x2dc, 0x2122, 0x161, 0x203a, 0x153, 0x9d, 0x17e, 0x178];
+function decode1252(buf) {
+  let out = '';
+  for (let i = 0; i < buf.length; i += 8192) {
+    const end = Math.min(buf.length, i + 8192); const codes = new Array(end - i);
+    for (let k = i; k < end; k++) { const b = buf[k]; codes[k - i] = b >= 0x80 && b <= 0x9f ? CP1252_HIGH[b - 0x80] : b; }
+    out += String.fromCharCode.apply(null, codes);
+  }
+  return out;
+}
+const SINGLE_BYTE = new Set(['windows-1252', 'iso-8859-1']);
+/** Decode a whole buffer in one encoding (replacement characters for bad bytes). */
+function decodeAs(buf, enc) {
+  return SINGLE_BYTE.has(enc) ? decode1252(buf) : new TextDecoder(enc).decode(buf);
+}
+
 /** Decode or null on a byte sequence the encoding does not allow. partial: the bytes stop mid-file, so a cut character at the end is not an error. */
 function tryDecode(buf, enc, partial = false) {
+  if (SINGLE_BYTE.has(enc)) return decode1252(buf);
   try { return strict(enc).decode(buf, { stream: partial }); } catch { return null; }
 }
 
@@ -94,7 +115,7 @@ export function decodeText(buf, { encoding = null, lang = null, words = null } =
   if (encoding && !set) throw new Error(`unknown encoding "${encoding}"; use one of: ${ENCODINGS.join(', ')}`);
   if (set) {
     const skip = set === 'utf-8' && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf ? 3 : (set.startsWith('utf-16') && ((buf[0] === 0xff && buf[1] === 0xfe) || (buf[0] === 0xfe && buf[1] === 0xff))) ? 2 : 0;
-    return { text: new TextDecoder(set).decode(buf.subarray(skip)), encoding: set, how: 'set' };
+    return { text: decodeAs(buf.subarray(skip), set), encoding: set, how: 'set' };
   }
   if (buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf) return { text: new TextDecoder('utf-8').decode(buf.subarray(3)), encoding: 'utf-8', how: 'bom' };
   if (buf[0] === 0xff && buf[1] === 0xfe) return { text: new TextDecoder('utf-16le').decode(buf.subarray(2)), encoding: 'utf-16le', how: 'bom' };
@@ -119,5 +140,5 @@ export function decodeText(buf, { encoding = null, lang = null, words = null } =
   }
   scored.sort((a, b) => b.score - a.score || LEGACY.indexOf(a.encoding) - LEGACY.indexOf(b.encoding));
   const best = scored[0] ? scored[0].encoding : 'windows-1252';
-  return { text: new TextDecoder(best).decode(buf), encoding: best, how: 'guessed', candidates: scored.slice(0, 3).map(({ encoding: e, header_words, plausibility: p }) => ({ encoding: e, header_words, plausibility: p })) };
+  return { text: decodeAs(buf, best), encoding: best, how: 'guessed', candidates: scored.slice(0, 3).map(({ encoding: e, header_words, plausibility: p }) => ({ encoding: e, header_words, plausibility: p })) };
 }

@@ -16,6 +16,9 @@ Changed
 - `normalizeName`, `normalizeAddress` and `safeFileName` keep letters of every script; `normalizeName` also drops European and CJK legal forms (AG, KG, SARL, S.p.A., Ltda, 株式会社, 有限公司, 주식회사...).
 - Yes/no columns read the nine languages and ○/×.
 
+Fixed (handoff ver 6)
+- Windows-1252 files read on Node 20 lost their euro signs, curly quotes and dashes (Node 20's decoder turns bytes 0x80-0x9F into control characters), so `1.234,56 €` was not read as an amount. The core decodes Windows-1252 and ISO-8859-1 itself now, the same on every Node version.
+
 Added (domain memory, handoff ver 5)
 - Domain memory for agents that opt in with manifest `memory: { prefix, kinds }`: `DomainMemory`, `memoryTools(prefix, kinds)` (`<prefix>_recall`, `_learn`, `_accept_learning`, `_retire_memory`), `memoryFile`, `memoryValueProblem`, `approvalIdFor`, `NOTE_KIND`. One hash-chained (optionally signed) file per agent under `.mythos/memory/`; fact ids are content hashes, so a value edited in place is ignored. Learning only proposes; a named person accepts. Each acceptance and retirement is checked against the approvals file (same person, before the line, exactly that fact and decision); otherwise it is `unverified` and not used. Refuses credentials, personal identifiers and instruction-like text; caps of 200 waiting and 5,000 kept facts.
 - New one-click category `accept_learning`: changing what an agent remembers always needs a named person, even in Auto.
