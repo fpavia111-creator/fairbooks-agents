@@ -1,6 +1,7 @@
 {
   "name": "hesperides-of-inventory",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/hesperides-of-inventory",
   "description": "Hesperides of Inventory: an MCP agent that compares cycle counts with on-hand exports per item, location and lot, ranks variances by value, separates timing differences, explains unit-of-measure errors with your conversion factors, plans ABC-ranked count schedules, reports record accuracy and drafts adjustment entries. Posting an adjustment is always one human click; it never writes to your ERP.",
   "type": "module",
   "license": "MIT",

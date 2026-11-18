@@ -1,6 +1,7 @@
 {
   "name": "echo-of-docs",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/echo-of-docs",
   "description": "Echo of Docs: an MCP agent that finds where a package's README, docs and SKILL.md no longer match its tool list, input schemas, OpenAPI spec, CHANGELOG and package.json, runs as a CI gate with SARIF output, and drafts low-risk fixes as copies. Publishing docs is one human click. Never overwrites docs.",
   "type": "module",
   "license": "MIT",

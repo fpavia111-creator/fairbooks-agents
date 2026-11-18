@@ -1,6 +1,7 @@
 {
   "name": "aeolus-of-mail",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/aeolus-of-mail",
   "description": "Aeolus of Mail: an MCP agent that audits a sending domain's SPF, DKIM, DMARC, BIMI, MX, MTA-STS and TLS-RPT records with read-only DNS-over-HTTPS lookups (or a saved records file), reads saved DMARC aggregate reports and message headers (alignment, ARC) offline, explains the gaps, pre-stages record changes and plans a staged DMARC rollout. Changing DNS is a production deploy: always one human click. Aeolus never edits DNS.",
   "type": "module",
   "license": "MIT",

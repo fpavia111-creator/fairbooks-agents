@@ -1,6 +1,7 @@
 {
   "name": "eos-of-onboarding",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/eos-of-onboarding",
   "description": "Eos of Onboarding: an MCP agent that tracks onboarding and offboarding checklists for employees, contractors or customers (documents, NDA, W-9, equipment, access, training) from CSV and a JSON template with per-role templates, gives each owner a prioritised action list, checks day-one readiness, and drafts access requests and removals. Granting or revoking access is always one human click.",
   "type": "module",
   "license": "MIT",

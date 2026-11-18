@@ -1,6 +1,7 @@
 {
   "name": "tiresias-of-drift",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/tiresias-of-drift",
   "description": "Tiresias of Drift: an MCP agent that compares snapshots over time (JSON/YAML config, .env, schema CSV, Terraform state, Kubernetes manifests), explains each drift with a risk level, remembers drift a person approved, and drafts a revert plan and patch. Secret values are never shown. Applying a fix to production is always one human click and only records a request.",
   "type": "module",
   "license": "MIT",

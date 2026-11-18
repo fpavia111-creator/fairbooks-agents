@@ -1,6 +1,7 @@
 {
   "name": "eirene-of-controls",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/eirene-of-controls",
   "description": "Eirene of Controls: a domain-specific MCP agent that turns Talos and mythos-agent-core JSONL audit logs (plus Alethea decisions and evidence files) into a hash-listed evidence folder mapped to your own control ids, and verifies hash chains and Ed25519 signatures. Evidence, not certification.",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "helios-of-seats",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/helios-of-seats",
   "description": "Helios of Seats: an MCP agent that finds unused, idle, duplicate, leaver and over-tiered SaaS seats (including AI tools) in CSV/JSON exports and estimates the saving, timed to each contract renewal and notice window. Writes a review sheet, a renewal calendar (.ics) and owner confirmation drafts, and compares two exports. Revoking is always one human click; it never changes any app itself.",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "arethusa-of-flows",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/arethusa-of-flows",
   "description": "Arethusa of Flows: an MCP agent that audits workflow automation exports (n8n, Zapier, Make, Power Automate, Workato) for broken and risky flows: no trigger, disconnected or disabled steps, failing runs, hardcoded secrets (known formats and entropy, never shown), open webhooks, destructive or money-moving steps, and credentials shared across flows. Enabling or changing a production flow is always one human click.",
   "type": "module",
   "license": "MIT",

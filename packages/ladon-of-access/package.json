@@ -1,6 +1,7 @@
 {
   "name": "ladon-of-access",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/ladon-of-access",
   "description": "Ladon of Access: a domain-specific MCP agent that reads access-list exports for people, AI agents and service accounts, flags leavers, stale, privileged, ownerless and unrotated accounts and segregation-of-duties conflicts, writes a recertification sheet with reviewers and due dates, tracks the campaign and writes an evidence pack. Never revokes access by itself.",
   "type": "module",
   "license": "MIT",

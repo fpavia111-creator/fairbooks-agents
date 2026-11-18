@@ -1,6 +1,7 @@
 {
   "name": "penelope-of-recon",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/penelope-of-recon",
   "description": "Penelope of Recon: an MCP agent for bank-to-GL reconciliation from CSV/JSON, CAMT.053, BAI2 or OFX exports. Proposes matches (including rules a person accepted), lists reconciling items, ties balances, rolls outstanding items forward month to month and drafts adjusting entries. Posting an entry is always one human click and only records a request.",
   "type": "module",
   "license": "MIT",

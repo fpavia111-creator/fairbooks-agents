@@ -1,6 +1,7 @@
 {
   "name": "agon-of-evals",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/agon-of-evals",
   "description": "Agon of Evals: an MCP agent for private, fixture-based evals of one business process on one pinned model. Grades recorded responses (including repeated trials), tells regressions from noise with seeded bootstrap confidence intervals, grades rubrics with cited criteria, and writes Markdown, JSON, JUnit and an offline HTML dashboard. Calls no model and publishes nothing.",
   "type": "module",
   "license": "MIT",

@@ -1,6 +1,7 @@
 {
   "name": "nausicaa-of-hygiene",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/nausicaa-of-hygiene",
   "description": "Nausicaa of Hygiene: an MCP agent for CRM and contact-list hygiene from exports: invalid and typo emails, hard bounces, role and disposable addresses, duplicates, stale records, missing or conflicting consent. Bulk deletes are always one human click and only record a request.",
   "type": "module",
   "license": "MIT",

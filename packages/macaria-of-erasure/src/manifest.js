@@ -1,6 +1,6 @@
 import { defineManifest, toCsv, sha256, safeFileName } from 'mythos-agent-core';
 import { readFileSync, readdirSync, statSync, existsSync, appendFileSync } from 'node:fs';
-import { join, extname, relative } from 'node:path';
+import { join, posix, extname, relative } from 'node:path';
 import { mapData, findSubject, checklist, checklistCsv, requestMarkdown, dueDate, maskEmail } from './erasure.js';
 import { RETENTION_RULES_SCHEMA, applyRetention, trackDeadlines, deadlinesCsv, deadlinesIcs } from './retention.js';
 import { evidencePack, evidenceHtml } from './evidence.js';
@@ -18,7 +18,7 @@ const today = () => new Date().toISOString().slice(0, 10);
 const logPath = (a) => a.log || join(a.out_dir || 'mythos-out/macaria', 'requests.csv');
 function load(a, ctx) {
   let list = a.files || [];
-  if (a.dir) { const d = ctx.path(a.dir); list = list.concat(readdirSync(d).filter((f) => ['.csv', '.json', '.jsonl'].includes(extname(f).toLowerCase()) && statSync(join(d, f)).isFile()).sort().map((f) => join(a.dir, f))); }
+  if (a.dir) { const d = ctx.path(a.dir); list = list.concat(readdirSync(d).filter((f) => ['.csv', '.json', '.jsonl'].includes(extname(f).toLowerCase()) && statSync(join(d, f)).isFile()).sort().map((f) => posix.join(String(a.dir).replace(/\\/g, '/'), f))); }
   if (!list.length) throw new Error('give "dir" or "files"');
   return list.map((f) => ({ name: f, rows: ctx.records(f) }));
 }

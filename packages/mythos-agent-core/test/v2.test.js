@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync, readFileSync, mkdirSync, symlinkSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import {
   AgentRuntime, ApprovalStore, AuditLog, readAudit, verifyChain, validate, assertValid, generateSigningKey, loadSigner, loadPublicKeys,
   signWebhook, verifyWebhook, serveApprovals, createMcpHandler, defineManifest, toIcs, validateIcs, toSarif, validateSarif, unifiedDiff,
@@ -145,12 +146,19 @@ test('caps persist across restarts per session and per day; per-tool caps block 
 test('safePath refuses symlink escapes and NUL bytes', () => {
   const root = tmp(); const outside = tmp();
   writeFileSync(join(outside, 'secret.txt'), 'x');
-  symlinkSync(outside, join(root, 'link'));
+  symlinkSync(outside, join(root, 'link'), 'junction'); // 'junction' needs no admin on Windows; ignored elsewhere
   assert.throws(() => safePath(root, 'link/secret.txt'), /symlink/);
   assert.throws(() => safePath(root, 'link/new/deeper.txt'), /symlink/);
   assert.throws(() => safePath(root, 'a\0b'), /NUL/);
   assert.throws(() => safePath(root, '/etc/passwd'), /outside/);
   mkdirSync(join(root, 'ok')); assert.ok(safePath(root, 'ok/file.txt').endsWith('file.txt'));
+});
+
+test('safePath refuses over-long paths before touching the disk (Windows mkdir never returns past ~32,767 chars)', () => {
+  const root = tmp();
+  assert.throws(() => safePath(root, 'A'.repeat(40000)), /too long/);
+  assert.throws(() => safePath(root, 'a/' + 'B'.repeat(300) + '/c.txt'), /longer than 255/);
+  assert.ok(safePath(root, 'x/'.repeat(200) + 'ok.txt').endsWith('ok.txt'));
 });
 
 test('MCP: annotations, prompts, 2025-11-25, usage in mythos_info', async () => {
@@ -203,10 +211,10 @@ test('eval report: offline HTML with regression highlighted', async () => {
 test('scaffolder writes a complete agent package', async () => {
   const { spawnSync } = await import('node:child_process');
   const dir = tmp();
-  const r = spawnSync(process.execPath, [new URL('../bin/mythos-new-agent.js', import.meta.url).pathname, 'iris-of-tests', '--dir', dir], { encoding: 'utf8' });
+  const r = spawnSync(process.execPath, [fileURLToPath(new URL('../bin/mythos-new-agent.js', import.meta.url)), 'iris-of-tests', '--dir', dir], { encoding: 'utf8' });
   assert.equal(r.status, 0, r.stderr);
   for (const f of ['package.json', 'bin/iris-of-tests.js', 'src/manifest.js', 'evals/cases.json', 'test/logic.test.js', 'LICENSE']) assert.ok(existsSync(join(dir, 'iris-of-tests', f)), f);
-  assert.equal(spawnSync(process.execPath, [new URL('../bin/mythos-new-agent.js', import.meta.url).pathname, 'Bad Name'], { encoding: 'utf8' }).status, 2);
+  assert.equal(spawnSync(process.execPath, [fileURLToPath(new URL('../bin/mythos-new-agent.js', import.meta.url)), 'Bad Name'], { encoding: 'utf8' }).status, 2);
 });
 
 test('MCP openWorldHint follows the tool openWorld flag', async () => {

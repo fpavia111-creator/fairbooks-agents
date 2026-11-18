@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { cpSync, mkdtempSync, readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { AgentRuntime, ApprovalStore, parseCsv } from 'mythos-agent-core';
 import { manifest, scanInventory, checkCois, expiryStatus, calendarIcs, scan, DEFAULTS } from '../src/index.js';
@@ -82,6 +82,6 @@ test('chase drafts for vendors named in Japanese and Korean get their own files 
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['aegle_draft_chase'], audit: false });
   const d = await rt.call('aegle_draft_chase', { cois: 'cois-intl.csv', requirements: 'requirements.csv', as_of });
   assert.equal(d.status, 'executed', JSON.stringify(d));
-  const names = d.result.files.map((f) => f.split('/').pop()).sort();
+  const names = d.result.files.map((f) => basename(f)).sort();
   assert.deepEqual(names, ['a-b-repairs-fictional-2.md', 'a-b-repairs-fictional.md', '株式会社架空商事.md', '주-가상상사.md'].sort());
 });

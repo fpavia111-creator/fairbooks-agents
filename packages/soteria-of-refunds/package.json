@@ -1,6 +1,7 @@
 {
   "name": "soteria-of-refunds",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/soteria-of-refunds",
   "description": "Soteria of Refunds: an MCP agent that triages refund requests and chargebacks from CSV/JSON exports against your written policy and drafts dispute evidence packs. Issuing money is blocked; a refund request is one human click and only records a request.",
   "type": "module",
   "license": "MIT",

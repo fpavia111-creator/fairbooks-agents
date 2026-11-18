@@ -33,11 +33,17 @@ function realish(p) {
 
 /**
  * Resolve a user path and refuse anything outside root: "..", absolute paths
- * elsewhere, NUL bytes, and symlinks (at any level) that point outside root.
+ * elsewhere, NUL bytes, symlinks (at any level) that point outside root, and
+ * paths longer than real file systems allow (on Windows, Node's recursive mkdir
+ * never returns for a path past about 32,767 characters, so this check runs first).
  */
+export const MAX_PATH_CHARS = 4096;
+export const MAX_NAME_CHARS = 255;
 export function safePath(root, p) {
   if (typeof p !== 'string' || !p) throw new Error('path is required');
   if (p.includes('\0')) throw new Error('path contains a NUL byte');
+  if (p.length > MAX_PATH_CHARS) throw new Error(`path is too long (${p.length} characters; the limit is ${MAX_PATH_CHARS})`);
+  if (p.split(/[\\/]/).some((s) => s.length > MAX_NAME_CHARS)) throw new Error(`a folder or file name in the path is longer than ${MAX_NAME_CHARS} characters`);
   const r = resolve(root);
   const abs = resolve(r, p);
   if (!within(r, abs)) throw new Error(`path "${p}" is outside the allowed root`);

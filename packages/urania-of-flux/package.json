@@ -1,6 +1,7 @@
 {
   "name": "urania-of-flux",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/urania-of-flux",
   "description": "Urania of Flux: an MCP agent that assembles a board pack from locked source figures and source documents, computes variances, compares with the prior pack, draws charts that trace to figure ids, drafts commentary that cites figure ids, and checks every number in the pack against its citation. Controller sign-off and distribution are each one human click.",
   "type": "module",
   "license": "MIT",

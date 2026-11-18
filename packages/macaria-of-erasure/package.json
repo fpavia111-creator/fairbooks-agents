@@ -1,6 +1,7 @@
 {
   "name": "macaria-of-erasure",
   "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/macaria-of-erasure",
   "description": "Macaria of Erasure: an MCP agent for data-subject erasure requests. Maps where personal data lives across your exports, finds the subject, flags records you may have to keep and builds a checklist. Deleting personal data is always one human click and only records a request; it never deletes anything.",
   "type": "module",
   "license": "MIT",
