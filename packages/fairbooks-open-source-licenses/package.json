@@ -1,0 +1,67 @@
+{
+  "name": "fairbooks-open-source-licenses",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-open-source-licenses",
+  "description": "Fairbooks Open Source Licenses: an MCP agent and CLI that reads a project's npm, pnpm, yarn, Python or Go lockfile and installed packages, applies your written license policy (allow, review, deny, unknown, exceptions with owners and expiry), identifies license texts for packages that declare none, writes a report, CycloneDX SBOM, SARIF and a third-party notices draft, and fails the check without changing files. Publishing a release is a production deploy: always one human click. Helps you apply your policy; not legal advice.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-open-source-licenses": "bin/fairbooks-open-source-licenses.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-open-source-licenses.js demo",
+    "eval": "node bin/fairbooks-open-source-licenses.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-open-source-licenses"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-open-source-licenses#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "license",
+    "licenses",
+    "license-checker",
+    "spdx",
+    "sbom",
+    "cyclonedx",
+    "sarif",
+    "open-source-compliance",
+    "npm",
+    "pnpm",
+    "yarn",
+    "python",
+    "golang",
+    "third-party-notices",
+    "attribution",
+    "ai-agents",
+    "mythos"
+  ]
+}

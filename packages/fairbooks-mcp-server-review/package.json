@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-mcp-server-review",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-mcp-server-review",
+  "description": "Fairbooks MCP Server Review: an MCP agent that reviews one MCP or Code Mode server folder, its saved tool definitions, or an MCP client config for risky patterns: shell exec, eval, source-to-sink data flows, token passthrough, tool poisoning and shadowing, rug pulls against pinned definitions, inline secrets, auto-approved tools, missing lockfiles and offline advisory matches. Writes Markdown, JSON and SARIF. Static, offline and pattern-based.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-mcp-server-review": "bin/fairbooks-mcp-server-review.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-mcp-server-review.js demo",
+    "eval": "node bin/fairbooks-mcp-server-review.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-mcp-server-review"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-mcp-server-review#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "mcp-security",
+    "code-mode",
+    "static-analysis",
+    "sarif",
+    "supply-chain",
+    "tool-poisoning",
+    "owasp-mcp",
+    "ai-agents",
+    "mythos"
+  ]
+}

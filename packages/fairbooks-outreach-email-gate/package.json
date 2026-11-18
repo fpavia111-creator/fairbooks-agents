@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-outreach-email-gate",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-outreach-email-gate",
+  "description": "Fairbooks Outreach Email Gate: a draft-only MCP send gate for outreach email. Checks suppression lists (with Mailchimp, HubSpot and Resend export import), CAN-SPAM footer fields, configurable send windows and time zones (default Tue/Wed America/Chicago), unfilled placeholders, spam phrases, links, subject under 30 characters and body under 100 words, and plans send slots. Never sends; release is always one human click.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-outreach-email-gate": "bin/fairbooks-outreach-email-gate.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-outreach-email-gate.js demo",
+    "eval": "node bin/fairbooks-outreach-email-gate.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-outreach-email-gate"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-outreach-email-gate#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "email",
+    "outreach",
+    "can-spam",
+    "suppression-list",
+    "human-in-the-loop",
+    "ai-agents",
+    "send-window",
+    "mythos"
+  ]
+}

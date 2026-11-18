@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-vendor-tax-forms",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-vendor-tax-forms",
+  "description": "Fairbooks Vendor Tax Forms: an MCP agent that tracks vendor W-9 and W-8 readiness from CSV exports (missing, unsigned or expired forms, TIN format and pattern per entity type, always masked), finds duplicate vendor records, summarises 1099 readiness against a threshold you set, and drafts request emails. Sends are one human click; it never files with the IRS and is not tax advice.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-vendor-tax-forms": "bin/fairbooks-vendor-tax-forms.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-vendor-tax-forms.js demo",
+    "eval": "node bin/fairbooks-vendor-tax-forms.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-vendor-tax-forms"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-vendor-tax-forms#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "w-9",
+    "w9",
+    "w-8ben",
+    "1099",
+    "vendor-onboarding",
+    "accounts-payable",
+    "bookkeeping",
+    "duplicate-vendors",
+    "ai-agents",
+    "mythos"
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "name": "fairbooks-web-page-audit",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-web-page-audit",
+  "description": "Fairbooks Web Page Audit: an MCP agent that audits a folder of exported HTML pages for broken links and anchors, basic SEO gaps, sitemap and robots.txt consistency, and automatable WCAG checklist issues (including contrast from static CSS and ARIA misuse), writes a prioritised fix list and drafts mechanical fixes as copies and a unified diff. Publishing changes is a production deploy: always one human click. A technical checklist, not a legal opinion.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-web-page-audit": "bin/fairbooks-web-page-audit.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-web-page-audit.js demo",
+    "eval": "node bin/fairbooks-web-page-audit.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-web-page-audit"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-web-page-audit#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "accessibility",
+    "wcag",
+    "a11y",
+    "seo",
+    "broken-links",
+    "link-checker",
+    "static-site",
+    "color-contrast",
+    "aria",
+    "sitemap",
+    "ai-agents",
+    "mythos"
+  ]
+}

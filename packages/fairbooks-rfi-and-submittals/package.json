@@ -1,0 +1,60 @@
+{
+  "name": "fairbooks-rfi-and-submittals",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-rfi-and-submittals",
+  "description": "Fairbooks RFI and Submittals: an MCP agent that reviews a construction RFI and submittal log against your drawing and spec index (overdue items, missing, unknown or superseded references) and shows ball-in-court aging with a chase list, compares log exports week over week, builds a drawing index from title-block text, and drafts RFIs and transmittals that cite only the documents you provide. Sending to the architect or GC is a binding send: always one human click.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-rfi-and-submittals": "bin/fairbooks-rfi-and-submittals.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-rfi-and-submittals.js demo",
+    "eval": "node bin/fairbooks-rfi-and-submittals.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-rfi-and-submittals"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-rfi-and-submittals#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "construction",
+    "rfi",
+    "submittals",
+    "transmittals",
+    "ball-in-court",
+    "general-contractor",
+    "project-engineer",
+    "aec",
+    "ai-agents",
+    "mythos"
+  ]
+}

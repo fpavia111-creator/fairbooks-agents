@@ -1,0 +1,60 @@
+{
+  "name": "fairbooks-cycle-counts",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-cycle-counts",
+  "description": "Fairbooks Cycle Counts: an MCP agent that compares cycle counts with on-hand exports per item, location and lot, ranks variances by value, separates timing differences, explains unit-of-measure errors with your conversion factors, plans ABC-ranked count schedules, reports record accuracy and drafts adjustment entries. Posting an adjustment is always one human click; it never writes to your ERP.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-cycle-counts": "bin/fairbooks-cycle-counts.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-cycle-counts.js demo",
+    "eval": "node bin/fairbooks-cycle-counts.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-cycle-counts"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-cycle-counts#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "inventory",
+    "cycle-count",
+    "inventory-variance",
+    "netsuite",
+    "warehouse",
+    "operations",
+    "lot-tracking",
+    "abc-analysis",
+    "ai-agents",
+    "mythos"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-access-review",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-access-review",
+  "description": "Fairbooks Access Review: a domain-specific MCP agent that reads access-list exports for people, AI agents and service accounts, flags leavers, stale, privileged, ownerless and unrotated accounts and segregation-of-duties conflicts, writes a recertification sheet with reviewers and due dates, tracks the campaign and writes an evidence pack. Never revokes access by itself.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-access-review": "bin/fairbooks-access-review.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-access-review.js demo",
+    "eval": "node bin/fairbooks-access-review.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-access-review"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-access-review#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "access-review",
+    "user-access-review",
+    "recertification",
+    "identity",
+    "ai-agents",
+    "segregation-of-duties",
+    "non-human-identity",
+    "mythos"
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-audit-evidence",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-audit-evidence",
+  "description": "Fairbooks Audit Evidence: a domain-specific MCP agent that turns Talos and fairbooks-core JSONL audit logs (plus Alethea decisions and evidence files) into a hash-listed evidence folder mapped to your own control ids, and verifies hash chains and Ed25519 signatures. Evidence, not certification.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-audit-evidence": "bin/fairbooks-audit-evidence.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "templates",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-audit-evidence.js demo",
+    "eval": "node bin/fairbooks-audit-evidence.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-audit-evidence"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-audit-evidence#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "audit-log",
+    "evidence",
+    "controls",
+    "signed-logs",
+    "ai-governance",
+    "ai-agents",
+    "mythos"
+  ]
+}

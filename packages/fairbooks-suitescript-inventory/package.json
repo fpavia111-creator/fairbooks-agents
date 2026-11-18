@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-suitescript-inventory",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-suitescript-inventory",
+  "description": "Fairbooks SuiteScript Inventory: a domain-specific MCP agent that inventories SuiteScript files from a local folder, finds SuiteScript 1.0/2.0 usage, risk-ranks and estimates what must move to 2.1 before NetSuite 2028.2, and orders the work by dependency. Writes a draft test plan and SARIF; never deploys code.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-suitescript-inventory": "bin/fairbooks-suitescript-inventory.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-suitescript-inventory.js demo",
+    "eval": "node bin/fairbooks-suitescript-inventory.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-suitescript-inventory"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-suitescript-inventory#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "netsuite",
+    "suitescript",
+    "suitescript-2.1",
+    "sdf",
+    "sarif",
+    "dependency-graph",
+    "ai-agents",
+    "mythos"
+  ]
+}

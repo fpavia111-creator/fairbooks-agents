@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-master-data-duplicates",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-master-data-duplicates",
+  "description": "Fairbooks Master Data Duplicates: a domain-specific MCP agent that finds likely duplicate vendors or items in master-data exports (CSV/JSON) with explainable match signals, previews field-level merge winners, and applies one approved merge at a time to a copy of the file with an undo log. Never edits your ERP.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-master-data-duplicates": "bin/fairbooks-master-data-duplicates.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-master-data-duplicates.js demo",
+    "eval": "node bin/fairbooks-master-data-duplicates.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-master-data-duplicates"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-master-data-duplicates#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "master-data",
+    "vendor-master",
+    "deduplication",
+    "netsuite",
+    "ai-agents",
+    "entity-resolution",
+    "survivorship",
+    "mythos"
+  ]
+}

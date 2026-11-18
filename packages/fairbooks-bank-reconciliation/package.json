@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-bank-reconciliation",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-bank-reconciliation",
+  "description": "Fairbooks Bank Reconciliation: an MCP agent for bank-to-GL reconciliation from CSV/JSON, CAMT.053, BAI2 or OFX exports. Proposes matches (including rules a person accepted), lists reconciling items, ties balances, rolls outstanding items forward month to month and drafts adjusting entries. Posting an entry is always one human click and only records a request.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-bank-reconciliation": "bin/fairbooks-bank-reconciliation.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-bank-reconciliation.js demo",
+    "eval": "node bin/fairbooks-bank-reconciliation.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-bank-reconciliation"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-bank-reconciliation#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "bank-reconciliation",
+    "accounting",
+    "general-ledger",
+    "month-end-close",
+    "camt053",
+    "bai2",
+    "ofx",
+    "ai-agents",
+    "mythos"
+  ]
+}

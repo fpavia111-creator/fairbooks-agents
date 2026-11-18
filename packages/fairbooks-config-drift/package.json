@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-config-drift",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-config-drift",
+  "description": "Fairbooks Config Drift: an MCP agent that compares snapshots over time (JSON/YAML config, .env, schema CSV, Terraform state, Kubernetes manifests), explains each drift with a risk level, remembers drift a person approved, and drafts a revert plan and patch. Secret values are never shown. Applying a fix to production is always one human click and only records a request.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-config-drift": "bin/fairbooks-config-drift.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-config-drift.js demo",
+    "eval": "node bin/fairbooks-config-drift.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-config-drift"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-config-drift#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "config-drift",
+    "schema-drift",
+    "change-management",
+    "devops",
+    "terraform",
+    "kubernetes",
+    "sarif",
+    "ai-agents",
+    "mythos"
+  ]
+}

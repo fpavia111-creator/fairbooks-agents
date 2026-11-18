@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-data-erasure-requests",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-data-erasure-requests",
+  "description": "Fairbooks Data Erasure Requests: an MCP agent for data-subject erasure requests. Maps where personal data lives across your exports, finds the subject, flags records you may have to keep and builds a checklist. Deleting personal data is always one human click and only records a request; it never deletes anything.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-data-erasure-requests": "bin/fairbooks-data-erasure-requests.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-data-erasure-requests.js demo",
+    "eval": "node bin/fairbooks-data-erasure-requests.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-data-erasure-requests"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-data-erasure-requests#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "privacy",
+    "dsar",
+    "gdpr",
+    "ccpa",
+    "right-to-erasure",
+    "data-mapping",
+    "ai-agents",
+    "mythos"
+  ]
+}

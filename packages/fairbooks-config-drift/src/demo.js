@@ -1,0 +1,43 @@
+import { fileURLToPath } from 'node:url';
+import { demoRuntime, printStep } from 'fairbooks-core';
+
+export async function demo(manifest) {
+  const rt = demoRuntime(manifest, fileURLToPath(new URL('../fixtures', import.meta.url)), { mode: 'auto' });
+  process.stdout.write(`Fairbooks Config Drift demo (fictional app config, schema, Terraform state and Kubernetes manifests) in ${rt.root} — Auto mode on\n`);
+  const row = (c) => process.stdout.write(`    ${c.risk.padEnd(6)} ${c.key.padEnd(28)} ${c.change.padEnd(8)} ${c.why}\n`);
+  const t = await rt.call('drift_timeline', { dir: 'snapshots', ignore: ['meta.generated_at'] });
+  printStep('Walk three config snapshots', t);
+  for (const c of t.result.net_drift.items) row(c);
+  const s = await rt.call('drift_diff', { before: 'schema-2026-10-01.csv', after: 'schema-2026-11-01.csv' });
+  printStep('Compare two schema snapshots', s);
+  for (const c of s.result.items) process.stdout.write(`    ${c.risk.padEnd(6)} ${c.key.padEnd(28)} ${c.why}\n`);
+  const tf = await rt.call('drift_diff', { before: 'terraform/2026-10-01.tfstate', after: 'terraform/2026-11-01.tfstate' });
+  printStep('Compare two Terraform state files (secrets masked)', tf);
+  for (const c of tf.result.items.filter((x) => x.risk === 'high')) row(c);
+  const k8 = await rt.call('drift_diff', { before: 'k8s/2026-10-01.yaml', after: 'k8s/2026-11-01.yaml' });
+  printStep('Compare two Kubernetes manifest snapshots', k8);
+  for (const c of k8.result.items.filter((x) => x.risk === 'high')) process.stdout.write(`    ${c.risk.padEnd(6)} ${c.key}\n           ${c.why}\n`);
+  const args = { before: 'snapshots/2026-10-01.json', after: 'snapshots/2026-11-01.json', ignore: ['meta.generated_at'] };
+  const base = { ...args, keys: ['features.new_invoice_pdf', 'db.pool_max'], reason: 'Planned launch CHG-1042 (fictional)' };
+  const ba = await rt.call('drift_approve_baseline', base);
+  printStep('Approve two expected changes as the new baseline — needs a person', ba);
+  rt.approvals.approve(ba.approval_id, 'Dana Reviewer (fictional)');
+  process.stdout.write(`    (demo: "Dana Reviewer" approves ${ba.approval_id})\n`);
+  printStep('Same request after the human yes', await rt.call('drift_approve_baseline', base));
+  const withBase = { ...args, approved: 'mythos-out/drift/approved-drift.json' };
+  printStep('Diff again with the approved baseline', await rt.call('drift_diff', withBase));
+  const rep = await rt.call('drift_write_report', withBase);
+  printStep('Write the report, SARIF and a revert plan', rep);
+  process.stdout.write(`    output_sha256 ${rep.result.output_sha256}\n`);
+  const pt = await rt.call('drift_write_revert_patch', { ...withBase, keys: ['security.tls.verify', 'security.cors.allow_origins', 'server.debug', 'security.api_key'] });
+  printStep('Write a revert patch for the unapproved security changes', pt);
+  for (const m of pt.result.manual_steps) process.stdout.write(`    manual: ${m.key} — ${m.step}\n`);
+  const fix = { environment: 'production', keys: ['security.tls.verify', 'server.debug'], reason: 'Revert unapproved changes found in drift review', ...args };
+  const a = await rt.call('drift_apply_fix', fix);
+  printStep('Auto: apply a fix to production — stays one-click', a);
+  rt.approvals.approve(a.approval_id, 'Dana Reviewer (fictional)');
+  process.stdout.write(`    (demo: "Dana Reviewer" approves ${a.approval_id})\n`);
+  printStep('Same request after the human click', await rt.call('drift_apply_fix', fix));
+  printStep('Agent tries to push config itself', await rt.call('production_push_config', {}));
+  process.stdout.write(`\nAudit log: ${rt.stateDir}/audit.jsonl\n`);
+}

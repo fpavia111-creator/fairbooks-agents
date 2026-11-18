@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-erp-migration",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-erp-migration",
+  "description": "Fairbooks ERP Migration: a domain-specific MCP agent that checks NetSuite/ERP migration export files (CSV/JSON) before go-live and writes a readiness report. Read-only on your data; never approves go-live.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-erp-migration": "bin/fairbooks-erp-migration.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-erp-migration.js demo",
+    "eval": "node bin/fairbooks-erp-migration.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-erp-migration"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-erp-migration#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "netsuite",
+    "erp-migration",
+    "data-migration",
+    "reconciliation",
+    "trial-balance",
+    "go-live",
+    "ai-agents",
+    "mythos"
+  ]
+}

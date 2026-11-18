@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-process-evals",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-process-evals",
+  "description": "Fairbooks Process Evals: an MCP agent for private, fixture-based evals of one business process on one pinned model. Grades recorded responses (including repeated trials), tells regressions from noise with seeded bootstrap confidence intervals, grades rubrics with cited criteria, and writes Markdown, JSON, JUnit and an offline HTML dashboard. Calls no model and publishes nothing.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-process-evals": "bin/fairbooks-process-evals.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-process-evals.js demo",
+    "eval": "node bin/fairbooks-process-evals.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-process-evals"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-process-evals#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "llm-evals",
+    "evaluation",
+    "regression-testing",
+    "junit",
+    "bootstrap",
+    "rubric",
+    "ai-agents",
+    "mythos"
+  ]
+}

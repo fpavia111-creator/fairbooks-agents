@@ -1,0 +1,63 @@
+{
+  "name": "fairbooks-email-domain-audit",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-email-domain-audit",
+  "description": "Fairbooks Email Domain Audit: an MCP agent that audits a sending domain's SPF, DKIM, DMARC, BIMI, MX, MTA-STS and TLS-RPT records with read-only DNS-over-HTTPS lookups (or a saved records file), reads saved DMARC aggregate reports and message headers (alignment, ARC) offline, explains the gaps, pre-stages record changes and plans a staged DMARC rollout. Changing DNS is a production deploy: always one human click. Fairbooks Email Domain Audit never edits DNS.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-email-domain-audit": "bin/fairbooks-email-domain-audit.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-email-domain-audit.js demo",
+    "eval": "node bin/fairbooks-email-domain-audit.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-email-domain-audit"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-email-domain-audit#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "email",
+    "dns",
+    "spf",
+    "dkim",
+    "dmarc",
+    "deliverability",
+    "mta-sts",
+    "dns-over-https",
+    "bimi",
+    "arc",
+    "dmarc-reports",
+    "ai-agents",
+    "mythos"
+  ]
+}

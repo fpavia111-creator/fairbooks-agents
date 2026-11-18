@@ -1,0 +1,57 @@
+{
+  "name": "fairbooks-crm-hygiene",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-crm-hygiene",
+  "description": "Fairbooks CRM Hygiene: an MCP agent for CRM and contact-list hygiene from exports: invalid and typo emails, hard bounces, role and disposable addresses, duplicates, stale records, missing or conflicting consent. Bulk deletes are always one human click and only record a request.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-crm-hygiene": "bin/fairbooks-crm-hygiene.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-crm-hygiene.js demo",
+    "eval": "node bin/fairbooks-crm-hygiene.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-crm-hygiene"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-crm-hygiene#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "crm",
+    "data-hygiene",
+    "email-list",
+    "deduplication",
+    "consent",
+    "ai-agents",
+    "mythos"
+  ]
+}

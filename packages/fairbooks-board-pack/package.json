@@ -1,0 +1,60 @@
+{
+  "name": "fairbooks-board-pack",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-board-pack",
+  "description": "Fairbooks Board Pack: an MCP agent that assembles a board pack from locked source figures and source documents, computes variances, compares with the prior pack, draws charts that trace to figure ids, drafts commentary that cites figure ids, and checks every number in the pack against its citation. Controller sign-off and distribution are each one human click.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-board-pack": "bin/fairbooks-board-pack.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-board-pack.js demo",
+    "eval": "node bin/fairbooks-board-pack.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-board-pack"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-board-pack#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "board-pack",
+    "flux-analysis",
+    "variance-analysis",
+    "month-end-close",
+    "fp-and-a",
+    "citations",
+    "restatement",
+    "svg-charts",
+    "ai-agents",
+    "mythos"
+  ]
+}

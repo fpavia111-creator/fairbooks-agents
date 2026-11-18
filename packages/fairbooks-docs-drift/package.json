@@ -1,0 +1,66 @@
+{
+  "name": "fairbooks-docs-drift",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-docs-drift",
+  "description": "Fairbooks Docs Drift: an MCP agent that finds where a package's README, docs and SKILL.md no longer match its tool list, input schemas, OpenAPI spec, CHANGELOG and package.json, runs as a CI gate with SARIF output, and drafts low-risk fixes as copies. Publishing docs is one human click. Never overwrites docs.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-docs-drift": "bin/fairbooks-docs-drift.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md",
+    "action.yml",
+    "examples"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-docs-drift.js demo",
+    "eval": "node bin/fairbooks-docs-drift.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-docs-drift"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-docs-drift#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "documentation",
+    "docs",
+    "drift",
+    "readme",
+    "lint",
+    "skills",
+    "skill-md",
+    "mcp-tools",
+    "openapi",
+    "changelog",
+    "sarif",
+    "github-action",
+    "ai-agents",
+    "mythos"
+  ]
+}

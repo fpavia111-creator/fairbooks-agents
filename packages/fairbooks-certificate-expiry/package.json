@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-certificate-expiry",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-certificate-expiry",
+  "description": "Fairbooks Certificate Expiry: an MCP agent that tracks expiry for TLS certificates, domains, licences and vendor certificates of insurance from CSV inventories, checks COIs against your written requirements (per vendor category), extracts COI fields from certificate text for review, diffs inventory snapshots, writes reports and calendar files, and drafts chase emails. An opt-in live TLS check is the only network feature. Paid renewals, production changes and sends are always one human click.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-certificate-expiry": "bin/fairbooks-certificate-expiry.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-certificate-expiry.js demo",
+    "eval": "node bin/fairbooks-certificate-expiry.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-certificate-expiry"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-certificate-expiry#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "certificates",
+    "tls",
+    "ssl",
+    "domain-expiry",
+    "certificate-of-insurance",
+    "coi",
+    "expiry-tracking",
+    "icalendar",
+    "ai-agents",
+    "mythos"
+  ]
+}

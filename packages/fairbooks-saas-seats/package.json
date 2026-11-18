@@ -1,0 +1,57 @@
+{
+  "name": "fairbooks-saas-seats",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-saas-seats",
+  "description": "Fairbooks SaaS Seats: an MCP agent that finds unused, idle, duplicate, leaver and over-tiered SaaS seats (including AI tools) in CSV/JSON exports and estimates the saving, timed to each contract renewal and notice window. Writes a review sheet, a renewal calendar (.ics) and owner confirmation drafts, and compares two exports. Revoking is always one human click; it never changes any app itself.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-saas-seats": "bin/fairbooks-saas-seats.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-saas-seats.js demo",
+    "eval": "node bin/fairbooks-saas-seats.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-saas-seats"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-saas-seats#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "saas",
+    "license-management",
+    "seat-optimization",
+    "finops",
+    "renewal-management",
+    "ai-agents",
+    "mythos"
+  ]
+}

@@ -1,0 +1,34 @@
+import { fileURLToPath } from 'node:url';
+import { demoRuntime, printStep } from 'fairbooks-core';
+
+export async function demo(manifest) {
+  const rt = demoRuntime(manifest, fileURLToPath(new URL('../fixtures', import.meta.url)), { mode: 'auto' });
+  process.stdout.write(`Fairbooks Three-Way Match demo (fictional POs, receipts and invoices) in ${rt.root} — Auto mode on\n`);
+  const f = { pos: 'pos.csv', receipts: 'receipts.csv', invoices: 'invoices.csv' };
+  const m = await rt.call('match_match', f);
+  printStep('Three-way match', m);
+  for (const i of m.result.items.filter((x) => x.status !== 'matched')) process.stdout.write(`    ${i.status.padEnd(18)} ${i.invoice.padEnd(9)} L${i.line} $${String(i.est_impact).padEnd(8)} ${i.exceptions.map((e) => e.code).join(', ')}\n`);
+  const e = await rt.call('match_explain_exception', { ...f, invoice: 'INV-2003' });
+  printStep('Explain INV-2003', e);
+  for (const x of e.result.lines[0].explanations) process.stdout.write(`    ${x.title}: ${x.suggested_next_step}\n`);
+  printStep('Same match with a per-vendor tolerance profile (Globex allows 10%)', await rt.call('match_match', { ...f, tolerance_profile: 'tolerances.json' }));
+  const p = { pos: 'partial-pos.csv', receipts: 'partial-receipts.csv', invoices: 'partial-invoices.csv' };
+  const pm = await rt.call('match_match', p);
+  printStep('Partial receipts: one PO line, two receipts, three invoices (+ a near-duplicate)', pm);
+  for (const i of pm.result.items) process.stdout.write(`    ${i.status.padEnd(18)} ${i.invoice.padEnd(9)} L${i.line} receipts: ${(i.receipts.join('+') || '-').padEnd(8)} ${i.exceptions.map((x) => x.code).join(', ')}\n`);
+  const ps = await rt.call('match_po_status', p);
+  printStep('PO line status and GRNI estimate', ps);
+  for (const l of ps.result.lines) process.stdout.write(`    ${l.po} L${l.line} ordered ${l.ordered} received ${l.received} billed ${l.billed}  GRNI $${l.grni_value}  ${l.status}\n`);
+  printStep('Write the AP worklist', await rt.call('match_write_worklist', f));
+  const rep = await rt.call('match_write_report', f);
+  printStep('Write the HTML report (hash logged in the audit line)', rep);
+  process.stdout.write(`    output_sha256 ${rep.result.output_sha256}\n`);
+  const req = { invoice: 'INV-2001', vendor: 'Acme Supply (fictional)', amount: 1200, reason: 'Matched within tolerance' };
+  const a = await rt.call('match_request_posting', req);
+  printStep('Auto: clear a matched invoice for posting — stays one-click', a);
+  rt.approvals.approve(a.approval_id, 'Dana Reviewer (fictional)');
+  process.stdout.write(`    (demo: "Dana Reviewer" approves ${a.approval_id})\n`);
+  printStep('Same request after the human click', await rt.call('match_request_posting', req));
+  printStep('Agent tries to post straight to the ERP', await rt.call('erp_post_invoice', {}));
+  process.stdout.write(`\nAudit log: ${rt.stateDir}/audit.jsonl\n`);
+}

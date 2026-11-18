@@ -1,0 +1,59 @@
+{
+  "name": "fairbooks-refunds-and-chargebacks",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-refunds-and-chargebacks",
+  "description": "Fairbooks Refunds and Chargebacks: an MCP agent that triages refund requests and chargebacks from CSV/JSON exports against your written policy and drafts dispute evidence packs. Issuing money is blocked; a refund request is one human click and only records a request.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-refunds-and-chargebacks": "bin/fairbooks-refunds-and-chargebacks.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-refunds-and-chargebacks.js demo",
+    "eval": "node bin/fairbooks-refunds-and-chargebacks.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-refunds-and-chargebacks"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-refunds-and-chargebacks#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "refunds",
+    "chargebacks",
+    "disputes",
+    "customer-support",
+    "ecommerce",
+    "ai-agents",
+    "mythos",
+    "reason-codes",
+    "dispute-evidence"
+  ]
+}

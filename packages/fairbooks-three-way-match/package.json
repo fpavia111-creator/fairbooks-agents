@@ -1,0 +1,58 @@
+{
+  "name": "fairbooks-three-way-match",
+  "version": "0.2.0",
+  "mcpName": "io.github.fpavia111-creator/fairbooks-three-way-match",
+  "description": "Fairbooks Three-Way Match: an MCP agent that investigates accounts-payable three-way-match exceptions (PO, receipt, invoice) from CSV/JSON exports, including partial receipts, per-vendor tolerances and near-duplicate invoices, and writes a worklist, PO status (GRNI estimate) and an HTML report. Clearing an invoice for posting is always one human click and only records a request; it never posts to an ERP or pays.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Kurt Francisco",
+  "engines": {
+    "node": ">=20"
+  },
+  "main": "src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./package.json": "./package.json"
+  },
+  "bin": {
+    "fairbooks-three-way-match": "bin/fairbooks-three-way-match.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "fixtures",
+    "evals",
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "node scripts/run-tests.cjs",
+    "demo": "node bin/fairbooks-three-way-match.js demo",
+    "eval": "node bin/fairbooks-three-way-match.js eval"
+  },
+  "dependencies": {
+    "fairbooks-core": "^0.2.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fpavia111-creator/fairbooks-agents.git",
+    "directory": "packages/fairbooks-three-way-match"
+  },
+  "homepage": "https://github.com/fpavia111-creator/fairbooks-agents/tree/main/packages/fairbooks-three-way-match#readme",
+  "bugs": {
+    "url": "https://github.com/fpavia111-creator/fairbooks-agents/issues"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "accounts-payable",
+    "three-way-match",
+    "ap-automation",
+    "finance",
+    "duplicate-invoice",
+    "grni",
+    "ai-agents",
+    "mythos"
+  ]
+}

@@ -1,0 +1,219 @@
+{
+  "suite": "fairbooks-saas-seats",
+  "root": "..",
+  "data_note": "Fictional seats, an earlier export, roster with managers and contract terms (seats-policy.json) in ../fixtures. Deterministic checks; no model is called.",
+  "cases": [
+    {
+      "id": "finds-waste",
+      "tool": "seats_find_waste",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "roster": "fixtures/hr-roster.csv",
+        "as_of": "2026-11-14"
+      },
+      "expect": {
+        "contains": [
+          "leaver",
+          "never_used",
+          "idle_136_days",
+          "duplicate_of_row_7",
+          "over_tiered"
+        ],
+        "equals": {
+          "result.seats": 8,
+          "result.skipped_inactive": 1,
+          "result.revoke_candidates": 4,
+          "result.downgrade_candidates": 1,
+          "result.est_monthly_saving": 239.5
+        }
+      }
+    },
+    {
+      "id": "unknown-cost-counted-separately",
+      "tool": "seats_find_waste",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "as_of": "2026-11-14"
+      },
+      "expect": {
+        "equals": {
+          "result.seats_with_unknown_cost": 1
+        }
+      }
+    },
+    {
+      "id": "downgrade-auto-when-opted-in",
+      "tool": "seats_request_downgrade",
+      "mode": "auto",
+      "auto_actions": [
+        "seats_request_downgrade"
+      ],
+      "args": {
+        "app": "Figma",
+        "user": "x",
+        "reason": "y",
+        "out_dir": "mythos-out/eval"
+      },
+      "expect": {
+        "status": "executed"
+      }
+    },
+    {
+      "id": "downgrade-asks-in-assist",
+      "tool": "seats_request_downgrade",
+      "args": {
+        "app": "Figma",
+        "user": "x",
+        "reason": "y"
+      },
+      "expect": {
+        "status": "needs_approval"
+      }
+    },
+    {
+      "id": "revoke-stays-one-click-in-auto",
+      "tool": "seats_request_revoke",
+      "mode": "auto",
+      "args": {
+        "app": "Salesforce",
+        "user": "x",
+        "reason": "y"
+      },
+      "expect": {
+        "status": "needs_approval",
+        "decision": "ask"
+      }
+    },
+    {
+      "id": "review-mode-blocks-revoke",
+      "tool": "seats_request_revoke",
+      "mode": "review",
+      "args": {
+        "app": "Salesforce",
+        "user": "x",
+        "reason": "y"
+      },
+      "expect": {
+        "status": "blocked"
+      }
+    },
+    {
+      "id": "refuse-direct-removal",
+      "tool": "salesforce_remove_user",
+      "args": {},
+      "expect": {
+        "status": "blocked"
+      }
+    },
+    {
+      "id": "renewal-pro-rated",
+      "tool": "seats_find_waste",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "roster": "fixtures/hr-roster.csv",
+        "policy": "fixtures/seats-policy.json",
+        "as_of": "2026-11-14"
+      },
+      "expect": {
+        "contains": [
+          "notice_window_passed",
+          "contract_minimum_2",
+          "Give notice by 2026-12-31"
+        ],
+        "equals": {
+          "result.actions.0.app": "Salesforce",
+          "result.actions.0.est_saving_next_12m": 1399.56,
+          "result.est_monthly_saving": 209.5
+        }
+      }
+    },
+    {
+      "id": "bad-policy-pointer",
+      "tool": "seats_find_waste",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "policy": "evals/bad-policy.json"
+      },
+      "expect": {
+        "status": "error",
+        "contains": [
+          "/apps/Zoom/billing"
+        ]
+      }
+    },
+    {
+      "id": "renewal-calendar",
+      "tool": "seats_renewal_calendar",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "roster": "fixtures/hr-roster.csv",
+        "policy": "fixtures/seats-policy.json",
+        "as_of": "2026-11-14",
+        "out_dir": "mythos-out/eval"
+      },
+      "expect": {
+        "contains": [
+          "renewals.ics"
+        ],
+        "equals": {
+          "result.events": 6
+        },
+        "matches": [
+          "\"output_sha256\":\"[0-9a-f]{64}\""
+        ]
+      }
+    },
+    {
+      "id": "owner-drafts-not-sent",
+      "tool": "seats_draft_confirmations",
+      "args": {
+        "seats": "fixtures/seats.csv",
+        "roster": "fixtures/hr-roster.csv",
+        "policy": "fixtures/seats-policy.json",
+        "as_of": "2026-11-14",
+        "out_dir": "mythos-out/eval"
+      },
+      "expect": {
+        "contains": [
+          "sales-ops@example.com",
+          "Not sent"
+        ],
+        "equals": {
+          "result.sent": 0
+        },
+        "length": {
+          "result.drafts": 4
+        }
+      }
+    },
+    {
+      "id": "compare-exports",
+      "tool": "seats_compare_reviews",
+      "args": {
+        "previous": "fixtures/seats-previous.csv",
+        "previous_as_of": "2026-10-14",
+        "seats": "fixtures/seats.csv",
+        "as_of": "2026-11-14"
+      },
+      "expect": {
+        "contains": [
+          "Miro"
+        ],
+        "equals": {
+          "result.monthly_spend_change": 7
+        },
+        "length": {
+          "result.removed": 2
+        }
+      }
+    },
+    {
+      "id": "no-send-tool",
+      "tool": "seats_send_confirmations",
+      "args": {},
+      "expect": {
+        "status": "blocked"
+      }
+    }
+  ]
+}

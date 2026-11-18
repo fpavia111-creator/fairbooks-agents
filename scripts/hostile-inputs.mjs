@@ -23,11 +23,11 @@ import { readdirSync, readFileSync, writeFileSync, cpSync, mkdtempSync, statSync
 import { join, relative, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { AgentRuntime, parseCsv, toCsv, neutraliseFormula, safeMarkdown } from '../packages/mythos-agent-core/src/index.js';
+import { AgentRuntime, parseCsv, toCsv, neutraliseFormula, safeMarkdown } from '../packages/fairbooks-core/src/index.js';
 
 const PK = join(dirname(fileURLToPath(import.meta.url)), '..', 'packages');
 const argv = process.argv.slice(2); const withArgs = argv.includes('--args'); const only = argv.filter((a) => !a.startsWith('--'));
-const agents = readdirSync(PK).filter((n) => n !== 'mythos-agent-core' && existsSync(join(PK, n, 'src', 'manifest.js')) && (!only.length || only.includes(n))).sort();
+const agents = readdirSync(PK).filter((n) => n !== 'fairbooks-core' && existsSync(join(PK, n, 'src', 'manifest.js')) && (!only.length || only.includes(n))).sort();
 
 const PLANT = {
   formula: '=HYPERLINK("http://evil.example/x","click")',
@@ -89,7 +89,7 @@ async function dataPass(n) {
         const warned = (out.warnings || []).some((w) => /reads like instructions/.test(w));
         if (quoted && !warned) add({ n, kind: 'INJECTION_NOT_FLAGGED', where: c.id }); if (warned) info.injectWarnings++;
       }
-      if (variant === 'clean' && (out.warnings || []).some((w) => /reads like instructions/.test(w)) && n !== 'nemesis-of-servers') add({ n, kind: 'FALSE_INJECTION_WARNING', where: c.id });
+      if (variant === 'clean' && (out.warnings || []).some((w) => /reads like instructions/.test(w)) && n !== 'fairbooks-mcp-server-review') add({ n, kind: 'FALSE_INJECTION_WARNING', where: c.id });
     }
     for (const f of walk(root)) {
       const rel = relative(root, f).split('\\').join('/'); if (rel.startsWith('fixtures/') || rel.startsWith('.mythos/')) continue;
