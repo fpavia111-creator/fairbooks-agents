@@ -41,6 +41,10 @@ const sec = (p, k) => (p.sections && p.sections[k]) || k;
 export function review(lines, policy, a = {}) {
   const p = validatePolicy(policy); const cur = (p.currency || 'USD').toUpperCase();
   const receiptsDir = a.receiptsDir; const seen = new Map(); const receiptUse = new Map();
+  // Each receipt file is checked and read once per run, not once per line that names it: on Windows the
+  // per-line reads made a 10,000-line file take about 40 s (found by the final pass's bench, 19 Nov 2026).
+  const receiptFiles = new Map();
+  const receiptFile = (name) => { if (!receiptFiles.has(name)) { const rf = join(receiptsDir, name); const ok = /^[\w.\- ]+$/.test(name) && existsSync(rf); receiptFiles.set(name, { ok, parsed: ok && /\.(txt|md|text)$/i.test(rf) ? readReceipt(readFileSync(rf, 'utf8')) : null }); } return receiptFiles.get(name); };
   const aliases = new Map(Object.entries(p.category_aliases || {}).map(([k, v]) => [k.trim().toLowerCase(), String(v).trim().toLowerCase()]));
   const items = lines.map((l, i) => {
     const line = {
@@ -89,10 +93,10 @@ export function review(lines, policy, a = {}) {
     const needsReceipt = p.receipt_required_over !== undefined && line.amount > p.receipt_required_over && !(rule && rule.receipt_exempt);
     if (!line.receipt) { if (needsReceipt) add('missing_receipt', 'needs_info', sec(p, 'receipts'), `Over ${Number(p.receipt_required_over).toFixed(2)} with no receipt.`); }
     else if (receiptsDir) {
-      const rf = join(receiptsDir, line.receipt);
-      if (!/^[\w.\- ]+$/.test(line.receipt) || !existsSync(rf)) add('receipt_not_found', 'needs_info', sec(p, 'receipts'), `Receipt "${line.receipt}" is not in the receipts folder.`);
-      else if (/\.(txt|md|text)$/i.test(rf)) {
-        const r = readReceipt(readFileSync(rf, 'utf8'));
+      const rcpt = receiptFile(line.receipt);
+      if (!rcpt.ok) add('receipt_not_found', 'needs_info', sec(p, 'receipts'), `Receipt "${line.receipt}" is not in the receipts folder.`);
+      else if (rcpt.parsed) {
+        const r = rcpt.parsed;
         if (r.amounts.length && !r.amounts.some((x) => Math.abs(x - line.amount) <= 0.01)) add('receipt_amount_mismatch', 'needs_info', sec(p, 'receipts'), `Receipt total ${r.amounts.map((x) => x.toFixed(2)).join(' / ')} does not match ${line.amount.toFixed(2)}.`);
         const d = parseDate(line.date);
         if (d !== null && r.dates.length && !r.dates.includes(d)) add('receipt_date_mismatch', 'needs_info', sec(p, 'receipts'), `Receipt date ${r.dates.map(iso).join(' / ')} does not match ${line.date}.`);

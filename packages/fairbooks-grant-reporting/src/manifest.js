@@ -33,7 +33,9 @@ const fileExists = (ctx, p) => { try { const f = ctx.path(p); return existsSync(
 // Evidence paths are relative to the folder of the outcomes file.
 const evPath = (a, ctx, p) => ctx.path(join(dirname(a.outcomes || '.'), p));
 const run = (a, ctx) => {
-  const isFile = (p) => { try { const f = evPath(a, ctx, p); return existsSync(f) && statSync(f).isFile(); } catch { return false; } };
+  // Each evidence path is checked once per run (repeated per-row checks were slow on Windows; final pass bench).
+  const seen = new Map();
+  const isFile = (p) => { if (seen.has(p)) return seen.get(p); let ok; try { const f = evPath(a, ctx, p); ok = existsSync(f) && statSync(f).isFile(); } catch { ok = false; } seen.set(p, ok); return ok; };
   return review({ ...a, grants: ctx.records(a.grants), budget: a.budget ? ctx.records(a.budget) : [], outcomes: a.outcomes ? ctx.records(a.outcomes) : [], exists: isFile });
 };
 
