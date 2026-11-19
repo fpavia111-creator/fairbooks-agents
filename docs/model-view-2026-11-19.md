@@ -27,7 +27,7 @@ Made by `node scripts/model-view.mjs`: every eval case that calls a read tool on
 | fairbooks-mcp-server-review | 0 | - | - |
 | fairbooks-onboarding-checklists | 6 | manager, name | email |
 | fairbooks-open-source-licenses | 0 | - | - |
-| fairbooks-outreach-email-gate | 3 | - | - |
+| fairbooks-outreach-email-gate | 3 | email | - |
 | fairbooks-process-evals | 0 | - | - |
 | fairbooks-refunds-and-chargebacks | 5 | customer | - |
 | fairbooks-rfi-and-submittals | 3 | - | - |

@@ -85,7 +85,8 @@ for (const n of agents) {
     seen.add(t.name);
     for (const size of SIZES) {
       const parent = mkdtempSync(join(tmpdir(), `bench-${n}-`)); const root = join(parent, 'root');
-      cpSync(base, root, { recursive: true, filter: (s) => !/node_modules|\.fairbooks|fairbooks-out|\/\.git(\/|$)/.test(s) });
+      // Whole path segments only: "fairbooks-out" is also the start of "fairbooks-outreach-email-gate".
+      cpSync(base, root, { recursive: true, filter: (s) => !/[\\/](node_modules|\.fairbooks|fairbooks-out|\.mythos|mythos-out|\.git)([\\/]|$)/.test(s) });
       let rowsIn = 0; let seed = 7;
       for (const [, rel] of tables) {
         const f = join(root, rel); const rows = parseCsv(readFileSync(f, 'utf8'));

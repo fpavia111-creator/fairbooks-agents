@@ -53,7 +53,8 @@ function apply(files, op, label) {
 async function runCase(n, manifest, c, files, ignore = []) {
   const root = mkdtempSync(join(tmpdir(), 'fb-acc-'));
   try {
-    cpSync(join(PK, n), root, { recursive: true, filter: (p) => !/node_modules|fairbooks-out|mythos-out|[\\/]\.fairbooks|[\\/]\.mythos|[\\/]fixtures[\\/]clean/.test(p) });
+    // Whole path segments only: "fairbooks-out" is also the start of "fairbooks-outreach-email-gate".
+    cpSync(join(PK, n), root, { recursive: true, filter: (p) => !/[\\/](node_modules|\.fairbooks|fairbooks-out|\.mythos|mythos-out)([\\/]|$)|[\\/]fixtures[\\/]clean([\\/]|$)/.test(p) });
     for (const [f, text] of Object.entries(files || {})) writeFileSync(join(root, f), text);
     const r = await new AgentRuntime(manifest, { root, audit: false, memory: false }).call(c.tool, c.args || {});
     if (r.status !== 'executed') throw new Error(`${n} ${c.tool}: ${r.status} ${r.error || r.reason || ''}`);

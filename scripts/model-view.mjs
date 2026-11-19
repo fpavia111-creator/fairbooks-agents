@@ -24,7 +24,7 @@ for (const n of readdirSync(PK).filter((x) => x !== 'fairbooks-core' && existsSy
   const data = JSON.parse(readFileSync(join(PK, n, 'evals', 'cases.json'), 'utf8'));
   const cases = (data.cases || data).filter((c) => reads.has(c.tool) && csvsOf(c.args).length);
   const clear = new Set(), absent = new Set(), clearOther = new Set(); let calls = 0;
-  const root = mkdtempSync(join(tmpdir(), 'fb-mv-')); cpSync(join(PK, n), root, { recursive: true, filter: (p) => !/node_modules|fairbooks-out|mythos-out|[\\/]\.fairbooks|[\\/]\.mythos/.test(p) });
+  const root = mkdtempSync(join(tmpdir(), 'fb-mv-')); cpSync(join(PK, n), root, { recursive: true, filter: (p) => !/[\\/](node_modules|\.fairbooks|fairbooks-out|\.mythos|mythos-out)([\\/]|$)/.test(p) }); // whole segments: not fairbooks-outreach-email-gate
   try {
     for (const c of cases) {
       const r = await new AgentRuntime(manifest, { root, audit: false, memory: false }).call(c.tool, c.args || {}); calls++;

@@ -276,9 +276,15 @@
   {
     "agent": "fairbooks-outreach-email-gate",
     "read_cases_run": 3,
-    "people_columns_in_clear": [],
+    "people_columns_in_clear": [
+      "email"
+    ],
     "people_columns_not_in_result": [],
-    "other_text_in_clear": []
+    "other_text_in_clear": [
+      "subject",
+      "time_zone",
+      "to"
+    ]
   },
   {
     "agent": "fairbooks-process-evals",

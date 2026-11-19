@@ -1,0 +1,302 @@
+{
+  "product": "Fairbooks",
+  "repo": "https://github.com/fpavia111-creator/fairbooks-agents",
+  "try_it": [
+    "git clone https://github.com/fpavia111-creator/fairbooks-agents",
+    "cd fairbooks-agents",
+    "npm install",
+    "node packages/fairbooks-bank-reconciliation/bin/fairbooks-bank-reconciliation.js demo"
+  ],
+  "accuracy": {
+    "agents": 7,
+    "planted_found": 44,
+    "planted_total": 44,
+    "clean_rows": 82,
+    "clean_false_positives": 0,
+    "mutation_cases": 18,
+    "mutation_caught": 18,
+    "note": "On fictional test data, 19 Nov 2026, for the 7 agents behind the four engagements (bank reconciliation, three-way match, expenses, access review, refunds and chargebacks, migration tie-out, duplicate vendors) of 30. The clean sets were written by the same author as the rules. The 1099 readiness agent is not measured: a clean vendor needs a well-formed taxpayer id, and the test files use invalid placeholders on purpose. The other 23 agents are checked by their eval cases only (596 expected markers, all found). This pass also fixed two bank-file reading bugs found on public files, two file-reading bugs found by the eight-language check, and one place where full tax ids reached the AI model."
+  },
+  "real_data": [
+    [
+      "PostFinance sample files for business customers (camt.053)",
+      "https://www.postfinance.ch/en/support/documents/sample-files-for-business-customers.html",
+      "2026-11-19",
+      "Published by PostFinance as sample files for software tests (no licence stated)",
+      "fairbooks-bank-reconciliation read all 4 statements; lines, totals and balances equal a separate re-count. In 2 of them the booked closing balance leaves out a 1,537.00 credit value-dated the next day; the agent now says so instead of only \"does not tie\"."
+    ],
+    [
+      "ofxparse test files (OFX bank and card statements)",
+      "https://github.com/jseutter/ofxparse/tree/master/tests/fixtures",
+      "2026-11-19",
+      "MIT",
+      "All 8 statements read; line counts, totals and ledger balances equal a separate re-count. No wrong results."
+    ],
+    [
+      "bai2 test files (Citi, NatWest and SVB layouts)",
+      "https://github.com/ministryofjustice/bai2/tree/main/tests/data",
+      "2026-11-19",
+      "MIT",
+      "All 4 files read and equal a re-count. The SVB file holds two days for one account and did not tie because the reader took the second day's opening balance; fixed, it ties. The Citi sample's own balances do not add up, which the agent reports."
+    ],
+    [
+      "SEC EDGAR XBRL company concept data (Apple, Microsoft, Walmart, Alphabet)",
+      "https://www.sec.gov/edgar/sec-api-documentation",
+      "2026-11-19",
+      "U.S. government data, public domain",
+      "fairbooks-erp-migration compared each period's first-filed value with its last-filed value: 448 periods, 26 reported differently later (for example Apple's fiscal 2008 net income, 4,834 then 6,119 million). The agent and a re-count list the same periods in all five series."
+    ]
+  ],
+  "formats": [
+    [
+      "Okta",
+      "Users API JSON (GET /api/v1/users)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Microsoft Entra ID",
+      "Users > Download users (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Microsoft 365 admin center",
+      "Active users > Export users (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Microsoft 365 usage reports",
+      "Active users report detail (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Google Workspace Admin",
+      "Users > Download users (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Slack",
+      "Manage members > Export member list (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "GitHub",
+      "Organization People > Export (CSV or JSON)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "GitHub Copilot",
+      "Seat assignments API JSON (GET /orgs/{org}/copilot/billing/seats)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "AWS IAM",
+      "Credential report (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Atlassian Administration",
+      "Directory > Users > Export users (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "BambooHR",
+      "Employee report (CSV or Excel)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "NetSuite",
+      "Vendor saved search (default column labels)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "NetSuite",
+      "Transaction saved search (default column labels)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "NetSuite",
+      "Item saved search with location quantities",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "QuickBooks Online",
+      "Vendor Contact List report (CSV or Excel)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "QuickBooks Online",
+      "Transaction List by Vendor report (CSV or Excel)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "QuickBooks Online",
+      "Transaction Detail by Account / General Ledger report",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Xero",
+      "Contacts > Export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Xero",
+      "Bills > Export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Xero",
+      "Account Transactions report (Excel or CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Xero",
+      "Bank statement CSV (Xero import layout)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Stripe",
+      "Payments > Export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Shopify",
+      "Orders > Export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Shopify",
+      "Products > Inventory > Export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "HubSpot",
+      "Contacts > Export (CSV or Excel)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Salesforce",
+      "Contacts or Leads report export",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Salesforce",
+      "Data Loader / Data Export of Contact (API field names)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Mailchimp",
+      "Audience > Export audience (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Procore",
+      "RFIs > Export > CSV",
+      "checked against the vendor's published documentation"
+    ],
+    [
+      "Ramp",
+      "Transactions > Export (CSV)",
+      "checked against the vendor's published documentation"
+    ],
+    [
+      "Expensify",
+      "Default CSV export of expenses",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Chase",
+      "Checking or savings account activity (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Chase",
+      "Credit card activity (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Bank of America",
+      "Checking account activity (CSV, with its summary block)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Wells Fargo",
+      "Account activity download (CSV with no header row)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Capital One",
+      "360 account transactions (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "Mercury",
+      "Transactions export (CSV)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "AWS Certificate Manager",
+      "aws acm list-certificates JSON",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "crt.sh",
+      "Certificate search JSON (output=json)",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "ISO 20022 bank statement",
+      "camt.053 (PostFinance published samples, 2009, 2013 and 2019 versions)",
+      "tested on a public sample"
+    ],
+    [
+      "OFX bank and card statements",
+      "OFX 1.x and 2.x statement download",
+      "tested on a public sample"
+    ],
+    [
+      "BAI2 cash management file",
+      "BAI2 prior-day file (Citi, NatWest and SVB layouts)",
+      "tested on a public sample"
+    ],
+    [
+      "SWIFT MT940 statement",
+      "MT940 customer statement",
+      "written from knowledge of the export; not yet checked against documentation or a real export"
+    ],
+    [
+      "SEC EDGAR XBRL",
+      "Company concept data, converted to the migration compare columns by scripts/realdata.mjs",
+      "tested on a public sample"
+    ]
+  ],
+  "human_review": [
+    [
+      "Access review",
+      "Each system owner decides keep or revoke for every flagged account; revoking access is a one-click request a named person approves, and the agents never change access themselves."
+    ],
+    [
+      "Dispute packs",
+      "A person reviews the reason code, the evidence list and the response draft before anything is submitted; a refund is always a person's click."
+    ],
+    [
+      "Migration readiness",
+      "The controller and the implementation lead decide whether untied totals, missing records and duplicate masters block go-live; go-live approval is never given by an agent."
+    ],
+    [
+      "Month-end",
+      "The accountant reviews matches, reconciling items, match exceptions, expense recommendations and the 1099 list, and posts any adjusting entry in the books; nothing is posted, paid or filed by the agents."
+    ]
+  ],
+  "common_problems": [
+    "Bank fees and interest not booked, and checks and deposits not yet cleared, listed as reconciling items with a draft adjusting entry.",
+    "Invoices billed above the receipt or the PO price, duplicate invoices, invoices with no PO or no receipt.",
+    "Expense lines over the policy limit, with no receipt, sent late, without pre-approval, or claimed twice.",
+    "Vendors paid over the 1099 threshold with no W-9, an unsigned or old W-9, or a malformed taxpayer id.",
+    "People who left the company but still have access, admin accounts without MFA, shared accounts and service accounts with no owner.",
+    "Refund requests outside the return window, over the refundable amount, duplicated, or for an order that does not exist.",
+    "Migration loads where records are missing, amounts changed or totals do not tie with the old system.",
+    "Duplicate vendor records that share a tax id, phone or address."
+  ],
+  "reaches_the_model": "When an assistant calls a tool, its model sees the result: amounts, dates, ids, finding codes and text from your files, including people's names and e-mail addresses (Fairbooks has no general masking, unlike the newer Fair families). Masked: taxpayer ids (last four digits), secrets found in configuration and automation exports, card numbers in receipt text, and the person in an erasure request. The report and draft files written on your computer hold the full values. Results go to whatever model your assistant uses; for staff, customer and vendor data, use a model covered by your own agreements or a local model.",
+  "rules_maintained": "Rules that change are settings or dated files, and a result names what it used: the 1099 threshold by tax year (600 before 2026, 2,000 in 2026, later years marked for confirmation), taxpayer id patterns, the cookie and tracker vendor list (version 2026.11.0), the MCP package advisory snapshot (2026-11-15), license text fingerprints and certificate strength rules. Expense, refund, tolerance, retention and access policies are your own JSON files, checked against a schema. You edit those files yourself, or support updates the bundled lists when a rule or a vendor changes."
+}
