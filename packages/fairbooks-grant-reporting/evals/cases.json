@@ -70,7 +70,7 @@
     "budget": "fixtures/budget.csv",
     "outcomes": "fixtures/outcomes.csv",
     "as_of": "2026-11-14",
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",
@@ -191,7 +191,7 @@
     "as_of": "2026-11-14",
     "grant_id": "G1",
     "template": "fixtures/templates/lakeside-interim.json",
-    "out_dir": "mythos-out/eval-template"
+    "out_dir": "fairbooks-out/eval-template"
    },
    "expect": {
     "status": "executed",
@@ -207,7 +207,7 @@
    "args": {
     "grants": "fixtures/grants.csv",
     "as_of": "2026-11-14",
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",

@@ -64,10 +64,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'clauses_write_report', kind: 'report',
-      description: 'Write clause-gaps.md and clause-gaps.csv (blank owner and status columns) into out_dir (default mythos-out/clauses). With previous_contract, also draft-changes.md (clause status before and after) and contract.diff (a unified diff of the two texts). Returns output_sha256 of clause-gaps.md, which is written into the audit log.',
+      description: 'Write clause-gaps.md and clause-gaps.csv (blank owner and status columns) into out_dir (default fairbooks-out/clauses). With previous_contract, also draft-changes.md (clause status before and after) and contract.diff (a unified diff of the two texts). Returns output_sha256 of clause-gaps.md, which is written into the audit log.',
       inputSchema: { type: 'object', required: ['contract', 'playbook'], properties: { ...props, previous_contract: prevProp, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/clauses');
+        const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/clauses');
         const L = [`# Clause check: ${r.file}`, '', DISCLAIMER, '', line(r), '', '| Status | Clause | Where | Issues |', '|---|---|---|---|', ...r.clauses.map((c) => `| ${c.status} | ${c.title} | ${c.citations.map((x) => `${x.section}, line ${x.line}`).join('; ')} | ${c.issues.join(' ').replace(/\|/g, '\\|')} |`), '', '## Document checks', '', ...(r.document_findings.length ? r.document_findings.map((d) => `- Line ${d.line} ${d.check}: ${d.detail}`) : ['- none']), '', '## Defined terms', '', `Playbook version: ${r.playbook_version || 'not stated'}.`, '', ...termLines(r), ''];
         const csv = toCsv(r.clauses.map((c) => ({ clause: c.id, title: c.title, status: c.status, where: c.citations.map((x) => `${x.section} L${x.line}`).join('; '), issues: c.issues.join(' '), owner: '', status_note: '' })), ['clause', 'title', 'status', 'where', 'issues', 'owner', 'status_note']);
         const md = safeMarkdown(L.join('\n')); const files = [ctx.writeFile(out, 'clause-gaps.md', md), ctx.writeFile(out, 'clause-gaps.csv', csv)];
@@ -89,7 +89,7 @@ export const manifest = defineManifest({
       description: 'Write issues-for-counsel.md into out_dir: each gap with its citation, your playbook\'s position and its fallback language copied word for word (Fairbooks Contract Clauses writes no contract language of its own), defined-term problems, and the playbook version and file hash it was checked against; every section marked [COUNSEL REVIEW]. With previous_contract, adds a section on what changed since that draft. With previous_draft (an earlier issues list), also writes issues-for-counsel.diff, a redline of the memo. Returns draft_sha256. Nothing is sent. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['contract', 'playbook'], properties: { ...props, previous_contract: prevProp, previous_draft: { ...str, description: 'An earlier issues-for-counsel.md, to redline the new memo against' }, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/clauses');
+        const { r, compare } = loadAll(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/clauses');
         let old = null; if (a.previous_draft) { if (!ctx.exists(a.previous_draft)) throw new Error(`previous_draft not found: ${a.previous_draft}`); old = ctx.readText(a.previous_draft); }
         const text = safeMarkdown(issuesMemo(r, { compare }));
         const f = ctx.writeFile(out, 'issues-for-counsel.md', text); const files = [f]; let redline = null;
@@ -108,7 +108,7 @@ export const manifest = defineManifest({
         if (!String(a.to || '').trim()) throw new Error('to is required');
         const left = (text.match(new RegExp(MARK.source, 'g')) || []).length;
         if (left) throw new Error(`${left} [COUNSEL REVIEW] marker(s) are still in the draft; counsel removes each one after reviewing that section`);
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/clauses'); const f = join(dir, 'send-requests.csv');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/clauses'); const f = join(dir, 'send-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), draft: a.draft, draft_sha256: a.draft_sha256, to: a.to, reviewed_by: a.reviewed_by, status: 'approved - a person sends it' }], ['requested_at', 'draft', 'draft_sha256', 'to', 'reviewed_by', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: `Send to ${a.to} approved and recorded (reviewed by ${a.reviewed_by}). Nothing was sent.`, file: f };

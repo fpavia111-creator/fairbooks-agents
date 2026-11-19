@@ -61,15 +61,15 @@ claude mcp add fairbooks-open-source-licenses -- npx -y fairbooks-open-source-li
 | Tool | Policy | What it does |
 |---|---|---|
 | `licenses_check` | **allow** | Decisions per dependency with the policy section; `pass`, `pass_with_review` or `fail` |
-| `licenses_write_report` | **allow** | Write the report, `licenses.csv`, `sbom.cdx.json`, `results.sarif`, `check-summary.json` and `exceptions.ics` to `mythos-out/licenses` |
-| `licenses_write_notices` | **allow** | Write a `THIRD-PARTY-NOTICES.md` draft and `attribution.csv` to `mythos-out/licenses`; the project is not changed |
+| `licenses_write_report` | **allow** | Write the report, `licenses.csv`, `sbom.cdx.json`, `results.sarif`, `check-summary.json` and `exceptions.ics` to `fairbooks-out/licenses` |
+| `licenses_write_notices` | **allow** | Write a `THIRD-PARTY-NOTICES.md` draft and `attribution.csv` to `fairbooks-out/licenses`; the project is not changed |
 | `licenses_diff_sbom` | **allow** | Compare an earlier CycloneDX SBOM with the project now |
 | `licenses_draft_exceptions` | **ask (Auto-eligible)** | Write `exceptions-proposed.json` (unsigned stubs) and `review-list.md`; policy and project untouched |
 | `licenses_request_release` | **ask · one-click** | After a named human approves, record the release (bound to the check summary hash; lockfile and policy re-hashed). Refused when the check failed |
 | `write_lockfile` | **block** | Listed so agents see the refusal. Fairbooks Open Source Licenses never changes project files. |
 | `npm_publish` | **block** | Listed so agents see the refusal. Fairbooks Open Source Licenses never publishes. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -94,7 +94,7 @@ npx -y fairbooks-open-source-licenses@0.2.0 check --project . --policy license-p
 # other lockfiles are detected; flags: --ecosystem pnpm|yarn|python|go, --modules-dir, --site-packages, --include-dev
 ```
 
-Prints the summary and exits `1` when the check fails (`0` otherwise). It changes no files. Upload `mythos-out/licenses/results.sarif` from `licenses_write_report` to show findings in code scanning.
+Prints the summary and exits `1` when the check fails (`0` otherwise). It changes no files. Upload `fairbooks-out/licenses/results.sarif` from `licenses_write_report` to show findings in code scanning.
 
 Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
 
@@ -107,7 +107,7 @@ fairbooks-open-source-licenses call licenses_write_report '{"project":".","polic
 fairbooks-open-source-licenses eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

@@ -46,7 +46,7 @@ claude mcp add fairbooks-data-erasure-requests -- npx -y fairbooks-data-erasure-
 |---|---|---|
 | `erasure_map_data` | **allow** | Inventory personal-data columns and retention flags |
 | `erasure_find_subject` | **allow** | Find the subject's rows; identifiers masked |
-| `erasure_build_checklist` | **allow** | Write `erasure-checklist.csv` + `erasure-request.md` to `mythos-out/erasure`; with `rules`, retention steps cite your rule and hold ids |
+| `erasure_build_checklist` | **allow** | Write `erasure-checklist.csv` + `erasure-request.md` to `fairbooks-out/erasure`; with `rules`, retention steps cite your rule and hold ids |
 | `erasure_retention_check` | **allow** | Apply your retention rules and legal holds to the matched rows; rule id per row |
 | `erasure_deadlines` | **allow** | Request deadline tracker over `requests.csv`: `request-deadlines.csv`, optional `.ics` |
 | `erasure_evidence_pack` | **allow** | `evidence-<key>.json` + `.html` for one request; hash recorded in the audit log |
@@ -54,7 +54,7 @@ claude mcp add fairbooks-data-erasure-requests -- npx -y fairbooks-data-erasure-
 | `erasure_request_deletion` | **ask · one-click** | After a named human approves, record a deletion for one system's owner |
 | `erasure_delete_records` | **block** | Listed so agents see the refusal. Fairbooks Data Erasure Requests never deletes or edits data. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### Retention rules file
 
@@ -93,7 +93,7 @@ fairbooks-data-erasure-requests call erasure_find_subject '{"dir":"exports","ema
 fairbooks-data-erasure-requests eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

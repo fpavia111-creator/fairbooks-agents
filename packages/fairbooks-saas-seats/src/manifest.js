@@ -33,7 +33,7 @@ function run(a, ctx, seatsPath = a.seats, asOf = a.as_of) {
 }
 function appendRequest(ctx, a, kind) {
   for (const k of ['app', 'user', 'reason']) if (!String(a[k] || '').trim()) throw new Error(`${k} is required`);
-  const out = ctx.outDir(a.out_dir || 'mythos-out/seats'); const f = join(out, 'change-requests.csv');
+  const out = ctx.outDir(a.out_dir || 'fairbooks-out/seats'); const f = join(out, 'change-requests.csv');
   const row = toCsv([{ requested_at: new Date().toISOString(), change: kind, app: a.app, user: a.user, to_tier: a.to_tier || '', reason: a.reason, status: 'approved request - admin to action' }], ['requested_at', 'change', 'app', 'user', 'to_tier', 'reason', 'status']);
   appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
   return f;
@@ -77,10 +77,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'seats_write_review', kind: 'report', title: 'Write seat review sheet',
-      description: 'Write seat-review.csv (blank reviewer columns), renewal-actions.csv (act-by order) and seat-review-summary.md into out_dir (default mythos-out/seats). The sheet hash is recorded in the audit log.',
+      description: 'Write seat-review.csv (blank reviewer columns), renewal-actions.csv (act-by order) and seat-review-summary.md into out_dir (default fairbooks-out/seats). The sheet hash is recorded in the audit log.',
       inputSchema: { type: 'object', required: ['seats'], additionalProperties: false, properties: { ...common, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r } = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/seats');
+        const { r } = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/seats');
         const sheet = sheetCsv(r); const acts = toCsv(r.actions, ACTION_COLS);
         const files = [ctx.writeFile(out, 'seat-review.csv', sheet), ctx.writeFile(out, 'seat-review-summary.md', summaryMarkdown(r, new Date().toISOString())), ctx.writeFile(out, 'renewal-actions.csv', acts)];
         return { summary: `Seat review written: est. $${r.est_monthly_saving}/month across ${r.seats} seat(s).`, files, est_monthly_saving: r.est_monthly_saving, est_saving_next_12m: r.est_saving_next_12m, output_sha256: sha256(sheet + acts) };
@@ -93,7 +93,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const { r } = run(a, ctx);
         const ics = renewalIcs(r);
-        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'mythos-out/seats'), 'renewals.ics', ics.text);
+        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'fairbooks-out/seats'), 'renewals.ics', ics.text);
         return { summary: `Renewal calendar written: ${ics.events} event(s).`, file, events: ics.events, output_sha256: sha256(ics.text) };
       },
     },
@@ -104,7 +104,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const { r, policy, managers } = run(a, ctx);
         const drafts = confirmationDrafts(r, { defaultOwner: policy?.default_owner || null, managers });
-        const out = ctx.outDir(join(a.out_dir || 'mythos-out/seats', 'confirmations'));
+        const out = ctx.outDir(join(a.out_dir || 'fairbooks-out/seats', 'confirmations'));
         const files = drafts.map((d) => ctx.writeFile(out, d.name, d.text));
         const index = draftIndexCsv(drafts); files.push(ctx.writeFile(out, 'drafts-index.csv', index));
         return { summary: `${drafts.length} confirmation draft(s) written for ${drafts.reduce((s, d) => s + d.seats, 0)} flagged seat(s). Not sent.`, files, drafts: drafts.map(({ text, ...d }) => d), sent: 0, output_sha256: sha256(drafts.map((d) => d.text).join('\n') + index) };

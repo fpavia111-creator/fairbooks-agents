@@ -90,7 +90,7 @@ test('dependency map lists shared credentials, secrets and webhook calls without
 });
 
 test('policy file: suppressions with reasons, allowed http hosts, and schema errors', async () => {
-  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.mythos') });
+  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.fairbooks') });
   const base = { exports: ['n8n-orders.json', 'power-automate-flow.json'], as_of: '2026-11-14T12:00:00Z' };
   const plain = await rt.call('flows_audit', base);
   const pol = await rt.call('flows_audit', { ...base, policy: 'flows-policy.json' });
@@ -116,7 +116,7 @@ test('policy file: suppressions with reasons, allowed http hosts, and schema err
 });
 
 test('report writes valid SARIF; baseline marks new and resolved findings', async () => {
-  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.mythos') });
+  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.fairbooks') });
   const f = { exports: ALL, history: 'run-history.csv', as_of: '2026-11-14T12:00:00Z', out_dir: 'out1' };
   const w = await rt.call('flows_write_report', f);
   assert.equal(w.status, 'executed'); assert.match(w.result.output_sha256, /^[0-9a-f]{64}$/);
@@ -142,7 +142,7 @@ test('report writes valid SARIF; baseline marks new and resolved findings', asyn
 });
 
 test('dependency map tool writes Markdown with Mermaid and CSV; MCP prompt keeps the one-click step', async () => {
-  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.mythos') });
+  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.fairbooks') });
   const r = await rt.call('flows_dependency_map', { exports: ALL });
   assert.equal(r.status, 'executed'); assert.equal(r.decision, 'allow');
   const md = readFileSync(r.result.files[0], 'utf8');

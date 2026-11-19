@@ -81,7 +81,7 @@ test('evidence pack cites every source row, hashes the index into the audit line
   assert.notDeepEqual(idx.disputes[0].checklist.map((c) => c.id), gil.checklist.map((c) => c.id));
   const ics = readFileSync(e.result.files.find((f) => f.endsWith('.ics')), 'utf8'); const v = validateIcs(ics);
   assert.ok(v.ok, v.errors.join()); assert.equal(v.events, 6);
-  assert.equal(readAudit(join(root, '.mythos', 'audit.jsonl')).filter((l) => l.tool === 'refunds_evidence_pack').pop().output_sha256, e.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks', 'audit.jsonl')).filter((l) => l.tool === 'refunds_evidence_pack').pop().output_sha256, e.result.output_sha256);
   const one = await rt.call('refunds_evidence_pack', { ...D, request_id: 'D-2003' }); assert.equal(one.result.disputes.length, 1);
   const bad = await rt.call('refunds_evidence_pack', { requests: 'requests.csv', orders: 'orders.csv', request_id: 'R-1001' }); assert.equal(bad.status, 'error'); assert.match(bad.reason, /not a chargeback/);
 });
@@ -108,7 +108,7 @@ test('queue carries the dispute category; refunds stay one-click; prompt renders
   const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
   const args = { request_id: 'D-2004', order_id: 'O-509', amount: 12.5, reason: 'v020 one-click test' };
   const a = await rt.call('refunds_request_refund', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin (fictional)');
   assert.equal((await rt.call('refunds_request_refund', args)).status, 'executed');
   assert.equal((await rt.call('refunds_request_refund', args)).status, 'needs_approval');
   const review = new AgentRuntime(manifest, { root, mode: 'review', audit: false });

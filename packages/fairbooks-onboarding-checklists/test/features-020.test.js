@@ -53,21 +53,21 @@ test('offboarding mirror: the end date drives removal and return tasks', () => {
 test('offboarding drafts on Auto; removal stays one-click and is recorded only after a named click', async () => {
   const root = tmpRoot('onboarding-off-'); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['onboarding_draft_offboarding'] });
   const d = await rt.call('onboarding_draft_offboarding', F); assert.equal(d.status, 'executed', d.reason);
-  assert.deepEqual(readdirSync(join(root, 'mythos-out/onboarding/offboarding')).sort(), ['C3-email-remove.md', 'C3-offboarding.md', 'C3-repo-remove.md']);
-  const draft = readFileSync(join(root, 'mythos-out/onboarding/offboarding/C3-repo-remove.md'), 'utf8');
+  assert.deepEqual(readdirSync(join(root, 'fairbooks-out/onboarding/offboarding')).sort(), ['C3-email-remove.md', 'C3-offboarding.md', 'C3-repo-remove.md']);
+  const draft = readFileSync(join(root, 'fairbooks-out/onboarding/offboarding/C3-repo-remove.md'), 'utf8');
   assert.match(draft, /^DRAFT — not submitted\. Fairbooks Onboarding Checklists does not remove access\./); assert.match(draft, /Engagement ended: 2026-10-31/);
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['onboarding_request_access_removal'] }), /one-click/);
   const args = { ...F, person_id: 'C3', task_id: 'email', reason: 'Offboarding: engagement ended 2026-10-31' };
   const a = await rt.call('onboarding_request_access_removal', args); assert.equal(a.status, 'needs_approval'); assert.match(a.reason, /one-click/);
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Sam');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Sam');
   const b = await rt.call('onboarding_request_access_removal', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Sam');
   assert.equal(parseCsv(readFileSync(b.result.file, 'utf8'))[0].status, 'approved - a person removes it');
   assert.equal((await rt.call('idp_remove_access', {})).status, 'blocked');
   // An upcoming end date says "ends" and when.
   writeFileSync(join(root, 'people2.csv'), 'person_id,name,type,role,manager,start_date,end_date\nE9,Avery Test,employee,Analyst,Ana Wu,2026-01-05,2026-11-20\n');
   writeFileSync(join(root, 'status2.csv'), 'person_id,task_id,status\nE9,nda,done\nE9,email,done\n');
-  const d2 = await rt.call('onboarding_draft_offboarding', { people: 'people2.csv', template: 'template.json', status: 'status2.csv', as_of, out_dir: 'mythos-out/e2' });
-  assert.match(readFileSync(join(root, 'mythos-out/e2/offboarding/E9-email-remove.md'), 'utf8'), /Engagement ends: 2026-11-20 \(remove access on that date, not before\)/);
+  const d2 = await rt.call('onboarding_draft_offboarding', { people: 'people2.csv', template: 'template.json', status: 'status2.csv', as_of, out_dir: 'fairbooks-out/e2' });
+  assert.match(readFileSync(join(root, 'fairbooks-out/e2/offboarding/E9-email-remove.md'), 'utf8'), /Engagement ends: 2026-11-20 \(remove access on that date, not before\)/);
   assert.equal(d2.status, 'executed');
 });
 
@@ -89,11 +89,11 @@ test('readiness report: blocking items listed, JSON hash in the audit log', asyn
   const k1 = readiness(st, { person_ids: ['K1', 'E1'] }); assert.equal(k1.people, 2);
   const root = tmpRoot('onboarding-ready-'); const rt = new AgentRuntime(manifest, { root });
   const out = await rt.call('onboarding_readiness_report', F); assert.equal(out.status, 'executed', out.reason);
-  const json = readFileSync(join(root, 'mythos-out/onboarding/readiness/readiness.json'), 'utf8');
+  const json = readFileSync(join(root, 'fairbooks-out/onboarding/readiness/readiness.json'), 'utf8');
   assert.equal(sha256(json), out.result.output_sha256);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).find((e) => e.tool === 'onboarding_readiness_report').output_sha256, out.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).find((e) => e.tool === 'onboarding_readiness_report').output_sha256, out.result.output_sha256);
   const html = readFileSync(out.result.files[0], 'utf8'); assert.match(html, /not ready/); assert.ok(!/<script/i.test(html)); assert.match(html, /Not HR, employment or legal advice/);
-  const again = await rt.call('onboarding_readiness_report', { ...F, out_dir: 'mythos-out/r2' }); assert.equal(again.result.output_sha256, out.result.output_sha256, 'deterministic');
+  const again = await rt.call('onboarding_readiness_report', { ...F, out_dir: 'fairbooks-out/r2' }); assert.equal(again.result.output_sha256, out.result.output_sha256, 'deterministic');
 });
 
 test('tracker also writes owner actions and a valid calendar', async () => {

@@ -15,7 +15,7 @@ const rulesArg = { rules: { ...str, description: 'Your retention rules JSON (ret
 const asOf = { as_of: { ...str, format: 'date', description: 'Date to evaluate against (YYYY-MM-DD, default today)' } };
 const loadRules = (a, ctx) => (a.rules ? ctx.readJson(a.rules, 'retention_rules') : null);
 const today = () => new Date().toISOString().slice(0, 10);
-const logPath = (a) => a.log || join(a.out_dir || 'mythos-out/erasure', 'requests.csv');
+const logPath = (a) => a.log || join(a.out_dir || 'fairbooks-out/erasure', 'requests.csv');
 function load(a, ctx) {
   let list = a.files || [];
   if (a.dir) { const d = ctx.path(a.dir); list = list.concat(readdirSync(d).filter((f) => ['.csv', '.json', '.jsonl'].includes(extname(f).toLowerCase()) && statSync(join(d, f)).isFile()).sort().map((f) => posix.join(String(a.dir).replace(/\\/g, '/'), f))); }
@@ -23,7 +23,7 @@ function load(a, ctx) {
   return list.map((f) => ({ name: f, rows: ctx.records(f) }));
 }
 function append(ctx, a, file, row, cols) {
-  const out = ctx.outDir(a.out_dir || 'mythos-out/erasure'); const f = join(out, file);
+  const out = ctx.outDir(a.out_dir || 'fairbooks-out/erasure'); const f = join(out, file);
   const csv = toCsv([row], cols); appendFileSync(f, existsSync(f) ? csv.split('\n').slice(1).join('\n') : csv); return f;
 }
 const subjectKey = (a) => sha256([String(a.email || '').trim().toLowerCase(), String(a.phone || '').replace(/\D/g, '').slice(-10), ...[].concat(a.ids || [])].join('|')).slice(0, 16);
@@ -51,12 +51,12 @@ export const manifest = defineManifest({
     },
     {
       name: 'erasure_build_checklist', kind: 'report',
-      description: 'Write erasure-checklist.csv (owner and evidence columns blank) and erasure-request.md (identifiers masked) into out_dir (default mythos-out/erasure).',
+      description: 'Write erasure-checklist.csv (owner and evidence columns blank) and erasure-request.md (identifiers masked) into out_dir (default fairbooks-out/erasure).',
       inputSchema: { type: 'object', properties: { ...src, ...subj, ...req, ...rulesArg, ...asOf, out_dir: str } },
       handler: async (a, ctx) => {
         const rules = loadRules(a, ctx); const fl = load(a, ctx); const r = findSubject(fl, a);
         const periods = rules?.response_periods || {}; const ret = rules ? applyRetention(fl, r, rules, a.as_of || today()) : null;
-        const steps = checklist(r, { ...a, periods }, ret); const out = ctx.outDir(a.out_dir || 'mythos-out/erasure');
+        const steps = checklist(r, { ...a, periods }, ret); const out = ctx.outDir(a.out_dir || 'fairbooks-out/erasure');
         return { summary: `Checklist written: ${steps.length} step(s) across ${r.files_with_data} file(s)${ret ? `; ${ret.on_hold} row(s) on hold, ${ret.retain_until} retained by your rules` : ''}.`, files: [ctx.writeFile(out, 'erasure-checklist.csv', checklistCsv(steps)), ctx.writeFile(out, 'erasure-request.md', requestMarkdown(r, { ...a, periods }, new Date().toISOString()))], due: dueDate(a.received, a.regime, periods) };
       },
     },
@@ -77,7 +77,7 @@ export const manifest = defineManifest({
         const rules = loadRules(a, ctx); const lp = logPath(a);
         if (!ctx.exists(lp)) throw new Error(`no request log at ${lp}; log a request with erasure_log_request first`);
         const t = trackDeadlines(ctx.records(lp), { periods: rules?.response_periods || {}, dueSoonDays: a.due_soon_days ?? rules?.due_soon_days ?? 7, asOf: a.as_of || today() });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/erasure'); const files = [ctx.writeFile(out, 'request-deadlines.csv', deadlinesCsv(t))];
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/erasure'); const files = [ctx.writeFile(out, 'request-deadlines.csv', deadlinesCsv(t))];
         if (a.ics) files.push(ctx.writeFile(out, 'request-deadlines.ics', deadlinesIcs(t)));
         return { summary: `${t.requests} request(s): ${t.overdue} overdue, ${t.due_soon} due soon, ${t.on_track} on track, ${t.closed} closed.`, ...t, files };
       },
@@ -88,7 +88,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', properties: { ...src, ...subj, ...rulesArg, ...asOf, request_key: { ...str, description: 'Defaults to the key derived from the identifiers given (same as erasure_log_request)' }, log: str, out_dir: str } },
       handler: async (a, ctx) => {
         const rules = loadRules(a, ctx); const fl = load(a, ctx); const f = findSubject(fl, a); const at = a.as_of || today();
-        const key = a.request_key || subjectKey(a); const out = a.out_dir || 'mythos-out/erasure';
+        const key = a.request_key || subjectKey(a); const out = a.out_dir || 'fairbooks-out/erasure';
         const rows = (p) => (ctx.exists(p) ? ctx.records(p) : []);
         const log = rows(logPath(a)).filter((r) => r.request_key === key).pop() || null;
         const deletions = rows(join(out, 'deletion-requests.csv')).filter((r) => r.request_key === key);

@@ -43,10 +43,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'certs_write_report', kind: 'report', title: 'Write expiry report',
-      description: 'Write expiry-report.md, expiry-report.html (self-contained, no scripts), expiry.csv (blank reviewer columns) and renewals.ics (calendar reminders at warn_days, critical_days and 1 day before, or reminder_days) into out_dir (default mythos-out/certs). The output hash goes into the audit line.',
+      description: 'Write expiry-report.md, expiry-report.html (self-contained, no scripts), expiry.csv (blank reviewer columns) and renewals.ics (calendar reminders at warn_days, critical_days and 1 day before, or reminder_days) into out_dir (default fairbooks-out/certs). The output hash goes into the audit line.',
       inputSchema: { type: 'object', properties: { ...props, reminder_days: reminderDays, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/certs');
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/certs');
         const docs = { 'expiry-report.md': reportMarkdown(r), 'expiry.csv': expiryCsv(r), 'renewals.ics': calendarIcs(r, a.reminder_days), 'expiry-report.html': reportHtml(r) };
         const files = Object.entries(docs).map(([n, t]) => ctx.writeFile(out, n, t));
         return { summary: `Report (md, html), CSV and calendar written for ${r.items.length} item(s) and ${r.vendors.length} vendor(s); reminders ${reminderOffsets(r, a.reminder_days).join('/')} days before.`, files, output_sha256: sha256(Object.entries(docs).map(([n, t]) => `${n}:${sha256(t)}`).join('\n')) };
@@ -68,7 +68,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const docs = a.files.map((f) => extractCoiText(ctx.readText(f), { source: basename(f) }));
         const rows = docs.flatMap((d) => d.rows.map((r) => ({ ...r, warnings: r.warnings.join('; '), reviewed_by: '' })));
-        const csv = toCsv(rows, EXTRACT_COLUMNS); const out = ctx.outDir(a.out_dir || 'mythos-out/certs');
+        const csv = toCsv(rows, EXTRACT_COLUMNS); const out = ctx.outDir(a.out_dir || 'fairbooks-out/certs');
         const file = ctx.writeFile(out, 'coi-extracted.csv', csv);
         const warn = docs.reduce((t, d) => t + d.warnings.length, 0);
         return { summary: `${rows.length} coverage row(s) extracted from ${docs.length} file(s), all marked needs_review; ${warn} warning(s).`, documents: docs, file, output_sha256: sha256(csv) };
@@ -87,7 +87,7 @@ export const manifest = defineManifest({
         }
         if (!targets.length) throw new Error('give hosts, or certificates with from_inventory: true');
         const r = await liveTlsCheck(targets, { ...a, inventory, timeoutMs: a.timeout_ms });
-        const csv = liveCsv(r); const file = ctx.writeFile(ctx.outDir(a.out_dir || 'mythos-out/certs'), 'live-tls.csv', csv);
+        const csv = liveCsv(r); const file = ctx.writeFile(ctx.outDir(a.out_dir || 'fairbooks-out/certs'), 'live-tls.csv', csv);
         return { summary: `${r.checked} host(s) checked live (${r.reachable} reachable); ${r.rows.filter((x) => ['expired', 'critical'].includes(x.status)).length} expired or critical; ${r.mismatches} inventory mismatch(es). Read-only handshakes; nothing was changed.`, ...r, file, output_sha256: sha256(csv) };
       },
     },
@@ -96,7 +96,7 @@ export const manifest = defineManifest({
       description: 'Write one chase email draft per vendor with COI gaps into out_dir/chase-drafts (marked DRAFT, not sent). Needs a human yes unless opted in to Auto. Nothing is sent.',
       inputSchema: { type: 'object', required: ['cois'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/certs'), 'chase-drafts'); mkdirSync(dir, { recursive: true });
+        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/certs'), 'chase-drafts'); mkdirSync(dir, { recursive: true });
         const unique = uniqueNames();
         const files = r.vendors.filter((v) => v.gaps.length).map((v) => ctx.writeFile(dir, unique(`${slug(v.vendor)}.md`), chaseDraft(v)));
         return { summary: `${files.length} chase draft(s) written. Nothing was sent.`, files };
@@ -108,7 +108,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['vendor', 'draft', 'to'], properties: { vendor: str, draft: { ...str, description: 'Path of the reviewed draft' }, to: str, out_dir: str } },
       handler: async (a, ctx) => {
         need(a, 'vendor', 'draft', 'to'); if (!existsSync(ctx.path(a.draft))) throw new Error(`draft not found: ${a.draft}`);
-        const f = appendRow(ctx.outDir(a.out_dir || 'mythos-out/certs'), 'send-requests.csv', { requested_at: new Date().toISOString(), vendor: a.vendor, to: a.to, draft: a.draft, status: 'approved - a person sends it' }, ['requested_at', 'vendor', 'to', 'draft', 'status']);
+        const f = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/certs'), 'send-requests.csv', { requested_at: new Date().toISOString(), vendor: a.vendor, to: a.to, draft: a.draft, status: 'approved - a person sends it' }, ['requested_at', 'vendor', 'to', 'draft', 'status']);
         return { summary: `Send approved and recorded for ${a.vendor}. Nothing was sent.`, file: f };
       },
     },
@@ -118,7 +118,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['id', 'cost', 'reason'], properties: { id: str, cost: num, reason: str, out_dir: str } },
       handler: async (a, ctx) => {
         need(a, 'id', 'reason'); if (!(Number(a.cost) >= 0)) throw new Error('cost must be a number');
-        const f = appendRow(ctx.outDir(a.out_dir || 'mythos-out/certs'), 'renewal-requests.csv', { requested_at: new Date().toISOString(), id: a.id, cost: Number(a.cost).toFixed(2), reason: a.reason, status: 'approved request - a person pays' }, ['requested_at', 'id', 'cost', 'reason', 'status']);
+        const f = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/certs'), 'renewal-requests.csv', { requested_at: new Date().toISOString(), id: a.id, cost: Number(a.cost).toFixed(2), reason: a.reason, status: 'approved request - a person pays' }, ['requested_at', 'id', 'cost', 'reason', 'status']);
         return { summary: `Renewal request recorded for ${a.id}. Nothing was paid.`, file: f };
       },
     },
@@ -128,7 +128,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['id', 'change'], properties: { id: str, change: str, window: str, out_dir: str } },
       handler: async (a, ctx) => {
         need(a, 'id', 'change');
-        const f = appendRow(ctx.outDir(a.out_dir || 'mythos-out/certs'), 'change-requests.csv', { requested_at: new Date().toISOString(), id: a.id, change: a.change, window: a.window || '', status: 'approved request - your change process applies it' }, ['requested_at', 'id', 'change', 'window', 'status']);
+        const f = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/certs'), 'change-requests.csv', { requested_at: new Date().toISOString(), id: a.id, change: a.change, window: a.window || '', status: 'approved request - your change process applies it' }, ['requested_at', 'id', 'change', 'window', 'status']);
         return { summary: `Production change request recorded for ${a.id}. No system was changed.`, file: f };
       },
     },

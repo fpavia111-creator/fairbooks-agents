@@ -48,7 +48,7 @@ export const SOURCES = {
         amount: 'Amount',
         purpose: 'Comment',
         receipt: 'Receipt',
-      }, { skipRow: (_r, get) => /^(no|false|n|0)$/i.test(String(get('Reimbursable') ?? '').trim()), note: 'The Expensify default CSV has no employee and no report column: export one report at a time, or set employee and report_id for the file in mythos-sources.json. Lines marked not reimbursable are skipped. Expensify category names are looked up in the policy\'s category_aliases.' }),
+      }, { skipRow: (_r, get) => /^(no|false|n|0)$/i.test(String(get('Reimbursable') ?? '').trim()), note: 'The Expensify default CSV has no employee and no report column: export one report at a time, or set employee and report_id for the file in fairbooks-sources.json. Lines marked not reimbursable are skipped. Expensify category names are looked up in the policy\'s category_aliases.' }),
     ],
   },
 };

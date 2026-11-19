@@ -32,7 +32,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | Ramp | Transactions > Export (CSV) | support.ramp.com "Exporting your data to CSV" on 2026-11-15 |
 | Expensify | Default CSV export of expenses | no |
 
-Columns named differently? Run `npx fairbooks-expense-policy inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-expense-policy inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -76,14 +76,14 @@ claude mcp add fairbooks-expense-policy -- npx -y fairbooks-expense-policy@0.2.0
 | `expenses_read_receipts` | **allow** | Merchant, total, date, currency, tax, tip and content hash per text receipt (text never returned) |
 | `expenses_find_duplicates` | **allow** | Possible duplicate pairs, also against earlier reports, with scores and reasons |
 | `expenses_audit_queue` | **allow** | Reports in review order with an explainable score |
-| `expenses_write_report` | **allow** | Write `expense-review.md` and `line-findings.csv` to `mythos-out/expenses` |
+| `expenses_write_report` | **allow** | Write `expense-review.md` and `line-findings.csv` to `fairbooks-out/expenses` |
 | `expenses_write_evidence_pack` | **allow** | Write `evidence-pack.html`, `audit-queue.csv` and `evidence-manifest.json` (hashed) |
 | `expenses_stage_reimbursement` | **ask (Auto-eligible)** | Pre-stage `staged-reimbursements.csv` + `batch.json` (nothing paid) |
 | `expenses_request_reimbursement` | **ask · one-click** | After a named human approves, record the batch (bound to its hash) for whoever pays |
 | `pay_reimbursement` | **block** | Listed so agents see the refusal. Fairbooks Expense Policy never pays. |
 | `ledger_post_expense` | **block** | Listed so agents see the refusal. Fairbooks Expense Policy never posts to a ledger. |
 
-Any other tool name is blocked. MCP hosts also get the prompt `review_expense_reports`, which walks a model through the whole review and stops for the human click. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. MCP hosts also get the prompt `review_expense_reports`, which walks a model through the whole review and stops for the human click. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -106,7 +106,7 @@ fairbooks-expense-policy validate-config policy policy.json   # typos fail with 
 
 The policy file is checked against a JSON Schema before every run: unknown keys (`"recipt_required_over"`), wrong types and a missing `source` fail with the JSON pointer of the problem.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

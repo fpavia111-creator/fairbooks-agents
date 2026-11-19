@@ -35,9 +35,9 @@ export const manifest = defineManifest({
     },
     {
       name: 'taxforms_write_tracker', kind: 'report',
-      description: 'Write w9-tracker.csv (blank owner and follow-up columns) and readiness.md into out_dir (default mythos-out/taxforms). TINs stay masked.',
+      description: 'Write w9-tracker.csv (blank owner and follow-up columns) and readiness.md into out_dir (default fairbooks-out/taxforms). TINs stay masked.',
       inputSchema: { type: 'object', required: ['vendors'], properties: { ...props, out_dir: str } },
-      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/taxforms'); const t = trackerCsv(r), m = safeMarkdown(readinessMarkdown(r)); return { summary: `Tracker written for ${r.vendors} vendor(s).`, files: [ctx.writeFile(out, 'w9-tracker.csv', t), ctx.writeFile(out, 'readiness.md', m)], output_sha256: sha256(`w9-tracker.csv:${sha256(t)}\nreadiness.md:${sha256(m)}`) }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/taxforms'); const t = trackerCsv(r), m = safeMarkdown(readinessMarkdown(r)); return { summary: `Tracker written for ${r.vendors} vendor(s).`, files: [ctx.writeFile(out, 'w9-tracker.csv', t), ctx.writeFile(out, 'readiness.md', m)], output_sha256: sha256(`w9-tracker.csv:${sha256(t)}\nreadiness.md:${sha256(m)}`) }; },
     },
     {
       name: 'auxo_1099_readiness', kind: 'report', title: '1099 readiness summary',
@@ -46,7 +46,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const vendors = ctx.records(a.vendors); const payments = ctx.records(a.payments);
         const x = readiness1099(check(vendors, payments, a), null, payments);
-        const md = safeMarkdown(readiness1099Markdown(x)); const csv = readinessCsv(x); const out = ctx.outDir(a.out_dir || 'mythos-out/taxforms');
+        const md = safeMarkdown(readiness1099Markdown(x)); const csv = readinessCsv(x); const out = ctx.outDir(a.out_dir || 'fairbooks-out/taxforms');
         const files = [ctx.writeFile(out, '1099-readiness.md', md), ctx.writeFile(out, '1099-readiness.csv', csv)];
         return { summary: `${x.year}: ${x.over_threshold} US vendor(s) at or over ${x.threshold}: ${x.ready} ready, ${x.missing_data} missing data; ${x.foreign_over_threshold.length} non-US; ${x.payments_without_vendor_record.length} payee(s) with no vendor record. Not a filing; nothing was sent to the IRS.`, ...x, files, output_sha256: sha256(`1099-readiness.md:${sha256(md)}\n1099-readiness.csv:${sha256(csv)}`) };
       },
@@ -65,7 +65,7 @@ export const manifest = defineManifest({
       description: 'Write a request or reminder email draft (marked DRAFT, not sent) for each vendor that needs one into out_dir/requests. Vendors asked within remind_days are skipped. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['vendors'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/taxforms'), 'requests'); mkdirSync(dir, { recursive: true });
+        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/taxforms'), 'requests'); mkdirSync(dir, { recursive: true });
         const todo = r.items.filter((i) => ['first_request', 'reminder'].includes(i.request));
         const files = todo.map((i) => ctx.writeFile(dir, `${safeFileName(i.vendor_id)}-${slug(i.name)}.md`, requestDraft(i)));
         return { summary: `${files.length} draft(s) written (${todo.filter((i) => i.request === 'reminder').length} reminder(s)); ${r.items.filter((i) => i.request === 'requested_recently').length} skipped as requested recently. Nothing was sent.`, files };
@@ -78,7 +78,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         for (const k of ['vendor_id', 'draft']) if (!String(a[k] ?? '').trim()) throw new Error(`${k} is required`);
         if (!existsSync(ctx.path(a.draft))) throw new Error(`draft not found: ${a.draft}`);
-        const f = appendRow(ctx.outDir(a.out_dir || 'mythos-out/taxforms'), 'send-requests.csv', { requested_at: new Date().toISOString(), vendor_id: a.vendor_id, draft: a.draft, status: 'approved - a person sends it' }, ['requested_at', 'vendor_id', 'draft', 'status']);
+        const f = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/taxforms'), 'send-requests.csv', { requested_at: new Date().toISOString(), vendor_id: a.vendor_id, draft: a.draft, status: 'approved - a person sends it' }, ['requested_at', 'vendor_id', 'draft', 'status']);
         return { summary: `Send approved and recorded for ${a.vendor_id}. Nothing was sent.`, file: f };
       },
     },

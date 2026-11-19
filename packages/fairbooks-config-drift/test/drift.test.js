@@ -11,7 +11,7 @@ async function oneClick(manifest, tool, args, root) {
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: [tool] }), /one-click/);
   const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
   const a = await rt.call(tool, args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
   const b = await rt.call(tool, args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Dana');
   const again = await rt.call(tool, args); assert.equal(again.status, 'needs_approval', 'approval is single-use');
   return b;

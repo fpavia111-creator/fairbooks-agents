@@ -40,7 +40,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | NetSuite | Transaction saved search (default column labels) | no |
 | QuickBooks Online | Transaction List by Vendor report (CSV or Excel) | no |
 
-Columns named differently? Run `npx fairbooks-vendor-tax-forms inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-vendor-tax-forms inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -77,15 +77,15 @@ claude mcp add fairbooks-vendor-tax-forms -- npx -y fairbooks-vendor-tax-forms@0
 | Tool | Policy | What it does |
 |---|---|---|
 | `taxforms_check` | **allow** | Status, flags, masked TIN, payment totals and priority per vendor |
-| `taxforms_write_tracker` | **allow** | Write `w9-tracker.csv` and `readiness.md` to `mythos-out/taxforms` |
+| `taxforms_write_tracker` | **allow** | Write `w9-tracker.csv` and `readiness.md` to `fairbooks-out/taxforms` |
 | `auxo_1099_readiness` | **allow** | Write `1099-readiness.md` and `.csv`: who is over the threshold and what is missing. Not a filing |
 | `taxforms_find_duplicates` | **allow** | Possible duplicate vendor records and payments split under the threshold |
-| `taxforms_draft_requests` | **ask (Auto-eligible)** | Write request and reminder drafts to `mythos-out/taxforms/requests` (not sent) |
+| `taxforms_draft_requests` | **ask (Auto-eligible)** | Write request and reminder drafts to `fairbooks-out/taxforms/requests` (not sent) |
 | `taxforms_request_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |
 | `irs_efile` | **block** | Listed so agents see the refusal. Fairbooks Vendor Tax Forms never files with the IRS. |
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks Vendor Tax Forms never sends. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## MCP prompt
 
@@ -109,7 +109,7 @@ fairbooks-vendor-tax-forms call taxforms_check '{"vendors":"vendors.csv","paymen
 fairbooks-vendor-tax-forms eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

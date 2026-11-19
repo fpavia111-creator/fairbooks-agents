@@ -75,13 +75,13 @@ test('a learned rule is shown, and applied only after the user accepts it', asyn
   const args = { bank_pattern: sug.bank_pattern, gl_pattern: sug.gl_pattern, direction: sug.direction, max_days: sug.max_days, support: sug.support };
   const ask = await new AgentRuntime(manifest, { root }).call('recon_accept_rule', args);
   assert.equal(ask.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(ask.approval_id, 'Robin');
+  new ApprovalStore(join(root, '.fairbooks')).approve(ask.approval_id, 'Robin');
   const ok = await new AgentRuntime(manifest, { root }).call('recon_accept_rule', args);
   assert.equal(ok.status, 'executed', ok.reason); assert.equal(ok.result.rule.id, sug.id);
-  const after = await rt(root).call('recon_reconcile', { bank: 'bank-statement.csv', gl: 'gl-cash.csv', date_window: 0, rules: 'mythos-out/recon/match-rules.json' });
+  const after = await rt(root).call('recon_reconcile', { bank: 'bank-statement.csv', gl: 'gl-cash.csv', date_window: 0, rules: 'fairbooks-out/recon/match-rules.json' });
   const m = after.result.matches.find((x) => x.type === 'rule');
   assert.ok(m); assert.deepEqual([m.bank, m.gl], [['B4'], ['G4']]); assert.equal(after.result.matched_groups, 4);
-  assert.equal((await rt(root).call('recon_suggest_rules', { bank: 'bank-statement.csv', gl: 'gl-cash.csv', rules: 'mythos-out/recon/match-rules.json' })).result.suggestions[0].already_accepted, true);
+  assert.equal((await rt(root).call('recon_suggest_rules', { bank: 'bank-statement.csv', gl: 'gl-cash.csv', rules: 'fairbooks-out/recon/match-rules.json' })).result.suggestions[0].already_accepted, true);
 });
 
 test('rules learn from words, not numbers; unmatched descriptions do not match', () => {
@@ -135,7 +135,7 @@ test('workpaper adds HTML with sign-off lines; hashes match the files and reach 
   const html = readFileSync(join(root, 'out', 'reconciliation.html'), 'utf8');
   assert.equal(r.result.output_sha256, sha256(html)); assert.match(html, /Reviewed by/); assert.match(html, /ties/); assert.ok(!/<script/i.test(html));
   assert.equal(r.result.file_sha256['reconciliation.csv'], sha256(readFileSync(join(root, 'out', 'reconciliation.csv'), 'utf8')));
-  const audit = readFileSync(join(root, '.mythos', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const audit = readFileSync(join(root, '.fairbooks', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(audit.at(-1).output_sha256, r.result.output_sha256);
 });
 

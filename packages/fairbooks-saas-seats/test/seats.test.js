@@ -42,7 +42,7 @@ test('revoke is one-click even in Auto; downgrade can be opted in', async () => 
   assert.equal((await rt.call('seats_request_downgrade', { app: 'Figma', user: 'Sam', reason: 'r' })).status, 'executed');
   const args = { app: 'Salesforce', user: 'Riley', reason: 'left' };
   const a = await rt.call('seats_request_revoke', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
   const b = await rt.call('seats_request_revoke', args); assert.equal(b.status, 'executed');
   const csv = parseCsv(readFileSync(b.result.file, 'utf8')); assert.equal(csv.length, 2); assert.equal(csv[1].change, 'revoke');
 });

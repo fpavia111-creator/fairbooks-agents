@@ -63,13 +63,13 @@ test('a Shift_JIS access export and HR roster with Japanese headers, summary in 
   const r = await rt.call('access_recert_sheet', { access: 'access.csv', roster: 'roster.csv', as_of: '2026-11-16' });
   assert.equal(r.status, 'executed', JSON.stringify(r)); assert.equal(r.result.language, 'ja');
   assert.ok(r.warnings.some((w) => /Shift_JIS/.test(w)), 'the guessed encoding is reported');
-  const sheet = parseCsv(readFileSync(join(d, 'mythos-out/access/recertification.csv'), 'utf8'));
+  const sheet = parseCsv(readFileSync(join(d, 'fairbooks-out/access/recertification.csv'), 'utf8'));
   assert.equal(sheet.length, 2, 'the 無効 (disabled) row is skipped');
   assert.ok('reviewer_decision' in sheet[0], 'CSV columns stay in English');
   const yamada = sheet.find((x) => x.user === '山田 太郎'), sato = sheet.find((x) => x.user === '佐藤 花子');
   assert.match(yamada.flags, /privileged_role/); assert.match(yamada.flags, /privileged_without_mfa/);
   assert.match(sato.flags, /terminated_in_hr/); assert.equal(sato.suggested_action, 'revoke candidate');
-  const md = readFileSync(join(d, 'mythos-out/access/recertification-summary.md'), 'utf8');
+  const md = readFileSync(join(d, 'fairbooks-out/access/recertification-summary.md'), 'utf8');
   assert.match(md, /# アクセス権の棚卸し/); assert.match(md, /多要素認証のない特権アカウント/); assert.match(md, /人事名簿で退職者/);
   assert.match(md, /Claude による翻訳/); assert.match(md, /`reviewer_decision`/, 'column names stay in English');
   assert.match(md, /証拠にはなりません/, 'the limitation sentence is kept');

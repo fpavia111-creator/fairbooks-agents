@@ -74,7 +74,7 @@
       "args": {
         "suite": "fixtures/suite.json",
         "responses": "fixtures/candidate.jsonl",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "contains": [
@@ -230,7 +230,7 @@
           "fixtures/trials-candidate-noise.jsonl",
           "fixtures/trials-candidate-regressed.jsonl"
         ],
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "contains": [
@@ -255,7 +255,7 @@
         "responses": "fixtures/trials-candidate-noise.jsonl",
         "baseline": "fixtures/trials-baseline.jsonl",
         "gate": "fixtures/gate.json",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "equals": {

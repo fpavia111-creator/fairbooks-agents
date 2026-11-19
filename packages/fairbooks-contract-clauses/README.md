@@ -52,14 +52,14 @@ claude mcp add fairbooks-contract-clauses -- npx -y fairbooks-contract-clauses@0
 | Tool | Policy | What it does |
 |---|---|---|
 | `clauses_check` | **allow** | Status, citations and issues per playbook clause, plus document checks |
-| `clauses_write_report` | **allow** | Write `clause-gaps.md` and `clause-gaps.csv` to `mythos-out/clauses` (plus `draft-changes.md` and `contract.diff` with `previous_contract`) |
+| `clauses_write_report` | **allow** | Write `clause-gaps.md` and `clause-gaps.csv` to `fairbooks-out/clauses` (plus `draft-changes.md` and `contract.diff` with `previous_contract`) |
 | `clauses_compare_drafts` | **allow** | Compare two drafts against the playbook: clauses better or worse, new and resolved findings, changed sections |
 | `clauses_draft_markup` | **ask (Auto-eligible)** | Draft `issues-for-counsel.md` from your playbook's own language, citing the playbook version, every section marked `[COUNSEL REVIEW]`; optional redline against the previous memo |
 | `clauses_request_send` | **ask · one-click** | After a named human approves, record the send (bound to the draft hash) once counsel is named and every `[COUNSEL REVIEW]` marker is cleared |
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks Contract Clauses never sends. |
 | `e_sign` | **block** | Listed so agents see the refusal. Fairbooks Contract Clauses never signs or accepts a contract. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -86,7 +86,7 @@ fairbooks-contract-clauses eval          # private evals on the bundled fixtures
 
 `contract_playbook_review` (arguments: `contract`, `playbook`, optional `previous_contract`) walks a host model through the check, the draft comparison, the report, the issues list, counsel's review and the one-click send. It tells the model to say this is not legal advice and never to tell anyone whether to sign.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

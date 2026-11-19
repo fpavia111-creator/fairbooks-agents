@@ -12,7 +12,7 @@ export function readJsonl(file) {
 
 export function detectFormat(entries) {
   const e = entries.find((x) => !x.__parseError) || {};
-  if (typeof e.sha256 === 'string' && ['agent-action', 'key-rotation'].includes(e.type)) return 'mythos';
+  if (typeof e.sha256 === 'string' && ['agent-action', 'key-rotation'].includes(e.type)) return 'fairbooks';
   if (typeof e.hash === 'string' && 'prev' in e) return 'talos';
   return 'generic';
 }
@@ -37,7 +37,7 @@ export function verifyTalosChain(entries) {
  */
 export function verifyLog(entries, { publicKeys = null } = {}) {
   const format = detectFormat(entries);
-  if (format === 'mythos') {
+  if (format === 'fairbooks') {
     const bad = entries.filter((e) => e.__parseError).map((e) => ({ line: e.__line, problem: 'not valid JSON' }));
     const r = verifyChain(entries.filter((e) => !e.__parseError), { publicKeys });
     const rotations = entries.filter((e) => e.type === 'key-rotation').map((e) => ({ id: e.id, new_key_id: e.new_key_id, rotated_by: e.rotated_by || '', ts: e.ts }));

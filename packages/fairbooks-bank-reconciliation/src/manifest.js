@@ -16,7 +16,7 @@ const bankArg = { ...str, description: 'Bank statement: CSV, TSV, Excel or JSON 
 const glArg = { ...str, description: 'GL cash-account detail CSV, TSV, Excel or JSON: date, memo, reference, amount (or debit/credit). NetSuite, QuickBooks Online and Xero report layouts are recognised.' };
 const rulesArg = { ...str, description: 'Optional accepted match-rules JSON (schema "match_rules", written by recon_accept_rule). Rules apply only when this is passed.' };
 const files = { bank: bankArg, gl: glArg, bank_format: FORMAT, bank_balance: num, gl_balance: num, date_window: { type: 'number', minimum: 0 }, amount_tolerance: { type: 'number', minimum: 0 }, max_group: { type: 'integer', minimum: 2, maximum: 4 }, rules: rulesArg };
-const DEFAULT_OUT = 'mythos-out/recon';
+const DEFAULT_OUT = 'fairbooks-out/recon';
 
 /** Read a bank statement in any supported format. Returns { format, rows (normalised), closing_balance, ... }. */
 export function readStatement(ctx, path, format = 'auto') {
@@ -74,7 +74,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'recon_write_workpaper', kind: 'report', title: 'Write the reconciliation workpaper',
-      description: 'Write reconciliation.csv (blank reviewer columns), reconciliation.md, reconciliation.html (self-contained, sign-off lines) and proposed-entries.csv into out_dir (default mythos-out/recon). The HTML hash is logged in the audit line.',
+      description: 'Write reconciliation.csv (blank reviewer columns), reconciliation.md, reconciliation.html (self-contained, sign-off lines) and proposed-entries.csv into out_dir (default fairbooks-out/recon). The HTML hash is logged in the audit line.',
       inputSchema: { type: 'object', required: ['bank', 'gl'], properties: { ...files, out_dir: str } },
       handler: async (a, ctx) => {
         const { bank, gl, r } = load(a, ctx); const out = ctx.outDir(a.out_dir || DEFAULT_OUT); const at = new Date().toISOString();
@@ -109,7 +109,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'recon_accept_rule', kind: 'write', title: 'Accept a match rule',
-      description: 'Record a match rule a person accepted in match-rules.json (out_dir, default mythos-out/recon). Needs a human yes unless opted in to Auto. Rules apply only when that file is passed as "rules".',
+      description: 'Record a match rule a person accepted in match-rules.json (out_dir, default fairbooks-out/recon). Needs a human yes unless opted in to Auto. Rules apply only when that file is passed as "rules".',
       inputSchema: { type: 'object', required: ['bank_pattern', 'gl_pattern', 'direction', 'max_days'], properties: { bank_pattern: nonEmpty, gl_pattern: nonEmpty, direction: { enum: ['in', 'out'] }, max_days: { type: 'integer', minimum: 0, maximum: 31 }, amount_tolerance: { type: 'number', minimum: 0 }, support: { type: 'integer', minimum: 0 }, note: str, out_dir: str } },
       handler: async (a, ctx) => {
         const out = ctx.outDir(a.out_dir || DEFAULT_OUT); const file = relative(ctx.root, join(out, 'match-rules.json'));

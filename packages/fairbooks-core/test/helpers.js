@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineManifest } from '../src/index.js';
 
-export const tmp = () => mkdtempSync(join(tmpdir(), 'mythos-core-'));
+export const tmp = () => mkdtempSync(join(tmpdir(), 'fairbooks-core-'));
 
 export function sampleManifest(extra = {}) {
   return defineManifest({

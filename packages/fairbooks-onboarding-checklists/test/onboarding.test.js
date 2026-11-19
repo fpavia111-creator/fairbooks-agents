@@ -40,11 +40,11 @@ test('drafts on Auto; grant and removal are one-click and re-checked; IdP blocke
   const root = tmpRoot('onboarding-'); const f = { people: 'people.csv', template: 'template.json', status: 'status.csv', as_of };
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['onboarding_draft_access_requests'] });
   assert.equal((await rt.call('onboarding_draft_access_requests', f)).status, 'executed');
-  assert.deepEqual(readdirSync(join(root, 'mythos-out/onboarding/access-requests')).sort(), ['C1-email-grant.md', 'C3-email-remove.md', 'C3-repo-remove.md', 'K1-portal-grant.md']);
-  const g = readFileSync(join(root, 'mythos-out/onboarding/access-requests/C1-email-grant.md'), 'utf8');
+  assert.deepEqual(readdirSync(join(root, 'fairbooks-out/onboarding/access-requests')).sort(), ['C1-email-grant.md', 'C3-email-remove.md', 'C3-repo-remove.md', 'K1-portal-grant.md']);
+  const g = readFileSync(join(root, 'fairbooks-out/onboarding/access-requests/C1-email-grant.md'), 'utf8');
   assert.match(g, /^DRAFT — not submitted/); assert.match(g, /Prerequisites done: nda\n/); assert.match(g, /Access end date: 2027-02-28/);
   for (const t of ['onboarding_request_access_grant', 'onboarding_request_access_removal']) assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: [t] }), /one-click/);
-  const store = new ApprovalStore(join(root, '.mythos'));
+  const store = new ApprovalStore(join(root, '.fairbooks'));
   const args = { ...f, person_id: 'C1', task_id: 'email' };
   const a = await rt.call('onboarding_request_access_grant', args); assert.equal(a.status, 'needs_approval'); store.approve(a.approval_id, 'Sam');
   const b = await rt.call('onboarding_request_access_grant', args); assert.equal(b.status, 'executed');

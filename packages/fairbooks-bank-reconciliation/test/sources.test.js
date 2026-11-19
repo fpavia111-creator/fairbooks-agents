@@ -72,12 +72,12 @@ test('a NetSuite search with debit and credit columns, and a bank file with with
   const [b, g] = r.sources; assert.equal(b.format, 'tsv'); assert.equal(b.decimal_mark, ','); assert.equal(b.mapped.debit, 'Paid Out'); assert.equal(g.mapped.credit, 'Amount (Credit)');
 });
 
-test('the mapping can be forced per file in mythos-sources.json', async () => {
+test('the mapping can be forced per file in fairbooks-sources.json', async () => {
   const root = mkdtempSync(join(tmpdir(), 'pen-src-')); cpSync(fixtures, root, { recursive: true });
   writeFileSync(join(root, 'odd.csv'), 'When;What;Sum\n2026-10-02;Deposit;2500.00\n2026-10-31;Monthly service fee;-25.00\n');
   const bare = await new AgentRuntime(manifest, { root, audit: false }).call('recon_read_statement', { bank: 'odd.csv' });
   assert.match(bare.warnings[0], /odd.csv: None of this file's columns was recognised as: date/); assert.equal(bare.sources[0].adapted, false);
-  writeFileSync(join(root, 'mythos-sources.json'), JSON.stringify({ files: { 'odd.csv': { columns: { date: 'When', description: 'What', amount: 'Sum' } } } }));
+  writeFileSync(join(root, 'fairbooks-sources.json'), JSON.stringify({ files: { 'odd.csv': { columns: { date: 'When', description: 'What', amount: 'Sum' } } } }));
   const r = await new AgentRuntime(manifest, { root, audit: false }).call('recon_read_statement', { bank: 'odd.csv' });
   assert.equal(r.status, 'executed', r.reason); assert.match(r.result.summary, /2 line\(s\), total 2475/);
 });

@@ -13,9 +13,9 @@ const tmpRoot = () => { const r = mkdtempSync(join(tmpdir(), 'docs-')); cpSync(f
 const at = (r, c) => r.findings.filter((f) => f.check === c);
 
 test('tool list formats and heading slugs', () => {
-  const t = loadTools(tools); assert.equal(t.length, 5, 'mythos_info is left out');
+  const t = loadTools(tools); assert.equal(t.length, 5, 'fairbooks_info is left out');
   assert.deepEqual(t.find((x) => x.name === 'kettle_request_publish'), { name: 'kettle_request_publish', decision: 'ask', category: 'production_deploy', properties: ['note', 'note_sha256'], required: ['note', 'note_sha256'] });
-  assert.equal(loadTools({ name: 'x', tools: [{ name: 'a_b', decision: 'allow' }] })[0].decision, 'allow', 'mythos_info output');
+  assert.equal(loadTools({ name: 'x', tools: [{ name: 'a_b', decision: 'allow' }] })[0].decision, 'allow', 'fairbooks_info output');
   assert.equal(loadTools({ result: { tools: [{ name: 'a_b' }] } })[0].name, 'a_b');
   assert.throws(() => loadTools({ nope: 1 }), /tools file must be/);
   assert.equal(slug('What it is not'), 'what-it-is-not'); assert.equal(slug('`CLI` & usage'), 'cli--usage');
@@ -51,15 +51,15 @@ test('draft on Auto; publish is one-click, hash-bound, checks originals; overwri
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['docsdrift_request_publish'] }), /one-click/);
   const f = { pack: 'kettle-of-notes', tools: 'kettle-of-notes/tools.json' };
   const d = await rt.call('docsdrift_draft_fixes', f); assert.equal(d.status, 'executed');
-  assert.match(readFileSync(join(root, 'mythos-out/docs/proposed/skills/notes/SKILL.md'), 'utf8'), /kettle_summarize/);
+  assert.match(readFileSync(join(root, 'fairbooks-out/docs/proposed/skills/notes/SKILL.md'), 'utf8'), /kettle_summarize/);
   const args = { proposal: d.result.proposal, proposal_sha256: d.result.proposal_sha256 };
   const a = await rt.call('docsdrift_request_publish', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Kai');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Kai');
   const ok = await rt.call('docsdrift_request_publish', args); assert.equal(ok.status, 'executed'); assert.equal(ok.approved_by, 'Kai');
-  assert.equal(parseCsv(readFileSync(join(root, 'mythos-out/docs/publish-requests.csv'), 'utf8'))[0].files, 'README.md; skills/notes/SKILL.md');
-  const d2 = await rt.call('docsdrift_draft_fixes', { ...f, out_dir: 'mythos-out/2' });
+  assert.equal(parseCsv(readFileSync(join(root, 'fairbooks-out/docs/publish-requests.csv'), 'utf8'))[0].files, 'README.md; skills/notes/SKILL.md');
+  const d2 = await rt.call('docsdrift_draft_fixes', { ...f, out_dir: 'fairbooks-out/2' });
   const a2 = { proposal: d2.result.proposal, proposal_sha256: d2.result.proposal_sha256 };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('docsdrift_request_publish', a2)).approval_id, 'Kai');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('docsdrift_request_publish', a2)).approval_id, 'Kai');
   writeFileSync(join(root, 'kettle-of-notes/README.md'), '# edited meanwhile\n');
   assert.match((await rt.call('docsdrift_request_publish', a2)).reason, /changed since the proposal/);
   for (const t of ['write_docs', 'git_push']) assert.equal((await rt.call(t, {})).status, 'blocked');

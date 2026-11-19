@@ -137,7 +137,7 @@ test('dashboard: self-contained HTML, zero network references, regression highli
   assert.match(html, /REGRESSED/); assert.match(html, /significant regression/); assert.match(html, /flaky/);
   const again = await rt.call('evals_write_dashboard', { ...args, out_dir: 'again' });
   assert.equal(again.result.output_sha256, d.result.output_sha256, 'same runs, same bytes');
-  assert.equal(readAudit(join(root, '.mythos', 'audit.jsonl')).find((e) => e.tool === 'evals_write_dashboard').output_sha256, d.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks', 'audit.jsonl')).find((e) => e.tool === 'evals_write_dashboard').output_sha256, d.result.output_sha256);
   const one = dashboardHtml(suite, [{ label: 'only', grade: run('baseline.jsonl') }]);
   assert.ok(!/REGRESSED/.test(one));
   assert.equal((await rt.call('evals_write_dashboard', { suite: 'suite.json', runs: ['baseline.jsonl'], labels: ['a', 'b'] })).status, 'error');
@@ -154,7 +154,7 @@ test('write_report: statistics, rubric, gate and audit hash; original three file
   const j = JSON.parse(readFileSync(w.result.files[1], 'utf8'));
   assert.equal(j.compare.stats.seed, 7); assert.equal(j.rubric.rubric, 'ap-answer-quality-v1');
   assert.match(readFileSync(w.result.files[2], 'utf8'), /failures="1"/);
-  assert.equal(readAudit(join(root, '.mythos', 'audit.jsonl')).find((e) => e.tool === 'evals_write_report').output_sha256, w.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks', 'audit.jsonl')).find((e) => e.tool === 'evals_write_report').output_sha256, w.result.output_sha256);
   const c = await rt.call('evals_compare', { suite: 'suite.json', baseline: 'trials-baseline.jsonl', candidate: 'trials-candidate-noise.jsonl', gate: 'gate.json' });
   assert.equal(c.result.gate.result, 'pass'); assert.equal(c.result.stats.verdict, 'within_noise');
   assert.equal((await rt.call('evals_publish_results', {})).status, 'blocked');

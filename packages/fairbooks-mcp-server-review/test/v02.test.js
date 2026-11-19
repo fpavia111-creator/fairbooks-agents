@@ -213,7 +213,7 @@ test('runtime: scan_tools, pin_tools then check_pins, report with gate and audit
   const sarifDoc = JSON.parse(readFileSync(w.result.files[2], 'utf8'));
   assert.deepEqual(validateSarif(sarifDoc).errors, []);
   assert.ok(sarifDoc.runs[0].results.some((x) => x.locations[0].physicalLocation.artifactLocation.uri === 'flow-server/src/server.js'), 'paths are root-relative');
-  const log = readAudit(join(root, '.mythos', 'audit.jsonl'));
+  const log = readAudit(join(root, '.fairbooks', 'audit.jsonl'));
   assert.equal(log.find((e) => e.tool === 'mcpreview_write_report').output_sha256, w.result.output_sha256);
   const tidy = await rt.call('mcpreview_write_report', { dir: 'tidy-server', fail_on: 'low', out_dir: 'tidy-out' });
   assert.equal(tidy.result.gate.result, 'pass');

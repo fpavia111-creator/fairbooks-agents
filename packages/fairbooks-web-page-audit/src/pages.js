@@ -113,7 +113,7 @@ const VAGUE = /^(click here|here|read more|more|learn more|this|link|this link|g
 
 export function listSite(dir) {
   const out = [];
-  const walk = (d) => { for (const f of readdirSync(d).sort()) { const p = join(d, f); const s = statSync(p); if (s.isDirectory()) { if (!/^(\.|node_modules$|mythos-out$)/.test(f)) walk(p); } else out.push(relative(dir, p).split('\\').join('/')); } };
+  const walk = (d) => { for (const f of readdirSync(d).sort()) { const p = join(d, f); const s = statSync(p); if (s.isDirectory()) { if (!/^(\.|node_modules$|fairbooks-out$)/.test(f)) walk(p); } else out.push(relative(dir, p).split('\\').join('/')); } };
   walk(dir); return out;
 }
 const isPage = (f) => /\.html?$/i.test(f);

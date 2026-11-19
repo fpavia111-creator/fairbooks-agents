@@ -10,7 +10,7 @@ const NOT_TOOLS = new Set(['go_live', 'revoke_access', 'delete_personal_data', '
 
 export function loadTools(json) {
   let list = Array.isArray(json) ? json : json?.tools || json?.result?.tools || json?.result?.structuredContent?.tools;
-  if (!Array.isArray(list)) throw new Error('tools file must be a list of tools, an MCP tools/list result ({"tools":[...]}) or mythos_info output');
+  if (!Array.isArray(list)) throw new Error('tools file must be a list of tools, an MCP tools/list result ({"tools":[...]}) or fairbooks_info output');
   return list.map((t) => {
     if (!t || !t.name) throw new Error('every tool needs a name');
     let decision = t.decision || null; let category = t.category || null;
@@ -18,14 +18,14 @@ export function loadTools(json) {
     if (!decision && m) { decision = m[1].toLowerCase(); category = category || m[2] || null; }
     const schema = t.inputSchema || t.input_schema || null;
     return { name: t.name, decision, category, properties: schema?.properties ? Object.keys(schema.properties) : null, required: schema?.required || [] };
-  }).filter((t) => t.name !== 'mythos_info');
+  }).filter((t) => !['fairbooks_info', 'mythos_info'].includes(t.name)); // the core's info tool, by its current and its 0.2.0 npm name
 }
 
 export function listDocs(packDir) {
   const out = [];
   const add = (f) => { if (existsSync(f) && statSync(f).isFile()) out.push(f); };
   for (const n of readdirSync(packDir)) if (/^(README|SKILL|CHANGELOG|USAGE|CONTRIBUTING)(\.[a-z]+)?\.md$/i.test(n) || /^readme\.md$/i.test(n)) add(join(packDir, n));
-  const walk = (d, depth) => { if (!existsSync(d) || depth > 4) return; for (const n of readdirSync(d).sort()) { const f = join(d, n); if (statSync(f).isDirectory()) { if (!n.startsWith('.') && n !== 'node_modules' && n !== 'mythos-out') walk(f, depth + 1); } else if (/\.mdx?$/i.test(n)) add(f); } };
+  const walk = (d, depth) => { if (!existsSync(d) || depth > 4) return; for (const n of readdirSync(d).sort()) { const f = join(d, n); if (statSync(f).isDirectory()) { if (!n.startsWith('.') && n !== 'node_modules' && n !== 'fairbooks-out') walk(f, depth + 1); } else if (/\.mdx?$/i.test(n)) add(f); } };
   walk(join(packDir, 'docs'), 0); walk(join(packDir, 'skills'), 0); walk(join(packDir, '.claude', 'skills'), 0);
   return [...new Set(out)].sort();
 }

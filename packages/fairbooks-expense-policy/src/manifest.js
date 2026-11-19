@@ -89,16 +89,16 @@ export const manifest = defineManifest({
     },
     {
       name: 'expenses_write_report', kind: 'report',
-      description: 'Write expense-review.md and line-findings.csv (blank reviewer columns) into out_dir (default mythos-out/expenses).',
+      description: 'Write expense-review.md and line-findings.csv (blank reviewer columns) into out_dir (default fairbooks-out/expenses).',
       inputSchema: { type: 'object', required: ['expenses', 'policy'], properties: { ...props, out_dir: str } },
-      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/expenses'); return { summary: `Review written for ${r.reports} report(s).`, files: [ctx.writeFile(out, 'expense-review.md', reviewMarkdown(r)), ctx.writeFile(out, 'line-findings.csv', findingsCsv(r))] }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/expenses'); return { summary: `Review written for ${r.reports} report(s).`, files: [ctx.writeFile(out, 'expense-review.md', reviewMarkdown(r)), ctx.writeFile(out, 'line-findings.csv', findingsCsv(r))] }; },
     },
     {
       name: 'expenses_write_evidence_pack', kind: 'report', title: 'Write the evidence pack',
       description: 'Write evidence-pack.html (self-contained, no scripts), audit-queue.csv (blank reviewer columns) and evidence-manifest.json with the sha256 of every input (expenses, policy, history, receipts used) and output. The manifest hash is recorded in the audit log as output_sha256. Receipt text is not included.',
       inputSchema: { type: 'object', required: ['expenses', 'policy'], properties: { ...props, ...dupProps, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, d, q } = queueOf(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/expenses/evidence');
+        const { r, d, q } = queueOf(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/expenses/evidence');
         const inputs = { [a.expenses]: ctx.hashFile(a.expenses), [a.policy]: ctx.hashFile(a.policy) };
         if (a.history) inputs[a.history] = ctx.hashFile(a.history);
         if (a.receipts) for (const f of [...new Set(r.items.map((l) => l.receipt).filter(Boolean))].sort()) { const p = join(a.receipts, f); if (/^[\w.\- ]+$/.test(f) && ctx.exists(p)) inputs[p.split('\\').join('/')] = ctx.hashFile(p); }
@@ -119,7 +119,7 @@ export const manifest = defineManifest({
         const r = run(a, ctx);
         const card = ctx.sourceReports().find((s) => s.profile === 'ramp_transactions');
         if (card) throw new Error(`${card.file} is a company card export (${card.system}): the company already paid these, so there is nothing to reimburse. Review and duplicate checks still work on it.`);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/expenses');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/expenses');
         const csv = batchCsv(r); const cf = ctx.writeFile(out, 'staged-reimbursements.csv', csv);
         const staged = r.report_summaries.filter((s) => s.recommended > 0);
         const batch = { created_at: new Date().toISOString(), policy_source: r.policy_source, currency: r.currency, reports: staged.map((s) => ({ report_id: s.report_id, employee: s.employee, amount: s.recommended, recommendation: s.recommendation })), total: Math.round(staged.reduce((t, s) => t + s.recommended, 0) * 100) / 100, csv: 'staged-reimbursements.csv', csv_sha256: sha256(csv), held: r.report_summaries.filter((s) => s.recommended === 0).map((s) => `${s.report_id} (${s.recommendation})`), status: 'staged - not paid' };
@@ -138,7 +138,7 @@ export const manifest = defineManifest({
         if (!existsSync(cf) || sha256(readFileSync(cf, 'utf8')) !== b.csv_sha256) throw new Error('staged-reimbursements.csv changed after the batch was staged');
         if (!b.reports.length) throw new Error('the batch has no reports to reimburse');
         const at = new Date().toISOString();
-        const file = appendRows(ctx.outDir(a.out_dir || 'mythos-out/expenses'), 'reimbursement-approvals.csv', b.reports.map((r) => ({ approved_at: at, batch_sha256: a.batch_sha256, report_id: r.report_id, employee: r.employee, amount: r.amount.toFixed(2), currency: b.currency, status: 'approved - a person pays it' })), ['approved_at', 'batch_sha256', 'report_id', 'employee', 'amount', 'currency', 'status']);
+        const file = appendRows(ctx.outDir(a.out_dir || 'fairbooks-out/expenses'), 'reimbursement-approvals.csv', b.reports.map((r) => ({ approved_at: at, batch_sha256: a.batch_sha256, report_id: r.report_id, employee: r.employee, amount: r.amount.toFixed(2), currency: b.currency, status: 'approved - a person pays it' })), ['approved_at', 'batch_sha256', 'report_id', 'employee', 'amount', 'currency', 'status']);
         return { summary: `Reimbursement of ${b.total.toFixed(2)} ${b.currency} for ${b.reports.length} report(s) approved and recorded. Nothing was paid.`, file };
       },
     },

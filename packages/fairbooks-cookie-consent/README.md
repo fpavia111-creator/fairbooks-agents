@@ -45,14 +45,14 @@ claude mcp add fairbooks-cookie-consent -- npx -y fairbooks-cookie-consent@0.2.0
 | Tool | Policy | What it does |
 |---|---|---|
 | `consent_inventory` | **allow** | Cookie and third-party inventory with every gap against the declared policy |
-| `consent_write_report` | **allow** | Write `consent-audit.md`, `consent-audit.html` (self-contained, no scripts), `cookie-inventory.csv`, `third-parties.csv` and `inventory.json` (no cookie values) to `mythos-out/consent`; the output hash goes into the audit line |
+| `consent_write_report` | **allow** | Write `consent-audit.md`, `consent-audit.html` (self-contained, no scripts), `cookie-inventory.csv`, `third-parties.csv` and `inventory.json` (no cookie values) to `fairbooks-out/consent`; the output hash goes into the audit line |
 | `consent_diff_inventory` | **allow** | Compare an earlier `inventory.json` with the current captures |
 | `consent_draft_policy_table` | **ask (Auto-eligible)** | Draft `cookie-table.md` and `declared.proposed.json` with `[TO CONFIRM]` markers, plus `proposal.json` with hashes |
 | `consent_request_publish` | **ask · one-click** | After a named human approves, record the reviewed table (bound to its hash; refused while markers remain) for whoever publishes |
 | `deploy_site` | **block** | Listed so agents see the refusal. Fairbooks Cookie Consent never changes the live site, banner or tag manager. |
 | `http_fetch` | **block** | Listed so agents see the refusal. Fairbooks Cookie Consent makes no network calls. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -91,7 +91,7 @@ fairbooks-cookie-consent call consent_inventory '{"site":"site","base_url":"http
 fairbooks-cookie-consent eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

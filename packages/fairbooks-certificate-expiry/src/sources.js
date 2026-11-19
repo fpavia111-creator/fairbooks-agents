@@ -50,7 +50,7 @@ export const SOURCES = {
         auto_renew: { from: ['Type', 'RenewalEligibility'], consume: false, compute: (_r, get) => (/^AMAZON_ISSUED$/i.test(String(get('Type') ?? '')) && /^ELIGIBLE$/i.test(String(get('RenewalEligibility') ?? '')) ? 'yes' : 'no') },
         key_type: { from: 'KeyAlgorithm', consume: false, compute: (_r, get) => keyOf(get('KeyAlgorithm'))[0] },
         key_bits: { from: 'KeyAlgorithm', compute: (_r, get) => keyOf(get('KeyAlgorithm'))[1] },
-      }, { skipRow: (_r, get) => String(get('NotAfter') ?? '').trim() === '', note: 'auto_renew is yes only for Amazon-issued certificates that ACM reports as eligible for renewal; imported certificates do not renew by themselves. Certificates with no expiry yet (pending validation or failed) are skipped. The list has no owner, issuer name for imported certificates or signature algorithm, so set an owner in mythos-sources.json and expect the weak-signature check to find nothing here.' }),
+      }, { skipRow: (_r, get) => String(get('NotAfter') ?? '').trim() === '', note: 'auto_renew is yes only for Amazon-issued certificates that ACM reports as eligible for renewal; imported certificates do not renew by themselves. Certificates with no expiry yet (pending validation or failed) are skipped. The list has no owner, issuer name for imported certificates or signature algorithm, so set an owner in fairbooks-sources.json and expect the weak-signature check to find nothing here.' }),
       exportProfile('crtsh', {
         id: { from: 'common_name', consume: false, compute: (_r, get) => `crtsh:${String(get('common_name') ?? '').trim().toLowerCase()}` },
         type: { value: 'tls' },

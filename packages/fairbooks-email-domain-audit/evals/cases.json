@@ -82,7 +82,7 @@
       "args": {
         "domain": "nomail.example.net",
         "records": "fixtures/records.json",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -228,7 +228,7 @@
         "records": "fixtures/records.json",
         "start_date": "2026-11-16",
         "rua": "dmarc@example.net",
-        "out_dir": "mythos-out/eval-rollout"
+        "out_dir": "fairbooks-out/eval-rollout"
       },
       "expect": {
         "status": "executed",
@@ -253,7 +253,7 @@
         "domain": "brand.example.net",
         "records": "fixtures/records.json",
         "start_date": "2026-11-16",
-        "out_dir": "mythos-out/eval-rollout2"
+        "out_dir": "fairbooks-out/eval-rollout2"
       },
       "expect": {
         "status": "executed",
@@ -288,7 +288,7 @@
         "reports": [
           "fixtures/dmarc"
         ],
-        "out_dir": "mythos-out/eval-report"
+        "out_dir": "fairbooks-out/eval-report"
       },
       "expect": {
         "status": "executed",

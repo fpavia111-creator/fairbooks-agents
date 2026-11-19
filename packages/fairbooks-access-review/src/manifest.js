@@ -47,7 +47,7 @@ const run = (a, ctx) => {
   return memory ? { ...r, memory } : r;
 };
 const memNote = (r) => (r.memory ? ` ${r.memory.used.length} learned fact(s) used.` : '');
-const OUT = 'mythos-out/access';
+const OUT = 'fairbooks-out/access';
 const language = { type: 'string', enum: LANGS, description: 'Language of the summary or evidence page: en, de, fr, es, pt, it, ja, zh, ko (default: the --lang setting, else English). The CSV, codes and JSON stay in English.' };
 
 const PROMPT = `You are running an access recertification with the fairbooks-access-review tools. Work only on files under --root. Fairbooks Access Review never revokes access; a named person does.
@@ -92,7 +92,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'access_recert_sheet', kind: 'report', title: 'Write recertification sheet',
-      description: 'Write recertification.csv (assigned_reviewer, delegated_to, due_date, and blank reviewer_decision / reviewer_name / review_date columns) and recertification-summary.md into out_dir (default mythos-out/access).',
+      description: 'Write recertification.csv (assigned_reviewer, delegated_to, due_date, and blank reviewer_decision / reviewer_name / review_date columns) and recertification-summary.md into out_dir (default fairbooks-out/access).',
       inputSchema: { type: 'object', required: ['access'], additionalProperties: false, properties: { ...common, out_dir: str, language } },
       handler: async (a, ctx) => {
         const r = run(a, ctx); const out = ctx.outDir(a.out_dir || OUT);
@@ -121,7 +121,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'access_evidence_pack', kind: 'report', title: 'Write campaign evidence pack',
-      description: 'From a filled recertification.csv, write recertification-evidence.json and .html into out_dir (default mythos-out/access/evidence): totals, decisions, reviewers, exceptions and the sha256 of the sheet. The record hash is logged in the audit line as output_sha256. Records what the sheet says; it is not proof the reviews happened.',
+      description: 'From a filled recertification.csv, write recertification-evidence.json and .html into out_dir (default fairbooks-out/access/evidence): totals, decisions, reviewers, exceptions and the sha256 of the sheet. The record hash is logged in the audit line as output_sha256. Records what the sheet says; it is not proof the reviews happened.',
       inputSchema: { type: 'object', required: ['sheet'], additionalProperties: false, properties: { sheet: { ...str, description: 'Filled recertification.csv' }, as_of: date, campaign: { ...str, description: 'Campaign name, e.g. "Q4 2026 access review"' }, out_dir: str, language } },
       handler: async (a, ctx) => {
         const s = campaignStatus(ctx.records(a.sheet), a);

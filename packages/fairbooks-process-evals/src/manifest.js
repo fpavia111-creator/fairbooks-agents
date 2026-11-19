@@ -105,7 +105,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'evals_write_report', kind: 'report', title: 'Write Markdown, JSON and JUnit',
-      description: 'Write eval-report.md, eval-results.json and junit.xml (for CI) into out_dir (default mythos-out/evals). Optional baseline adds regressions and statistics; optional rubric adds cited rubric grades; optional gate adds a pass/fail result. The results hash is recorded in the audit log.',
+      description: 'Write eval-report.md, eval-results.json and junit.xml (for CI) into out_dir (default fairbooks-out/evals). Optional baseline adds regressions and statistics; optional rubric adds cited rubric grades; optional gate adds a pass/fail result. The results hash is recorded in the audit log.',
       inputSchema: { type: 'object', required: ['suite', 'responses'], additionalProperties: false, properties: { suite: P.suite, responses: P.responses, baseline: P.baseline, gate: P.gate, rubric: P.rubric, judgments: P.judgments, out_dir: str, resamples: P.resamples, seed: P.seed, confidence: P.confidence, min_delta: P.min_delta } },
       handler: async (a, ctx) => {
         const s = loadSuite(ctx, a.suite); const gateCfg = loadGate(ctx, a);
@@ -113,7 +113,7 @@ export const manifest = defineManifest({
         const cmp = a.baseline ? compared(ctx, s, a.baseline, r, a, gateCfg) : null;
         const rubric = loadRubric(ctx, a, s);
         const gate = gateCfg ? applyGate(gateCfg, r, cmp, rubric) : null;
-        const out = ctx.outDir(a.out_dir || 'mythos-out/evals');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/evals');
         const json = JSON.stringify({ grade: r, compare: cmp, rubric, gate }, null, 2);
         const files = [ctx.writeFile(out, 'eval-report.md', reportMarkdown(r, cmp, new Date().toISOString(), { gate, rubric })), ctx.writeFile(out, 'eval-results.json', json), ctx.writeFile(out, 'junit.xml', junit(r))];
         return { summary: `Report written: ${r.score}%${cmp ? `, ${cmp.regressions.length} regression(s), ${cmp.stats.verdict.replace(/_/g, ' ')}` : ''}${gate ? `, gate ${gate.result}` : ''}.`, files, score: r.score, comparable: r.comparable, ...(cmp ? { stat_verdict: cmp.stats.verdict } : {}), ...(gate ? { gate } : {}), output_sha256: sha256(json) };
@@ -121,7 +121,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'evals_write_dashboard', kind: 'report', title: 'Write the offline HTML dashboard',
-      description: 'Write dashboard.html (and dashboard.json) into out_dir (default mythos-out/evals): score trend across runs, a case-by-run grid with regressions and fixes highlighted, flaky and critical cases, per-tag results and the statistics for the last two runs. One self-contained file: inline CSS, no scripts, no network requests.',
+      description: 'Write dashboard.html (and dashboard.json) into out_dir (default fairbooks-out/evals): score trend across runs, a case-by-run grid with regressions and fixes highlighted, flaky and critical cases, per-tag results and the statistics for the last two runs. One self-contained file: inline CSS, no scripts, no network requests.',
       inputSchema: { type: 'object', required: ['suite', 'runs'], additionalProperties: false, properties: { suite: P.suite, runs: { type: 'array', minItems: 1, maxItems: 24, items: str, description: 'Recorded response files, oldest first' }, labels: { type: 'array', items: str, description: 'A label per run (default: file names)' }, gate: P.gate, rubric: P.rubric, judgments: P.judgments, out_dir: str, resamples: P.resamples, seed: P.seed, confidence: P.confidence, min_delta: P.min_delta } },
       handler: async (a, ctx) => {
         if (a.labels && a.labels.length !== a.runs.length) throw new Error('labels must have one entry per run');
@@ -134,7 +134,7 @@ export const manifest = defineManifest({
         const gate = gateCfg ? applyGate(gateCfg, last, cmp, rubric) : null;
         const html = dashboardHtml(s, runs, { stats, gate, rubric });
         const json = JSON.stringify({ suite: s.suite, pinned_model: s.model.id, runs: runs.map((r) => ({ label: r.label, score: r.grade.score, passed: r.grade.passed, cases: r.grade.cases, comparable: r.grade.comparable, results: r.grade.results.map(({ id, pass, passes, trials }) => ({ id, pass, passes, trials })) })), compare: cmp, gate }, null, 2) + '\n';
-        const out = ctx.outDir(a.out_dir || 'mythos-out/evals');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/evals');
         const files = [ctx.writeFile(out, 'dashboard.html', html), ctx.writeFile(out, 'dashboard.json', json)];
         return { summary: `Dashboard written: ${runs.length} run(s), latest ${last.score}%${cmp ? `, ${cmp.regressions.length} regression(s) vs previous` : ''}.`, files, runs: runs.length, latest_score: last.score, regressions: cmp ? cmp.regressions.map((r) => r.id) : [], ...(gate ? { gate } : {}), output_sha256: sha256(html) };
       },

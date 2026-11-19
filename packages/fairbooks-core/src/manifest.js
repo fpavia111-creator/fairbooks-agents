@@ -1,4 +1,4 @@
-// Pack manifest: identity, pinned model, tool allowlist and Talos-style policy.
+// Pack manifest: identity, pinned model, tool allowlist and allow/ask/block policy.
 
 export const KINDS = ['read', 'report', 'write', 'action'];
 export const DECISIONS = ['allow', 'ask', 'block'];

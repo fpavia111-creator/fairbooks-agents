@@ -25,7 +25,7 @@ export async function demo(manifest) {
   const auto = new AgentRuntime(manifest, { root: rt.root, mode: 'auto', autoActions: ['dupes_apply_merge', 'dupes_undo_merge'], caps: { maxSteps: 5 } });
   const c1 = v.result.proposals[0];
   printStep('Auto mode (buyer opted in dupes_apply_merge): next merge runs without asking, still logged', await auto.call('dupes_apply_merge', { path: 'vendors.csv', kind: 'vendor', survivor: c1.survivor, merge: c1.merge }));
-  printStep('Auto mode: undo that merge (copy restored byte-for-byte, hash checked)', await auto.call('dupes_undo_merge', { copy: 'mythos-out/dupes/vendors.merged.csv' }));
+  printStep('Auto mode: undo that merge (copy restored byte-for-byte, hash checked)', await auto.call('dupes_undo_merge', { copy: 'fairbooks-out/dupes/vendors.merged.csv' }));
   printStep('Auto mode: agent tries to pay a vendor', await auto.call('dupes_pay_vendor', {}));
   process.stdout.write(`\nAudit log: ${rt.stateDir}/audit.jsonl\n`);
 }

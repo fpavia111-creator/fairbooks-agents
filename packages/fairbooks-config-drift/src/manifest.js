@@ -8,7 +8,7 @@ import { APPROVED_DRIFT_SCHEMA, PROMPTS, driftSarif } from './config.js';
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
 const nonEmpty = { type: 'string', minLength: 1 };
-const DEFAULT_OUT = 'mythos-out/drift';
+const DEFAULT_OUT = 'fairbooks-out/drift';
 const snapDesc = 'Snapshot under --root: JSON or YAML config, .env/.properties, schema CSV, Terraform state (.tfstate) or Kubernetes manifests (YAML/JSON)';
 const before = { ...nonEmpty, description: `Earlier snapshot. ${snapDesc}` };
 const after = { ...nonEmpty, description: 'Later snapshot of the same kind' };
@@ -47,7 +47,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'drift_write_report', kind: 'report', title: 'Write the drift report',
-      description: 'Write drift-report.md, drift.json, drift.sarif (SARIF 2.1.0 for CI code scanning) and revert-plan.json (a proposal back to "before") into out_dir (default mythos-out/drift). The report hash is logged in the audit line.',
+      description: 'Write drift-report.md, drift.json, drift.sarif (SARIF 2.1.0 for CI code scanning) and revert-plan.json (a proposal back to "before") into out_dir (default fairbooks-out/drift). The report hash is logged in the audit line.',
       inputSchema: { type: 'object', required: ['before', 'after'], properties: { before, after, ignore, approved, out_dir: str, title: str } },
       handler: async (a, ctx) => {
         const { b, af } = snaps(a, ctx); const d = diff(b, af, opts(a, ctx)); const plan = revertPlan(d, a.before); const out = ctx.outDir(a.out_dir || DEFAULT_OUT);

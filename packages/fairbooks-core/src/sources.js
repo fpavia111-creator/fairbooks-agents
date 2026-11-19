@@ -33,7 +33,7 @@ import { encodingName, ENCODINGS } from './encoding.js';
 export { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal };
 
 export const FIELD_TYPES = ['text', 'date', 'datetime', 'money', 'number', 'bool', 'email'];
-export const SOURCES_FILE = 'mythos-sources.json';
+export const SOURCES_FILE = 'fairbooks-sources.json';
 
 // Yes and no in the nine report languages too (ja, si, sim, oui, はい, 是, 예...), and the
 // ○ / × marks Japanese and Korean forms use.
@@ -315,7 +315,7 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
   };
 }
 
-/** JSON Schema for mythos-sources.json. */
+/** JSON Schema for fairbooks-sources.json. */
 const OVERRIDE = {
   type: 'object', additionalProperties: false,
   properties: {
@@ -339,7 +339,7 @@ export const SOURCES_CONFIG_SCHEMA = {
   },
 };
 
-/** Read and check <root>/mythos-sources.json. Returns null when there is none. */
+/** Read and check <root>/fairbooks-sources.json. Returns null when there is none. */
 export function loadSourceOverrides(root) {
   const f = join(root, SOURCES_FILE);
   if (!existsSync(f)) return null;

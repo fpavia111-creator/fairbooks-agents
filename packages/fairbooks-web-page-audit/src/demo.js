@@ -20,7 +20,7 @@ export async function demo(manifest) {
   s.result.top_actions.slice(0, 3).forEach((t, n) => process.stdout.write(`    ${n + 1}. ${t.check} ${t.selector} — ${t.why}\n`));
   const d = await rt.call('pages_draft_fixes', { ...f, lang: 'en' });
   printStep('Auto: draft mechanical fixes as copies and one unified diff (opted in; site files untouched)', d);
-  process.stdout.write(readFileSync(join(rt.root, 'mythos-out/pages/fixes.diff'), 'utf8').split('\n').slice(0, 12).map((l) => `    ${l}`).join('\n') + '\n');
+  process.stdout.write(readFileSync(join(rt.root, 'fairbooks-out/pages/fixes.diff'), 'utf8').split('\n').slice(0, 12).map((l) => `    ${l}`).join('\n') + '\n');
   const pub = { proposal: d.result.proposal, proposal_sha256: d.result.proposal_sha256 };
   const a = await rt.call('pages_request_publish', pub);
   printStep('Auto: publish the proposal — stays one-click (production deploy)', a);

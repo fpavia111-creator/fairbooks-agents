@@ -17,14 +17,14 @@
       }
     },
     {
-      "id": "mythos-chain-verifies",
+      "id": "fairbooks-chain-verifies",
       "tool": "evidence_verify_chain",
       "args": {
-        "log": "fixtures/olympus-audit.jsonl"
+        "log": "fixtures/fairbooks-audit.jsonl"
       },
       "expect": {
         "equals": {
-          "result.format": "mythos",
+          "result.format": "fairbooks",
           "result.ok": true
         }
       }
@@ -50,7 +50,7 @@
       "args": {
         "logs": [
           "fixtures/talos-audit.jsonl",
-          "fixtures/olympus-audit.jsonl"
+          "fixtures/fairbooks-audit.jsonl"
         ]
       },
       "expect": {
@@ -131,7 +131,7 @@
       "args": {
         "logs": [
           "fixtures/talos-audit.jsonl",
-          "fixtures/olympus-audit.jsonl"
+          "fixtures/fairbooks-audit.jsonl"
         ],
         "template": "itgc-starter",
         "evidence_dir": "fixtures/evidence/2026-Q4",

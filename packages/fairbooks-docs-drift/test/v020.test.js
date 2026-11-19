@@ -68,7 +68,7 @@ test('docsdrift_ci: SARIF with repo-relative paths, fail_on, baseline and new_on
   const uris = sarif.runs[0].results.map((x) => x.locations?.[0]?.physicalLocation.artifactLocation.uri).filter(Boolean);
   assert.ok(uris.includes('kettle-of-notes/README.md')); assert.ok(uris.includes('kettle-of-notes/tools.json'));
   assert.equal(sarif.runs[0].results.length, 19);
-  const line = readAudit(join(root, '.mythos/audit.jsonl')).filter((e) => e.tool === 'docsdrift_ci').pop(); assert.equal(line.output_sha256, a.result.output_sha256);
+  const line = readAudit(join(root, '.fairbooks/audit.jsonl')).filter((e) => e.tool === 'docsdrift_ci').pop(); assert.equal(line.output_sha256, a.result.output_sha256);
   assert.equal((await rt.call('docsdrift_ci', { ...k, fail_on: 'none', out_dir: 'ci/b' })).result.pass, true);
   assert.equal((await rt.call('docsdrift_ci', { ...k, fail_on: 'any', out_dir: 'ci/c' })).result.failing.length, 19);
   // baseline: fix one README problem, add a new one
@@ -86,8 +86,8 @@ test('ci command: exit 1 on drift, 0 on this package, 2 on bad usage', () => {
   const root = tmpRoot(); const state = mkdtempSync(join(tmpdir(), 'docs-ci-state-'));
   const run = (...a) => spawnSync(process.execPath, [bin, 'ci', '--root', root, '--state-dir', state, ...a], { encoding: 'utf8' });
   const bad = run('--pack', 'kettle-of-notes', '--tools', 'kettle-of-notes/tools.json');
-  assert.equal(bad.status, 1, bad.stderr); assert.match(bad.stdout, /^FAIL/); assert.match(bad.stdout, /SARIF: mythos-out\/docs\/fairbooks-docs-drift\.sarif/);
-  assert.ok(existsSync(join(root, 'mythos-out/docs/fairbooks-docs-drift.sarif')));
+  assert.equal(bad.status, 1, bad.stderr); assert.match(bad.stdout, /^FAIL/); assert.match(bad.stdout, /SARIF: fairbooks-out\/docs\/fairbooks-docs-drift\.sarif/);
+  assert.ok(existsSync(join(root, 'fairbooks-out/docs/fairbooks-docs-drift.sarif')));
   assert.equal(run('--pack', 'kettle-of-notes', '--fail-on', 'none').status, 0);
   assert.equal(run('--pack', 'kettle-of-notes', '--bogus', 'x').status, 2);
   assert.equal(run().status, 2);
@@ -108,18 +108,18 @@ test('GitHub Action: the composite step fails on drift, passes on this package, 
   for (const input of ['pack', 'tools', 'openapi', 'config', 'fail-on', 'baseline', 'new-only', 'require-changelog', 'out-dir', 'version']) assert.match(yml, new RegExp(`\\n  ${input}:\\n`), input);
   const runAction = (workspace, env) => {
     const out = join(mkdtempSync(join(tmpdir(), 'docs-gh-')), 'out');
-    const r = spawnSync('bash', ['-c', script], { encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: workspace, RUNNER_TEMP: mkdtempSync(join(tmpdir(), 'docs-rt-')), GITHUB_OUTPUT: out, ECHO_CMD: bin, ECHO_TOOLS: '', ECHO_OPENAPI: '', ECHO_CONFIG: '', ECHO_BASELINE: '', ECHO_NEW_ONLY: 'false', ECHO_REQUIRE_CHANGELOG: 'false', ECHO_FAIL_ON: 'error', ECHO_OUT_DIR: 'mythos-out/docs', ECHO_VERSION: '0.2.0', ...env } });
+    const r = spawnSync('bash', ['-c', script], { encoding: 'utf8', env: { ...process.env, GITHUB_WORKSPACE: workspace, RUNNER_TEMP: mkdtempSync(join(tmpdir(), 'docs-rt-')), GITHUB_OUTPUT: out, ECHO_CMD: bin, ECHO_TOOLS: '', ECHO_OPENAPI: '', ECHO_CONFIG: '', ECHO_BASELINE: '', ECHO_NEW_ONLY: 'false', ECHO_REQUIRE_CHANGELOG: 'false', ECHO_FAIL_ON: 'error', ECHO_OUT_DIR: 'fairbooks-out/docs', ECHO_VERSION: '0.2.0', ...env } });
     return { ...r, output: readFileSync(out, 'utf8') };
   };
   const ws = tmpRoot();
   const drift = runAction(ws, { ECHO_PACK: 'ladle-of-api', ECHO_OPENAPI: 'ladle-of-api/openapi.json' });
-  assert.equal(drift.status, 1, drift.stderr); assert.equal(drift.output.trim(), 'sarif=mythos-out/docs/fairbooks-docs-drift.sarif');
-  assert.ok(validateSarif(JSON.parse(readFileSync(join(ws, 'mythos-out/docs/fairbooks-docs-drift.sarif'), 'utf8'))).ok);
+  assert.equal(drift.status, 1, drift.stderr); assert.equal(drift.output.trim(), 'sarif=fairbooks-out/docs/fairbooks-docs-drift.sarif');
+  assert.ok(validateSarif(JSON.parse(readFileSync(join(ws, 'fairbooks-out/docs/fairbooks-docs-drift.sarif'), 'utf8'))).ok);
   const self = mkdtempSync(join(tmpdir(), 'docs-gh-self-'));
   for (const f of ['README.md', 'CHANGELOG.md', 'package.json']) cpSync(join(pkgDir, f), join(self, f));
   writeFileSync(join(self, 'tools.json'), JSON.stringify(ownTools()));
   const pass = runAction(self, { ECHO_PACK: '.', ECHO_TOOLS: 'tools.json', ECHO_REQUIRE_CHANGELOG: 'true' });
-  assert.equal(pass.status, 0, pass.stdout + pass.stderr); assert.ok(existsSync(join(self, 'mythos-out/docs/fairbooks-docs-drift.sarif')));
+  assert.equal(pass.status, 0, pass.stdout + pass.stderr); assert.ok(existsSync(join(self, 'fairbooks-out/docs/fairbooks-docs-drift.sarif')));
   assert.match(readFileSync(join(pkgDir, 'examples/docs-drift.yml'), 'utf8'), /upload-sarif/);
 });
 

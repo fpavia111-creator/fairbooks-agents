@@ -25,7 +25,7 @@ export async function demo(manifest) {
   printStep('Auto: build draft packets (opted in; nothing is submitted)', await rt.call('grants_build_packet', f));
   printStep('Auto: rebuild G1 following the funder template', await rt.call('grants_build_packet', { ...f, grant_id: 'G1', template: 'templates/lakeside-interim.json' }));
   printStep('Auto: evidence pack for G1 (zip with hash manifest; nothing is sent)', await rt.call('grants_evidence_pack', { ...f, grant_id: 'G1' }));
-  const sub = { grant_id: 'G1', packet: 'mythos-out/grants/packets/G1/report-draft.md' };
+  const sub = { grant_id: 'G1', packet: 'fairbooks-out/grants/packets/G1/report-draft.md' };
   const a = await rt.call('grants_request_submission', sub);
   printStep('Auto: submit the G1 report — a binding send, stays one-click', a);
   rt.approvals.approve(a.approval_id, 'Morgan Program Director (fictional)');

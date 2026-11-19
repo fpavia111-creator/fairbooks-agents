@@ -75,9 +75,9 @@ test('report writes HTML and a value-free inventory.json with an output hash; di
   assert.match(html, /Content-Security-Policy" content="default-src 'none'/); assert.ok(!/<script/i.test(html)); assert.match(html, /gpc_signal_ignored/);
   assert.ok(!/compliant/i.test(html.replace(/never says a site is GDPR, CCPA\/CPRA or ePrivacy compliant/g, '')), 'no compliance wording');
   const inv = JSON.parse(readFileSync(w.result.files[4], 'utf8')); assert.equal(inv.format, 'consent-inventory/1');
-  const audit1 = readFileSync(join(root, '.mythos/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).at(-1);
+  const audit1 = readFileSync(join(root, '.fairbooks/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l)).at(-1);
   assert.equal(audit1.output_sha256, w.result.output_sha256);
-  const d = await rt.call('consent_diff_inventory', { ...f, previous: 'mythos-out/consent/inventory.json' });
+  const d = await rt.call('consent_diff_inventory', { ...f, previous: 'fairbooks-out/consent/inventory.json' });
   assert.equal(d.status, 'executed'); assert.ok(d.result.resolved_findings.some((x) => x.check === 'gpc_signal_ignored'));
   assert.match(d.result.markdown, /not a compliance finding/);
 });

@@ -1,7 +1,7 @@
 {
   "name": "fairbooks-core",
   "version": "0.2.0",
-  "description": "Shared core for Fairbooks domain agents: pinned-model pack manifests, Talos-style allow/ask/block policy, Review/Assist/Auto modes with caps and a kill switch, hash-chained JSONL audit logs, a zero-dependency stdio MCP server and fixture-based evals.",
+  "description": "Shared core for Fairbooks domain agents: pinned-model pack manifests, allow/ask/block policy, Review/Assist/Auto modes with caps and a kill switch, hash-chained JSONL audit logs, a zero-dependency stdio MCP server and fixture-based evals.",
   "type": "module",
   "license": "MIT",
   "author": "Kurt Francisco",
@@ -14,10 +14,10 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "mythos-approve": "bin/mythos-approve.js",
-    "mythos-verify-log": "bin/mythos-verify-log.js",
-    "mythos-new-agent": "bin/mythos-new-agent.js",
-    "mythos-license": "bin/mythos-license.js"
+    "fairbooks-approve": "bin/fairbooks-approve.js",
+    "fairbooks-verify-log": "bin/fairbooks-verify-log.js",
+    "fairbooks-new-agent": "bin/fairbooks-new-agent.js",
+    "fairbooks-license": "bin/fairbooks-license.js"
   },
   "files": [
     "src",
@@ -45,6 +45,6 @@
     "guardrails",
     "human-in-the-loop",
     "audit-log",
-    "mythos"
+    "fairbooks"
   ]
 }

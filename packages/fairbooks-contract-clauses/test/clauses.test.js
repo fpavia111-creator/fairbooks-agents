@@ -47,20 +47,20 @@ test('send is one-click, needs a named reviewer, hash-bound, marker-gated; send 
   const d = await rt.call('clauses_draft_markup', { contract: 'contracts/msa.md', playbook: 'playbook.json' }); assert.equal(d.status, 'executed');
   const req = { draft: d.result.draft, draft_sha256: d.result.draft_sha256, to: 'Kettle Labs legal', reviewed_by: 'Morgan' };
   const a = await rt.call('clauses_request_send', req); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Jo');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Jo');
   assert.match((await rt.call('clauses_request_send', req)).reason, /COUNSEL REVIEW/);
   const file = join(root, d.result.draft); const reviewed = readFileSync(file, 'utf8').replace(/ ?\[COUNSEL REVIEW\]/g, ''); writeFileSync(file, reviewed);
   const stale = { ...req, to: 'Kettle Labs legal team' };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('clauses_request_send', stale)).approval_id, 'Jo');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('clauses_request_send', stale)).approval_id, 'Jo');
   assert.match((await rt.call('clauses_request_send', stale)).reason, /does not match/);
   const req2 = { ...req, draft_sha256: createHash('sha256').update(reviewed).digest('hex') };
   const blank = { ...req2, reviewed_by: ' ' };
   // A blank reviewer is refused before anyone is asked to approve it.
   const refused = await rt.call('clauses_request_send', blank); assert.equal(refused.status, 'error'); assert.equal(refused.approval_id, undefined);
   assert.match(refused.reason, /reviewed_by is required/);
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('clauses_request_send', req2)).approval_id, 'Jo');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('clauses_request_send', req2)).approval_id, 'Jo');
   const ok = await rt.call('clauses_request_send', req2); assert.equal(ok.status, 'executed'); assert.equal(ok.approved_by, 'Jo');
-  const row = parseCsv(readFileSync(join(root, 'mythos-out/clauses/send-requests.csv'), 'utf8'))[0];
+  const row = parseCsv(readFileSync(join(root, 'fairbooks-out/clauses/send-requests.csv'), 'utf8'))[0];
   assert.deepEqual([row.to, row.reviewed_by, row.status], ['Kettle Labs legal', 'Morgan', 'approved - a person sends it']);
   for (const t of ['send_email', 'e_sign']) assert.equal((await rt.call(t, {})).status, 'blocked');
 });

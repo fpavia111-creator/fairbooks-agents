@@ -22,7 +22,7 @@ const SEAT_PROFILES = [
     tier: 'Assigned Products',
     last_active: { compute: (r, _get, h) => Object.keys(r).filter((k) => /last activity date$/i.test(k)).map((k) => h.date(r[k])).filter(Boolean).sort().pop() || '', default: 'never' },
     status: { from: 'Is Deleted', values: { true: 'removed', false: 'active' } },
-  }, { note: 'Seat prices are not in the Microsoft 365 usage report. Savings show as unknown until monthly_cost is set in mythos-sources.json or a cost column is added.' }),
+  }, { note: 'Seat prices are not in the Microsoft 365 usage report. Savings show as unknown until monthly_cost is set in fairbooks-sources.json or a cost column is added.' }),
   exportProfile('google_workspace_users', {
     app: { value: 'Google Workspace' },
     user: fullName('First Name [Required]', 'Last Name [Required]'),
@@ -30,21 +30,21 @@ const SEAT_PROFILES = [
     tier: ['Licenses [READ ONLY]', 'New Licenses [UPLOAD ONLY]'],
     last_active: { from: 'Last Sign In [READ ONLY]', values: NEVER },
     status: { from: 'Status [READ ONLY]', values: { Active: 'active', Suspended: 'suspended' } },
-  }, { note: 'Seat prices are not in the Google Workspace users download. Savings show as unknown until monthly_cost is set in mythos-sources.json or a cost column is added.' }),
+  }, { note: 'Seat prices are not in the Google Workspace users download. Savings show as unknown until monthly_cost is set in fairbooks-sources.json or a cost column is added.' }),
   exportProfile('github_copilot_seats', {
     app: { value: 'GitHub Copilot' },
     user: 'assignee.login',
     tier: 'plan_type',
     last_active: { from: 'last_activity_at', default: 'never' },
     status: { value: 'active' },
-  }, { note: 'The Copilot seats list has no email or price. Savings show as unknown until monthly_cost is set in mythos-sources.json.' }),
+  }, { note: 'The Copilot seats list has no email or price. Savings show as unknown until monthly_cost is set in fairbooks-sources.json.' }),
   exportProfile('atlassian_users', {
     app: { value: 'Atlassian' },
     user: 'User name',
     email: 'email',
     last_active: { compute: (r, _get, h) => Object.keys(r).filter((k) => /^last seen in/i.test(k)).map((k) => h.date(r[k])).filter(Boolean).sort().pop() || '', default: 'never' },
     status: { from: 'User status', values: { Active: 'active', Suspended: 'suspended', Deactivated: 'deactivated', Invited: 'active' } },
-  }, { note: 'Seat prices are not in the Atlassian users export. Savings show as unknown until monthly_cost is set in mythos-sources.json.' }),
+  }, { note: 'Seat prices are not in the Atlassian users export. Savings show as unknown until monthly_cost is set in fairbooks-sources.json.' }),
 ];
 
 const ROSTER_FIELDS = {

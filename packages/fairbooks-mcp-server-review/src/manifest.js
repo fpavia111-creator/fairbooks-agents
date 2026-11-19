@@ -116,12 +116,12 @@ export const manifest = defineManifest({
     },
     {
       name: 'mcpreview_pin_tools', kind: 'report', title: 'Pin reviewed tool definitions',
-      description: 'Write tool-pins.json (a sha256 per tool plus the reviewed text) into out_dir (default mythos-out/mcpreview), so later changes to descriptions or schemas (rug pulls) show up in mcpreview_check_pins. Pin only definitions a person has reviewed.',
+      description: 'Write tool-pins.json (a sha256 per tool plus the reviewed text) into out_dir (default fairbooks-out/mcpreview), so later changes to descriptions or schemas (rug pulls) show up in mcpreview_check_pins. Pin only definitions a person has reviewed.',
       inputSchema: { type: 'object', required: ['tools'], additionalProperties: false, properties: { tools: P.tools, server: P.server, out_dir: str } },
       handler: async (a, ctx) => {
         const { dumps } = readTools(a, ctx);
         const text = JSON.stringify(pinTools(dumps), null, 2) + '\n';
-        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'mythos-out/mcpreview'), 'tool-pins.json', text);
+        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'fairbooks-out/mcpreview'), 'tool-pins.json', text);
         const n = dumps.reduce((s, d) => s + d.tools.length, 0);
         return { summary: `Pinned ${n} tool(s) on ${dumps.length} server(s).`, file, tools: n, output_sha256: sha256(text) };
       },
@@ -138,7 +138,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'mcpreview_write_report', kind: 'report', title: 'Write Markdown, JSON and SARIF',
-      description: 'Write mcpreview-report.md (with a prioritised "fix first" list and an OWASP MCP Top 10 view), findings.json and mcpreview.sarif (SARIF 2.1.0 with rule help, CWE tags, security-severity, data-flow paths and policy suppressions) into out_dir (default mythos-out/mcpreview). Optional fail_on returns a pass/fail gate for CI. The SARIF hash is recorded in the audit log.',
+      description: 'Write mcpreview-report.md (with a prioritised "fix first" list and an OWASP MCP Top 10 view), findings.json and mcpreview.sarif (SARIF 2.1.0 with rule help, CWE tags, security-severity, data-flow paths and policy suppressions) into out_dir (default fairbooks-out/mcpreview). Optional fail_on returns a pass/fail gate for CI. The SARIF hash is recorded in the audit log.',
       inputSchema: { type: 'object', additionalProperties: false, properties: { dir: P.dir, config: P.config, tools: P.tools, server: P.server, pins: P.pins, policy: P.policy, advisories: P.advisories, out_dir: str, title: str, uri_prefix: { type: 'string', description: 'Prefix for SARIF paths so they are repository-relative, e.g. "servers/notes/"' }, fail_on: { type: 'string', enum: ['high', 'medium', 'low', 'none'] } } },
       handler: async (a, ctx) => {
         if (!a.dir && !a.config && !a.tools) throw new Error('pass "dir" (a server source folder), "config" (an MCP client config JSON) and/or "tools" (a saved tools/list result)');
@@ -157,7 +157,7 @@ export const manifest = defineManifest({
         const failOn = a.fail_on || policy?.fail_on || null;
         const gate = failOn ? { fail_on: failOn, result: items.some((i) => GATE[failOn].includes(i.severity)) ? 'fail' : 'pass' } : null;
         const merged = { findings: items.length, by_severity: by, verdict: verdictOf(by), items, suppressed, gate, tool_changes: pc?.changes || [] };
-        const out = ctx.outDir(a.out_dir || 'mythos-out/mcpreview');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/mcpreview');
         const sarifText = JSON.stringify(sarif(merged, pkg.version, { uriPrefix: a.uri_prefix, configUri: a.config }), null, 2) + '\n';
         const json = JSON.stringify({ tool: 'fairbooks-mcp-server-review', version: pkg.version, advisory_snapshot, verdict: merged.verdict, by_severity: by, gate, fix_first: actionPlan(items), source: src, config: cfg, tools: tl, pins: pc }, null, 2) + '\n';
         const files = [

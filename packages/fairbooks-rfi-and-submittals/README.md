@@ -37,7 +37,7 @@ No named exports: other column names are matched by a list of common alternative
 
 No named exports: other column names are matched by a list of common alternatives.
 
-Columns named differently? Run `npx fairbooks-rfi-and-submittals inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-rfi-and-submittals inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -74,7 +74,7 @@ claude mcp add fairbooks-rfi-and-submittals -- npx -y fairbooks-rfi-and-submitta
 | Tool | Policy | What it does |
 |---|---|---|
 | `rfis_review_log` | **allow** | Flags per RFI and submittal against the index |
-| `rfis_write_log_report` | **allow** | Write `rfi-log-review.md`, `rfi-log.csv`, `submittal-log.csv`, `ball-in-court.csv`, `rfi-due-dates.ics` and (with `previous_rfis`) `rfi-log-diff.md` to `mythos-out/rfis` |
+| `rfis_write_log_report` | **allow** | Write `rfi-log-review.md`, `rfi-log.csv`, `submittal-log.csv`, `ball-in-court.csv`, `rfi-due-dates.ics` and (with `previous_rfis`) `rfi-log-diff.md` to `fairbooks-out/rfis` |
 | `rfis_ball_in_court` | **allow** | Aging per responsible party and a chase list with reasons |
 | `rfis_diff_logs` | **allow** | Compare an earlier RFI log export with the current one |
 | `rfis_index_title_blocks` | **allow** | Read title-block text, compare with the index, write a proposed index (yours is not changed) |
@@ -84,7 +84,7 @@ claude mcp add fairbooks-rfi-and-submittals -- npx -y fairbooks-rfi-and-submitta
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks RFI and Submittals never sends. |
 | `project_portal_submit` | **block** | Listed so agents see the refusal. Fairbooks RFI and Submittals never submits to a project portal. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -108,7 +108,7 @@ fairbooks-rfi-and-submittals call rfis_review_log '{"documents":"documents.csv",
 fairbooks-rfi-and-submittals eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

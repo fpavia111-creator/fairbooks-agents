@@ -237,7 +237,7 @@
       "args": {
         "tools": "fixtures/tools/notes-v1.json",
         "server": "notes",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "contains": [
@@ -255,7 +255,7 @@
         "dir": "fixtures/flow-server",
         "tools": "fixtures/tools/multi.json",
         "fail_on": "high",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "contains": [

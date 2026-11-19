@@ -130,9 +130,9 @@ test('evidence pack: hashed inputs, self-contained HTML, output_sha256 in the au
   assert.match(html, /§3\.1 Meals/); assert.match(html, /Not fraud detection/);
   assert.equal(m.outputs['evidence-pack.html'], sha256(html));
   const q = parseCsv(readFileSync(r.result.files[1], 'utf8')); assert.equal(q[0].report_id, 'R-103'); assert.equal(q[0].reviewer, '');
-  const line = readAudit(join(root, '.mythos/audit.jsonl')).find((e) => e.tool === 'expenses_write_evidence_pack');
+  const line = readAudit(join(root, '.fairbooks/audit.jsonl')).find((e) => e.tool === 'expenses_write_evidence_pack');
   assert.equal(line.output_sha256, r.result.output_sha256);
-  const again = await rt.call('expenses_write_evidence_pack', { expenses: 'expenses.csv', policy: 'policy.json', receipts: 'receipts', history: 'history.csv', out_dir: 'mythos-out/ev2' });
+  const again = await rt.call('expenses_write_evidence_pack', { expenses: 'expenses.csv', policy: 'policy.json', receipts: 'receipts', history: 'history.csv', out_dir: 'fairbooks-out/ev2' });
   assert.equal(again.result.output_sha256, r.result.output_sha256, 'deterministic');
 });
 
@@ -140,11 +140,11 @@ test('new tools are read/report only; reimbursing still one-click with per diem 
   const rt = new AgentRuntime(manifest, { root: tmpRoot('prax-pd-'), mode: 'auto', autoActions: ['expenses_stage_reimbursement'] });
   const byName = Object.fromEntries(rt.listTools().map((t) => [t.name, t]));
   for (const t of ['expenses_read_receipts', 'expenses_find_duplicates', 'expenses_audit_queue', 'expenses_write_evidence_pack']) { assert.equal(byName[t].decision, 'allow'); assert.ok(['read', 'report'].includes(byName[t].kind)); }
-  const s = await rt.call('expenses_stage_reimbursement', { expenses: 'expenses-travel.csv', policy: 'policy.json', out_dir: 'mythos-out/pd' });
+  const s = await rt.call('expenses_stage_reimbursement', { expenses: 'expenses-travel.csv', policy: 'policy.json', out_dir: 'fairbooks-out/pd' });
   assert.equal(s.result.total, 324);
-  const args = { batch: s.result.batch, batch_sha256: s.result.batch_sha256, out_dir: 'mythos-out/pd' };
+  const args = { batch: s.result.batch, batch_sha256: s.result.batch_sha256, out_dir: 'fairbooks-out/pd' };
   const a = await rt.call('expenses_request_reimbursement', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(rt.root, '.mythos')).approve(a.approval_id, 'Kim');
+  new ApprovalStore(join(rt.root, '.fairbooks')).approve(a.approval_id, 'Kim');
   assert.equal((await rt.call('expenses_request_reimbursement', args)).status, 'executed');
 });
 

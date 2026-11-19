@@ -1,7 +1,7 @@
 import { matchRule, ONE_CLICK_CATEGORIES } from './manifest.js';
 
 /**
- * Talos-style allow/ask/block engine.
+ * allow/ask/block engine.
  * Returns { decision, reason, oneClick }. Unknown tools are blocked.
  */
 export class PolicyEngine {

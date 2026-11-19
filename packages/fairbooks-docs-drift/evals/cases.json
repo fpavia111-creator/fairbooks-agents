@@ -75,7 +75,7 @@
         "pack": "fixtures/kettle-of-notes",
         "tools": "fixtures/kettle-of-notes/tools.json",
         "max_fixes": 2,
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -181,7 +181,7 @@
       "args": {
         "pack": "fixtures/kettle-of-notes",
         "tools": "fixtures/kettle-of-notes/tools.json",
-        "out_dir": "mythos-out/eval-ci"
+        "out_dir": "fairbooks-out/eval-ci"
       },
       "expect": {
         "status": "executed",
@@ -207,7 +207,7 @@
       "args": {
         "pack": "fixtures/kettle-of-notes",
         "fail_on": "none",
-        "out_dir": "mythos-out/eval-ci2"
+        "out_dir": "fairbooks-out/eval-ci2"
       },
       "expect": {
         "equals": {
@@ -222,7 +222,7 @@
         "config": "fixtures/ladle-of-api/docs.config.json",
         "pack": "fixtures/ladle-of-api",
         "openapi": "fixtures/ladle-of-api/openapi.json",
-        "out_dir": "mythos-out/eval-ci3"
+        "out_dir": "fairbooks-out/eval-ci3"
       },
       "expect": {
         "contains": [

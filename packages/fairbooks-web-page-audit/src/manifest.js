@@ -45,10 +45,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'pages_write_report', kind: 'report',
-      description: 'Write page-audit.md, page-audit.html (self-contained, no scripts) and fix-list.csv (selector column; blank owner and status columns) into out_dir (default mythos-out/pages). Both reports open with a prioritised "do these first" list.',
+      description: 'Write page-audit.md, page-audit.html (self-contained, no scripts) and fix-list.csv (selector column; blank owner and status columns) into out_dir (default fairbooks-out/pages). Both reports open with a prioritised "do these first" list.',
       inputSchema: { type: 'object', required: ['site'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/pages');
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/pages');
         const md = safeMarkdown(reportMarkdown(r, a.site)); const html = reportHtml(r, a.site); const csv = fixListCsv(r);
         return { summary: `Report written: ${r.issues} issue(s) across ${r.pages} page(s).`, files: [ctx.writeFile(out, 'page-audit.md', md), ctx.writeFile(out, 'fix-list.csv', csv), ctx.writeFile(out, 'page-audit.html', html)], output_sha256: sha256(md + csv + html) };
       },
@@ -59,7 +59,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['site'], properties: { ...props, lang: { ...str, description: 'Language to set on pages with none, e.g. "en"' }, out_dir: str } },
       handler: async (a, ctx) => {
         const c = withConfig(a, ctx); const dir = siteDir(c, ctx); const r = audit(dir, c);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/pages'); const files = []; const diffs = [];
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/pages'); const files = []; const diffs = [];
         for (const p of r.by_page) {
           const before = readFileSync(join(dir, p.page), 'utf8'); const fx = mechanicalFixes(before, a);
           if (!fx.applied.length) continue;
@@ -93,7 +93,7 @@ export const manifest = defineManifest({
         const p = JSON.parse(text);
         for (const f of p.files) { const fp = join(dirname(pf), f.proposed); if (!existsSync(fp) || sha256(readFileSync(fp, 'utf8')) !== f.sha256_after) throw new Error(`${f.proposed} changed after the proposal was written`); }
         if (p.diff) { const dp = join(dirname(pf), p.diff); if (!existsSync(dp) || sha256(readFileSync(dp, 'utf8')) !== p.diff_sha256) throw new Error(`${p.diff} changed after the proposal was written`); }
-        const file = appendRow(ctx.outDir(a.out_dir || 'mythos-out/pages'), 'publish-requests.csv', { requested_at: new Date().toISOString(), proposal: a.proposal, proposal_sha256: a.proposal_sha256, pages: p.files.map((f) => f.page).join('; '), status: 'approved - a person publishes it' }, ['requested_at', 'proposal', 'proposal_sha256', 'pages', 'status']);
+        const file = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/pages'), 'publish-requests.csv', { requested_at: new Date().toISOString(), proposal: a.proposal, proposal_sha256: a.proposal_sha256, pages: p.files.map((f) => f.page).join('; '), status: 'approved - a person publishes it' }, ['requested_at', 'proposal', 'proposal_sha256', 'pages', 'status']);
         return { summary: `Publish approved and recorded for ${p.files.length} page(s). Nothing was deployed.`, file, output_sha256: a.proposal_sha256 };
       },
     },

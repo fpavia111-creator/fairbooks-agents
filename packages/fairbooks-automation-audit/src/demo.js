@@ -20,7 +20,7 @@ export async function demo(manifest) {
   for (const x of m.result.calls) process.stdout.write(`    call   ${x.from} -> ${x.to} (${x.via})\n`);
   for (const x of m.result.rotation_plan.slice(0, 3)) process.stdout.write(`    rotate ${x.priority} ${x.secret}: ${x.reasons[0]}\n`);
   printStep('Write the report, findings sheet and SARIF', await rt.call('flows_write_report', f));
-  copyFileSync(join(rt.root, 'mythos-out/flows/findings.csv'), join(rt.root, 'baseline-findings.csv'));
+  copyFileSync(join(rt.root, 'fairbooks-out/flows/findings.csv'), join(rt.root, 'baseline-findings.csv'));
   process.stdout.write('    (demo: the owner moves the ERP token in "Order sync" into a stored credential and re-exports)\n');
   const orders = join(rt.root, 'n8n-orders.json');
   writeFileSync(orders, readFileSync(orders, 'utf8').replace(/"Bearer FAKE[^"]*"/, '"={{$credentials.erpToken}}"'));

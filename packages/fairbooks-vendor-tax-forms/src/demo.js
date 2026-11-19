@@ -20,7 +20,7 @@ export async function demo(manifest) {
   printStep('Write the tracker (TINs masked)', await rt.call('taxforms_write_tracker', f));
   const d = await rt.call('taxforms_draft_requests', f);
   printStep('Auto: draft requests and reminders (opted in; nothing is sent)', d);
-  const send = { vendor_id: 'V2', draft: 'mythos-out/taxforms/requests/V2-pat-rivera.md' };
+  const send = { vendor_id: 'V2', draft: 'fairbooks-out/taxforms/requests/V2-pat-rivera.md' };
   const a = await rt.call('taxforms_request_send', send);
   printStep('Auto: send the request to Pat Rivera — stays one-click', a);
   rt.approvals.approve(a.approval_id, 'Jo AP Lead (fictional)');

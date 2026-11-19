@@ -5,8 +5,8 @@ export async function demo(manifest) {
   const rt = demoRuntime(manifest, fileURLToPath(new URL('../fixtures', import.meta.url)));
   const out = (s) => process.stdout.write(s);
   out(`Fairbooks Audit Evidence demo (sample logs) in ${rt.root}\n`);
-  const logs = ['talos-audit.jsonl', 'olympus-audit.jsonl'];
-  printStep('Summarize a Talos log and an Olympus log', await rt.call('evidence_summarize_logs', { logs }));
+  const logs = ['talos-audit.jsonl', 'fairbooks-audit.jsonl'];
+  printStep('Summarize a Talos log and a fairbooks-core log', await rt.call('evidence_summarize_logs', { logs }));
   printStep('Verify the Talos hash chain', await rt.call('evidence_verify_chain', { log: 'talos-audit.jsonl' }));
   printStep('Verify a log someone edited by hand', await rt.call('evidence_verify_chain', { log: 'tampered-audit.jsonl' }));
   printStep('Verify a signed log with its public key (includes a signed key rotation)', await rt.call('evidence_verify_chain', { log: 'signed-audit.jsonl', public_keys: ['keys/audit-public.pem'] }));

@@ -27,12 +27,12 @@ export async function demo(manifest) {
   process.stdout.write(`    (demo: "Ana Site Owner" approves ${a.approval_id})\n`);
   printStep('Same request after the click: refused while [TO CONFIRM] rows remain', await rt.call('consent_request_publish', req));
   // Ana reviews declared.proposed.json, fills in every [TO CONFIRM], drops csrftoken (no longer used) and saves it as her policy.
-  const prop = JSON.parse(readFileSync(join(rt.root, 'mythos-out/consent/declared.proposed.json'), 'utf8'));
+  const prop = JSON.parse(readFileSync(join(rt.root, 'fairbooks-out/consent/declared.proposed.json'), 'utf8'));
   const fill = { promo_seen: ['This site', 'preferences', '30 days'], YSC: ['YouTube', 'marketing', 'session'], VISITOR_INFO1_LIVE: ['YouTube', 'marketing', '6 months'] };
   const reviewed = { source: 'Fernhill Bakery cookie policy, updated 2026-11-14 (fictional)', cookies: prop.cookies.filter((c) => c.name !== 'csrftoken').map((c) => (fill[c.name] ? { name: c.name, provider: fill[c.name][0], purpose: fill[c.name][1], duration: fill[c.name][2] } : c)), third_parties: prop.third_parties.map((t) => (/\[TO CONFIRM/.test(t.purpose) ? { ...t, purpose: t.host.includes('youtube') || t.host.includes('facebook') ? 'marketing' : 'other' } : t)) };
   writeFileSync(join(rt.root, 'declared.reviewed.json'), JSON.stringify(reviewed, null, 2) + '\n');
   process.stdout.write('\n    (demo: Ana fills in every [TO CONFIRM] in declared.proposed.json, removes csrftoken and saves it as declared.reviewed.json)\n');
-  const d2 = await rt.call('consent_draft_policy_table', { ...f, declared: 'declared.reviewed.json', out_dir: 'mythos-out/reviewed' });
+  const d2 = await rt.call('consent_draft_policy_table', { ...f, declared: 'declared.reviewed.json', out_dir: 'fairbooks-out/reviewed' });
   printStep('Auto: draft the table again from the reviewed policy', d2);
   const req2 = { proposal: d2.result.proposal, proposal_sha256: d2.result.proposal_sha256 };
   rt.approvals.approve((await rt.call('consent_request_publish', req2)).approval_id, 'Ana Site Owner (fictional)');

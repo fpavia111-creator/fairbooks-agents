@@ -42,7 +42,7 @@ test('posting is one-click even in Auto and never touches an ERP', async () => {
   assert.equal((await rt.call('erp_post_invoice', {})).status, 'blocked');
   const args = { invoice: 'INV-2001', vendor: 'Acme', amount: 1200, reason: 'matched' };
   const a = await rt.call('match_request_posting', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
   const b = await rt.call('match_request_posting', args); assert.equal(b.status, 'executed'); assert.match(b.result.summary, /Nothing was posted or paid/);
 });
 

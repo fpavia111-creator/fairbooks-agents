@@ -6,7 +6,7 @@ export const CI_FLAGS = ['pack', 'tools', 'openapi', 'config', 'fail-on', 'basel
 const USAGE = `fairbooks-docs-drift ci --pack DIR [--tools tools.json] [--openapi spec.json] [--config .docs.json]
                  [--fail-on error|warning|any|none] [--baseline drift.json] [--new-only]
                  [--require-changelog] [--ignore check_a,check_b] [--out-dir DIR] [--root DIR] [--state-dir DIR]
-Writes fairbooks-docs-drift.sarif and drift.json to --out-dir (default mythos-out/docs, under --root).
+Writes fairbooks-docs-drift.sarif and drift.json to --out-dir (default fairbooks-out/docs, under --root).
 Exit code: 0 pass, 1 drift at or above --fail-on, 2 usage or input error.`;
 
 export async function runCi(manifest, argv, { write = (s) => process.stdout.write(s), writeErr = (s) => process.stderr.write(s) } = {}) {

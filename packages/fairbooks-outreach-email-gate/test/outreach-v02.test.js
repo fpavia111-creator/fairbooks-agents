@@ -101,7 +101,7 @@ test('import adds only new addresses, needs a human yes, and a second ESP adds n
   const args = { suppression: 'suppression.csv', export: 'esp/mailchimp-unsubscribed.csv' };
   const a = await rt.call('outreach_import_suppression', args);
   assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana (fictional)');
   const b = await rt.call('outreach_import_suppression', args);
   assert.equal(b.status, 'executed'); assert.equal(b.result.added, 3);
   const auto = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['outreach_import_suppression'] });
@@ -164,10 +164,10 @@ test('plan and release write hashes to the audit log; release stays one-click; p
   assert.equal(validateIcs(readFileSync(p.result.files[1], 'utf8')).ok, true);
   const rel = await rt.call('outreach_release_batch', base);
   assert.equal(rel.status, 'needs_approval'); assert.match(rel.reason, /one-click/);
-  new ApprovalStore(join(root, '.mythos')).approve(rel.approval_id, 'Kim (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(rel.approval_id, 'Kim (fictional)');
   const done = await rt.call('outreach_release_batch', base);
   assert.equal(done.status, 'executed');
-  const log = readAudit(join(root, '.mythos', 'audit.jsonl'));
+  const log = readAudit(join(root, '.fairbooks', 'audit.jsonl'));
   assert.equal(log.find((e) => e.tool === 'outreach_plan_schedule').output_sha256, p.result.output_sha256);
   assert.equal(log.filter((e) => e.tool === 'outreach_release_batch' && e.status === 'executed')[0].output_sha256, sha256(readFileSync(done.result.file, 'utf8')));
   assert.equal((await rt.call('outreach_send_email', {})).status, 'blocked');

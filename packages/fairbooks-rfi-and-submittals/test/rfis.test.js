@@ -44,9 +44,9 @@ test('draft cites only provided documents, with file:line quotes and markers', (
   assert.throws(() => draftRfi({ subject: 'x' }, [], [], fixtures), /question is required/);
 });
 test('drafts on Auto; send is one-click, hash- and recipient-bound, marker-gated; sending blocked', async () => {
-  const root = tmpRoot('rfis-'); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['rfis_draft_rfi'] }); const store = new ApprovalStore(join(root, '.mythos'));
+  const root = tmpRoot('rfis-'); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['rfis_draft_rfi'] }); const store = new ApprovalStore(join(root, '.fairbooks'));
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['rfis_request_send'] }), /one-click/);
-  const open = await rt.call('rfis_draft_rfi', { documents: 'documents.csv', rfis: 'rfis.csv', subject: 'x', question: 'y', references: ['A-201 rev 2'], out_dir: 'mythos-out/o' });
+  const open = await rt.call('rfis_draft_rfi', { documents: 'documents.csv', rfis: 'rfis.csv', subject: 'x', question: 'y', references: ['A-201 rev 2'], out_dir: 'fairbooks-out/o' });
   assert.equal(open.status, 'executed'); assert.ok(open.result.open_markers > 0);
   const sa = { draft: open.result.draft, draft_sha256: open.result.draft_sha256, to: 'Architect' };
   store.approve((await rt.call('rfis_request_send', sa)).approval_id, 'Pat');

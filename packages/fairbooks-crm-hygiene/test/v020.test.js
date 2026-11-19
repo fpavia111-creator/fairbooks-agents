@@ -138,7 +138,7 @@ test('bulk delete still one-click; MCP prompt renders', async () => {
   const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
   const args = { ids: ['C8', 'C9'], reason: 'v020 one-click test' };
   const a = await rt.call('crm_request_bulk_delete', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin (fictional)');
   assert.equal((await rt.call('crm_request_bulk_delete', args)).status, 'executed');
   assert.equal((await rt.call('crm_request_bulk_delete', args)).status, 'needs_approval');
   const handle = createMcpHandler(new AgentRuntime(manifest, { root, audit: false }));

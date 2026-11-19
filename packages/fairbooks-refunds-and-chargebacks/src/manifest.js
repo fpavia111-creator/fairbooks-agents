@@ -42,10 +42,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'refunds_write_queue', kind: 'report',
-      description: 'Write refund-queue.csv (blank decision columns) and one dispute evidence draft per chargeback into out_dir (default mythos-out/refunds).',
+      description: 'Write refund-queue.csv (blank decision columns) and one dispute evidence draft per chargeback into out_dir (default fairbooks-out/refunds).',
       inputSchema: { type: 'object', required: ['requests', 'orders'], properties: { ...files, out_dir: str } },
       handler: async (a, ctx) => {
-        const { orders, r } = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/refunds'); const at = new Date().toISOString();
+        const { orders, r } = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/refunds'); const at = new Date().toISOString();
         const fl = [ctx.writeFile(out, 'refund-queue.csv', queueCsv(r))];
         for (const i of r.items.filter((x) => x.type === 'chargeback' && x.suggestion !== 'hold_duplicate')) fl.push(ctx.writeFile(out, `dispute-${i.request_id.replace(/[^A-Za-z0-9_-]/g, '_')}.md`, evidenceMarkdown(i, orders.get(i.order_id), at)));
         return { summary: `Queue written with ${r.requests} request(s) and ${fl.length - 1} dispute draft(s).`, files: fl };
@@ -63,7 +63,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'refunds_evidence_pack', kind: 'report', title: 'Dispute evidence packs',
-      description: 'For each chargeback (or one request_id): map the reason code to a category, build the evidence checklist, mark what your exports already show and what a person must attach, give a readiness score with its explanation, and cite every source row used. Writes evidence-<id>.html per dispute, evidence-index.json (hash recorded in the audit log) and dispute-deadlines.ics into out_dir (default mythos-out/refunds).',
+      description: 'For each chargeback (or one request_id): map the reason code to a category, build the evidence checklist, mark what your exports already show and what a person must attach, give a readiness score with its explanation, and cite every source row used. Writes evidence-<id>.html per dispute, evidence-index.json (hash recorded in the audit log) and dispute-deadlines.ics into out_dir (default fairbooks-out/refunds).',
       inputSchema: { type: 'object', required: ['requests', 'orders'], properties: { ...files, request_id: str, out_dir: str } },
       handler: async (a, ctx) => {
         const { orders, requests, policy, r } = run(a, ctx);
@@ -72,7 +72,7 @@ export const manifest = defineManifest({
         const src = { requestsFile: a.requests, ordersFile: a.orders, policyFile: a.policy || null, policySha256: a.policy ? ctx.hashFile(a.policy) : null };
         const list = items.map((i) => disputeEvidence(i, orders, requests, { ...r.policy, ...policy }, src));
         const idx = evidenceIndex(list, { sources: { requests: { file: a.requests, sha256: ctx.hashFile(a.requests) }, orders: { file: a.orders, sha256: ctx.hashFile(a.orders) }, policy: a.policy ? { file: a.policy, sha256: src.policySha256 } : null } });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/refunds');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/refunds');
         const fl = list.map((d) => ctx.writeFile(out, `evidence-${d.request_id.replace(/[^A-Za-z0-9_-]/g, '_')}.html`, evidencePackHtml(d)));
         fl.push(ctx.writeFile(out, 'evidence-index.json', idx.json), ctx.writeFile(out, 'dispute-deadlines.ics', disputeIcs(list)));
         return { summary: `${list.length} evidence pack(s): ${list.map((d) => `${d.request_id} ${d.classification.category} ${d.readiness.score ?? '-'}%`).join(', ') || 'no chargebacks'}.`, output_sha256: idx.output_sha256, disputes: list.map((d) => ({ request_id: d.request_id, category: d.classification.category, code: d.classification.code, respond_by: d.respond_by, readiness: d.readiness, missing: d.checklist.filter((c) => c.status === 'missing').map((c) => c.id), attach: d.checklist.filter((c) => c.status === 'attach').map((c) => c.id) })), files: fl };
@@ -85,7 +85,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         for (const k of ['request_id', 'order_id', 'reason']) if (!String(a[k] || '').trim()) throw new Error(`${k} is required`);
         if (!(Number(a.amount) > 0)) throw new Error('amount must be positive');
-        const out = ctx.outDir(a.out_dir || 'mythos-out/refunds'); const f = join(out, 'refund-requests.csv');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/refunds'); const f = join(out, 'refund-requests.csv');
         const csv = toCsv([{ requested_at: new Date().toISOString(), request_id: a.request_id, order_id: a.order_id, amount: a.amount, reason: a.reason, status: 'approved request - a person issues it in the payment system' }], ['requested_at', 'request_id', 'order_id', 'amount', 'reason', 'status']);
         appendFileSync(f, existsSync(f) ? csv.split('\n').slice(1).join('\n') : csv);
         return { summary: `Refund request recorded for ${a.request_id} (${a.amount}). No money moved.`, file: f };

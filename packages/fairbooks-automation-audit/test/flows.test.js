@@ -56,7 +56,7 @@ test('drafts on Auto; production change is one-click; platform edit and run bloc
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['flows_request_flow_change'] }), /one-click/);
   const args = { flow: 'Order sync', change: 'disable', detail: 'pause' };
   const a = await rt.call('flows_request_flow_change', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Ari');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Ari');
   const b = await rt.call('flows_request_flow_change', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Ari');
   assert.equal(parseCsv(readFileSync(b.result.file, 'utf8'))[0].change, 'disable');
   assert.equal((await rt.call('flows_request_flow_change', args)).status, 'needs_approval');

@@ -45,10 +45,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'flows_write_report', kind: 'report',
-      description: 'Write flow-audit.md, findings.csv (blank owner and decision columns) and findings.sarif (SARIF 2.1.0 for code-scanning dashboards) into out_dir (default mythos-out/flows). With a baseline, findings are marked new or existing and resolved ones are listed.',
+      description: 'Write flow-audit.md, findings.csv (blank owner and decision columns) and findings.sarif (SARIF 2.1.0 for code-scanning dashboards) into out_dir (default fairbooks-out/flows). With a baseline, findings are marked new or existing and resolved ones are listed.',
       inputSchema: { type: 'object', required: ['exports'], properties: { ...props, out_dir: str, baseline: { ...str, description: 'Optional earlier findings.csv' } } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/flows');
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/flows');
         const md = safeMarkdown(reportMarkdown(r)); const csv = findingsCsv(r); const sarif = JSON.stringify(findingsSarif(r, pkg.version), null, 2) + '\n';
         return { summary: `Report written: ${r.findings} finding(s) across ${r.flows} flow(s).`, files: [ctx.writeFile(out, 'flow-audit.md', md), ctx.writeFile(out, 'findings.csv', csv), ctx.writeFile(out, 'findings.sarif', sarif)], output_sha256: sha256(md + csv + sarif) };
       },
@@ -59,7 +59,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['exports'], properties: { exports: props.exports, policy: props.policy, out_dir: str } },
       handler: async (a, ctx) => {
         const p = loadPolicy(a, ctx); const m = dependencyMap(flowsOf(a, ctx), { entropy: p.entropy });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/flows'); const md = safeMarkdown(dependencyMarkdown(m)); const csv = dependencyCsv(m);
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/flows'); const md = safeMarkdown(dependencyMarkdown(m)); const csv = dependencyCsv(m);
         return { summary: `${m.flows} flow(s): ${m.shared} shared resource(s), ${m.calls.length} flow-to-flow call(s), ${m.rotation_plan.length} secret(s) to rotate.`, ...m, files: [ctx.writeFile(out, 'dependency-map.md', md), ctx.writeFile(out, 'dependency-map.csv', csv)], output_sha256: sha256(canonical(m)) };
       },
     },
@@ -68,7 +68,7 @@ export const manifest = defineManifest({
       description: 'Write proposals/<flow>.json (proposed fixes, marked not applied) and a redacted copy of each export with hardcoded secrets replaced by placeholders, into out_dir. Inputs are never changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['exports'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const pol = loadPolicy(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/flows'); const pdir = join(out, 'proposals'); mkdirSync(pdir, { recursive: true });
+        const r = run(a, ctx); const pol = loadPolicy(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/flows'); const pdir = join(out, 'proposals'); mkdirSync(pdir, { recursive: true });
         const unique = uniqueNames();
         const files = r.items.filter((i) => i.findings.length).map((i) => ctx.writeFile(pdir, unique(`${slug(i.name)}.json`), JSON.stringify(proposals(i), null, 2) + '\n'));
         for (const p of a.exports) files.push(ctx.writeFile(out, `${basename(p, extname(p))}.redacted.json`, JSON.stringify(redact(readJson(ctx, p), { entropy: pol.entropy }), null, 2) + '\n'));
@@ -82,7 +82,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         if (!['enable', 'disable', 'modify'].includes(a.change)) throw new Error('change must be enable, disable or modify');
         for (const k of ['flow', 'detail']) if (!String(a[k] ?? '').trim()) throw new Error(`${k} is required`);
-        const f = join(ctx.outDir(a.out_dir || 'mythos-out/flows'), 'change-requests.csv');
+        const f = join(ctx.outDir(a.out_dir || 'fairbooks-out/flows'), 'change-requests.csv');
         const csv = toCsv([{ requested_at: new Date().toISOString(), flow: a.flow, change: a.change, detail: a.detail, status: 'approved request - the flow owner applies it' }], ['requested_at', 'flow', 'change', 'detail', 'status']);
         appendFileSync(f, existsSync(f) ? csv.split('\n').slice(1).join('\n') : csv);
         return { summary: `Change request (${a.change}) recorded for "${a.flow}". No flow was changed.`, file: f };

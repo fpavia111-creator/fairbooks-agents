@@ -20,12 +20,12 @@ export async function demo(manifest) {
   printStep('Percentage checks: ratios, "roughly", and up/down wording', pc);
   for (const x of pc.result.claims) process.stdout.write(`    ${x.status.padEnd(18)} "${x.text}"${x.matched.length ? `  -> ${x.matched.map((m) => m.matches.join('|')).join(', ')}` : ''}\n`);
   printStep('Auto: draft cited commentary (opted in; reasons left to owners)', await rt.call('board_draft_commentary', f));
-  const c = await rt.call('board_check_claims', { ...f, docs, commentary: 'mythos-out/board/commentary.md' });
+  const c = await rt.call('board_check_claims', { ...f, docs, commentary: 'fairbooks-out/board/commentary.md' });
   printStep('Claims check on the source docs and commentary', c);
   for (const x of c.result.claims.filter((y) => y.status !== 'ok')) process.stdout.write(`    ${x.status.padEnd(16)} ${x.doc}:${x.line}  "${x.text}"\n`);
-  const pack = { ...f, docs, commentary: 'mythos-out/board/commentary.md', title: 'Board pack (fictional)' };
+  const pack = { ...f, docs, commentary: 'fairbooks-out/board/commentary.md', title: 'Board pack (fictional)' };
   printStep('Assemble the board pack (DRAFT)', await rt.call('board_assemble_pack', pack));
-  const mf = 'mythos-out/board/pack-manifest.json';
+  const mf = 'fairbooks-out/board/pack-manifest.json';
   const sha = () => JSON.parse(readFileSync(join(rt.root, mf), 'utf8')).pack_sha256;
   let sign = { pack_manifest: mf, pack_sha256: sha(), controller: 'Riley Controller (fictional)' };
   const s1 = await rt.call('board_record_signoff', sign);
@@ -37,7 +37,7 @@ export async function demo(manifest) {
   fix('docs/ops-update.md', '312,000 [F4]', '310,000 [F4]');
   fix('docs/ops-update.md', 'Shipping costs were 41,000 [F9].', 'Shipping costs are inside cost of sales [F2].');
   process.stdout.write('    (demo: line owners write the four "Reason" lines in the commentary)\n');
-  for (const r of ['Two large school-district orders landed early (fictional).', 'Revenue mix shifted to higher-margin licences (fictional).', 'Planned channel tests were brought forward (fictional).', 'Annual insurance and a hardware refresh were paid (fictional).']) fix('mythos-out/board/commentary.md', '[TO WRITE — owner explains]', r);
+  for (const r of ['Two large school-district orders landed early (fictional).', 'Revenue mix shifted to higher-margin licences (fictional).', 'Planned channel tests were brought forward (fictional).', 'Annual insurance and a hardware refresh were paid (fictional).']) fix('fairbooks-out/board/commentary.md', '[TO WRITE — owner explains]', r);
   printStep('Charts from the locked figures (SVG, no scripts)', await rt.call('board_charts', { figures: 'figures.csv', charts: ['variance', 'variance_pct', 'actual_vs_basis'] }));
   printStep('Reassemble the pack (Markdown + self-contained HTML with charts)', await rt.call('board_assemble_pack', { ...pack, html: true }));
   sign = { ...sign, pack_sha256: sha() };

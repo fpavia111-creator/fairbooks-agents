@@ -24,7 +24,7 @@ export async function demo(manifest) {
   printStep('Write the gap report (hash in the audit log)', await rt.call('clauses_write_report', f));
   const d = await rt.call('clauses_draft_markup', f);
   printStep('Auto: draft the issues list for counsel, citing the playbook version (nothing sent)', d);
-  printStep('Auto: draft it again for the next draft, with a redline of the memo', await rt.call('clauses_draft_markup', { ...v2, previous_draft: d.result.draft, out_dir: 'mythos-out/clauses-v2' }));
+  printStep('Auto: draft it again for the next draft, with a redline of the memo', await rt.call('clauses_draft_markup', { ...v2, previous_draft: d.result.draft, out_dir: 'fairbooks-out/clauses-v2' }));
   const req = { draft: d.result.draft, draft_sha256: d.result.draft_sha256, to: 'Kettle Labs legal (fictional)', reviewed_by: 'Morgan Counsel (fictional)' };
   const a = await rt.call('clauses_request_send', req);
   printStep('Auto: send it to the supplier — stays one-click (binding send)', a);

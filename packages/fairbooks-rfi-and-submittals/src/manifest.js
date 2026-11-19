@@ -49,10 +49,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'rfis_write_log_report', kind: 'report', title: 'Write the RFI and submittal log review',
-      description: 'Write rfi-log-review.md (with ball-in-court aging and a chase list), rfi-log.csv and submittal-log.csv (blank next_action and owner columns), ball-in-court.csv and rfi-due-dates.ics (open RFI response dates and unsent submittals) into out_dir (default mythos-out/rfis). With previous_rfis (an earlier export of the log) it also writes rfi-log-diff.md. The output hash goes into the audit line.',
+      description: 'Write rfi-log-review.md (with ball-in-court aging and a chase list), rfi-log.csv and submittal-log.csv (blank next_action and owner columns), ball-in-court.csv and rfi-due-dates.ics (open RFI response dates and unsent submittals) into out_dir (default fairbooks-out/rfis). With previous_rfis (an earlier export of the log) it also writes rfi-log-diff.md. The output hash goes into the audit line.',
       inputSchema: { type: 'object', required: ['documents'], properties: { ...logProps, previous_rfis: { ...str, description: 'Optional earlier export of the RFI log (CSV/JSON) to compare with' }, previous_as_of: { ...date, description: 'Date of the earlier export (default as_of minus 7 days)' }, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const b = ballInCourt(r); const out = ctx.outDir(a.out_dir || 'mythos-out/rfis');
+        const r = run(a, ctx); const b = ballInCourt(r); const out = ctx.outDir(a.out_dir || 'fairbooks-out/rfis');
         const files = [ctx.writeFile(out, 'rfi-log-review.md', logMarkdown(r) + '\n' + bicMarkdown(b)), ctx.writeFile(out, 'rfi-log.csv', rfiCsv(r)), ctx.writeFile(out, 'submittal-log.csv', subCsv(r)), ctx.writeFile(out, 'ball-in-court.csv', bicCsv(b)), ctx.writeFile(out, 'rfi-due-dates.ics', toIcs(dueEvents(r), { prodId: '-//Fairbooks Machine//fairbooks-rfi-and-submittals//EN', calName: 'RFI and submittal dates', stamp: `${r.as_of.replace(/-/g, '')}T000000Z` }))];
         let d = null; if (a.previous_rfis) { d = diffFor(a, ctx); files.push(ctx.writeFile(out, 'rfi-log-diff.md', diffMarkdown(d))); }
         return { summary: `Log review written: ${r.rfis} RFI(s), ${r.submittals} submittal(s), ${b.open_items} open item(s) across ${b.parties.length} part${b.parties.length === 1 ? 'y' : 'ies'}${d ? `; ${d.changes} change(s) since ${d.previous_as_of}` : ''}.`, files, output_sha256: filesHash(files) };
@@ -79,7 +79,7 @@ export const manifest = defineManifest({
         const files = readdirSync(dir).filter((f) => /\.txt$/i.test(f)).sort(); if (!files.length) throw new Error(`no .txt title-block files in ${a.folder}`);
         const parsed = files.map((f) => parseTitleBlock(readFileSync(join(dir, f), 'utf8'), `${String(a.folder).replace(/\/+$/, '')}/${f}`));
         const r = indexFromTitleBlocks(parsed, a.documents ? ctx.records(a.documents) : []);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/rfis');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/rfis');
         const md = ['# Drawing index from title blocks', '', `${r.sheets_read} file(s) read; ${r.new_sheet} new sheet(s), ${r.index_behind} where the index is behind the title block, ${r.unreadable} unreadable.`, '', '> Read from the title-block text you provided. Check the proposed index against the drawings before you replace your index.', '', '## Sheets', '', '| File | Sheet | Rev | Issued | Title |', '|---|---|---|---|---|', ...parsed.map((p) => `| ${p.file} | ${p.doc_id || '?'} | ${p.revision || '?'} | ${p.issued || ''} | ${p.title || ''} |`), '', '## Findings', '', ...(r.findings.length ? r.findings.map((f) => `- **${f.check}** ${f.doc_id || f.file}: ${f.detail}`) : ['- none']), ''].join('\n');
         const fs = [ctx.writeFile(out, 'documents.from-title-blocks.csv', toCsv(r.rows, INDEX_COLUMNS)), ctx.writeFile(out, 'title-block-index.md', md)];
         return { summary: `${r.sheets_read} title block(s) read: ${r.new_sheet} new sheet(s), ${r.index_behind} newer than the index, ${r.unreadable} unreadable. Proposed index written; your index was not changed.`, sheets: parsed.map(({ file, doc_id, type, title, revision, issued, problems }) => ({ file, doc_id, type, title, revision, issued, problems })), ...r, files: fs, output_sha256: filesHash(fs) };
@@ -92,7 +92,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         if (!String(a.documents ?? '').trim()) throw new Error('documents is required');
         const d = draftRfi(a, ctx.records(a.documents), a.rfis ? ctx.records(a.rfis) : [], ctx.root);
-        const dir = join(ctx.outDir(a.out_dir || 'mythos-out/rfis'), 'drafts'); mkdirSync(dir, { recursive: true });
+        const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/rfis'), 'drafts'); mkdirSync(dir, { recursive: true });
         const f = ctx.writeFile(dir, `RFI-${safeFileName(d.rfi_no)}.md`, d.text);
         return { summary: `RFI ${d.rfi_no} drafted with ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: relative(ctx.root, f).split('\\').join('/'), draft_sha256: sha256(safeMarkdown(d.text)), rfi_no: d.rfi_no, open_markers: d.open_markers, markers: d.markers, file: f };
       },
@@ -102,7 +102,7 @@ export const manifest = defineManifest({
       description: 'Write drafts/TR-<no>.md (marked DRAFT, not sent) listing the drawings and specs you name. Only documents in the index are listed, each on its current revision with its issue date and the hash of its text extract; anything not in the index is [MISSING REFERENCE], an old revision is [CHECK REVISION], missing header fields are [TO CONFIRM]. Sending goes through rfis_request_send (one click). Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['documents', 'items', 'subject'], properties: { documents: logProps.documents, items: { type: 'array', items: str, minItems: 1, description: 'References to transmit, e.g. ["A-201", "A-501", "08 71 00"]' }, subject: str, purpose: { type: 'string', enum: PURPOSES }, project: str, to: str, from: str, date, action_by: date, copies: { type: 'integer', minimum: 1 }, remarks: str, transmittal_no: { type: 'string', pattern: '^TR-[0-9]{1,5}$' }, out_dir: str } },
       handler: async (a, ctx) => {
-        const dir = join(ctx.outDir(a.out_dir || 'mythos-out/rfis'), 'drafts'); mkdirSync(dir, { recursive: true });
+        const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/rfis'), 'drafts'); mkdirSync(dir, { recursive: true });
         const d = draftTransmittal({ ...a, transmittal_no: a.transmittal_no || nextTransmittalNo(dir) }, ctx.records(a.documents), ctx.root, sha256);
         const f = ctx.writeFile(dir, `${safeFileName(d.transmittal_no)}.md`, d.text);
         return { summary: `Transmittal ${d.transmittal_no} drafted with ${d.documents.length} indexed document(s) and ${d.open_markers} open marker(s)${d.markers.length ? ` (${d.markers.join(', ')})` : ''}. Nothing was sent.`, draft: rel(ctx, f), draft_sha256: sha256(safeMarkdown(d.text)), transmittal_no: d.transmittal_no, documents: d.documents, open_markers: d.open_markers, markers: d.markers, file: f };
@@ -121,7 +121,7 @@ export const manifest = defineManifest({
         const to = ((/^To: (.*)$/m.exec(text) || [])[1] || '').trim();
         if (to && !/^\[TO CONFIRM/.test(to) && to !== String(a.to).trim()) throw new Error(`to ("${a.to}") differs from the draft's To line ("${to}")`);
         const hd = /^(RFI|Transmittal) (\S+):/m.exec(text) || []; const no = hd[2] || ''; const label = hd[1] || 'RFI';
-        const file = appendRow(ctx.outDir(a.out_dir || 'mythos-out/rfis'), 'send-requests.csv', { approved_at: new Date().toISOString(), rfi_no: no, to: a.to, draft: a.draft, draft_sha256: a.draft_sha256, open_markers: open.length, note: a.note || '', status: 'approved - a person sends it' }, ['approved_at', 'rfi_no', 'to', 'draft', 'draft_sha256', 'open_markers', 'note', 'status']);
+        const file = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/rfis'), 'send-requests.csv', { approved_at: new Date().toISOString(), rfi_no: no, to: a.to, draft: a.draft, draft_sha256: a.draft_sha256, open_markers: open.length, note: a.note || '', status: 'approved - a person sends it' }, ['approved_at', 'rfi_no', 'to', 'draft', 'draft_sha256', 'open_markers', 'note', 'status']);
         return { summary: `${label} ${no} approved to send to ${a.to} and recorded${open.length ? ` with ${open.length} open marker(s) accepted` : ''}. Nothing was sent.`, file };
       },
     },

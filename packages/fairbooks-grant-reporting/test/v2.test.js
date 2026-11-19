@@ -43,9 +43,9 @@ test('packet shows the variance table and every over-threshold line has a marker
   const root = tmpRoot('poly-v-');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['grants_build_packet'] });
   const p = await rt.call('grants_build_packet', { ...f, grant_id: 'G1' }); assert.equal(p.status, 'executed');
-  const draft = readFileSync(join(root, 'mythos-out/grants/packets/G1/report-draft.md'), 'utf8');
+  const draft = readFileSync(join(root, 'fairbooks-out/grants/packets/G1/report-draft.md'), 'utf8');
   assert.match(draft, /## Budget vs actual variance/); assert.equal((draft.match(/\[EXPLAIN VARIANCE/g) || []).length, 2);
-  const cl = readFileSync(join(root, 'mythos-out/grants/packets/G1/checklist.md'), 'utf8');
+  const cl = readFileSync(join(root, 'fairbooks-out/grants/packets/G1/checklist.md'), 'utf8');
   assert.match(cl, /- \[ \] Explain the variance on "Books and materials"/);
 });
 
@@ -65,7 +65,7 @@ test('funder template: packet follows the template, missing sections and attachm
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['grants_build_packet'] });
   const p = await rt.call('grants_build_packet', { ...f, grant_id: 'G1', template: 'templates/lakeside-interim.json' });
   assert.equal(p.status, 'executed', JSON.stringify(p)); assert.match(p.result.summary, /following template "lakeside-interim" \(2 template gap\(s\)\)/);
-  const draft = readFileSync(join(root, 'mythos-out/grants/packets/G1/report-draft.md'), 'utf8');
+  const draft = readFileSync(join(root, 'fairbooks-out/grants/packets/G1/report-draft.md'), 'utf8');
   const order = t.sections.map((s) => draft.indexOf(`## ${s.title}`));
   assert.ok(order.every((i, k) => i > 0 && (k === 0 || i > order[k - 1])), 'sections in template order');
   assert.match(draft, /\[TO WRITE — a person writes this \(max 500 words\)/); assert.match(draft, /\[MISSING ATTACHMENT — evidence\/g1-board-budget\.pdf\]/);
@@ -106,7 +106,7 @@ test('deadline reminders as .ics validate', async () => {
   const r = await new AgentRuntime(manifest, { root }).call('grants_calendar', { grants: 'grants.csv', as_of, reminder_days: [10, 3], include_period_end: false });
   assert.equal(r.status, 'executed'); assert.equal(r.result.events, 3);
   const text = readFileSync(r.result.file, 'utf8'); assert.ok(validateIcs(text).ok); assert.match(text, /TRIGGER:-P10D/); assert.doesNotMatch(text, /TRIGGER:-P30D/);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).at(-1).output_sha256, sha256(text));
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, sha256(text));
 });
 
 test('evidence pack zips the packet, cited evidence, variance and a hash manifest', async () => {
@@ -117,7 +117,7 @@ test('evidence pack zips the packet, cited evidence, variance and a hash manifes
   assert.equal(early.status, 'error'); assert.match(early.reason, /run grants_build_packet first/);
   await rt.call('grants_build_packet', args);
   const a = await rt.call('grants_evidence_pack', args); assert.equal(a.status, 'needs_approval', 'not on Auto unless opted in');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Morgan');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Morgan');
   const b = await rt.call('grants_evidence_pack', args); assert.equal(b.status, 'executed');
   const zip = readZip(readFileSync(b.result.file));
   assert.deepEqual([...zip.keys()].sort(), ['evidence/evidence/g1-assessments.csv', 'evidence/evidence/g1-enrollment.csv', 'manifest.json', 'packet/checklist.md', 'packet/evidence-index.csv', 'packet/report-draft.md', 'packet/variance.csv']);
@@ -125,7 +125,7 @@ test('evidence pack zips the packet, cited evidence, variance and a hash manifes
   for (const x of m.files) assert.equal(x.sha256, sha256(zip.get(x.name)), x.name);
   assert.match(m.note, /Not submitted/);
   assert.equal(parseCsv(zip.get('packet/variance.csv').toString()).filter((r) => r.explanation_required === 'yes').length, 2);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).at(-1).output_sha256, sha256(readFileSync(b.result.file)));
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, sha256(readFileSync(b.result.file)));
   const g3 = await new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['grants_build_packet', 'grants_evidence_pack'] });
   await g3.call('grants_build_packet', { ...f, grant_id: 'G3' });
   const z3 = await g3.call('grants_evidence_pack', { ...f, grant_id: 'G3' });

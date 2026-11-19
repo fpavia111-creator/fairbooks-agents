@@ -74,7 +74,7 @@
     "cois": "fixtures/cois.csv",
     "requirements": "fixtures/requirements.csv",
     "as_of": "2026-11-14",
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",
@@ -185,7 +185,7 @@
     "files": [
      "fixtures/coi-text/acme-plumbing-coi.txt"
     ],
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",
@@ -212,7 +212,7 @@
      45,
      7
     ],
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",

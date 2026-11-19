@@ -62,7 +62,7 @@ export const PROMPTS = [
 3. For drift the engineer says was intended, call drift_approve_baseline with the keys and a reason. It needs their yes. Approved items stop alerting until their value changes again.
 4. Call drift_write_report (drift-report.md, drift.json, revert-plan.json and drift.sarif for CI). Quote output_sha256.
 5. For JSON or .env snapshots, call drift_write_revert_patch for the keys the engineer wants reverted. Say whether it applies to the original file or to the 2-space formatted form, and list manual_steps (secrets are never put in a patch).
-6. If the engineer wants the fix applied, call drift_apply_fix with environment, keys and reason. It returns needs_approval: a named person must approve it (mythos-approve <id> --as "Name" or the approvals page), then repeat the same call. It only records the request. Never call production_push_config; it is blocked.
+6. If the engineer wants the fix applied, call drift_apply_fix with environment, keys and reason. It returns needs_approval: a named person must approve it (fairbooks-approve <id> --as "Name" or the approvals page), then repeat the same call. It only records the request. Never call production_push_config; it is blocked.
 
 Risk levels come from key names and values, not knowledge of the system; say so.`,
   },

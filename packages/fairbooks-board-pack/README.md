@@ -56,7 +56,7 @@ claude mcp add fairbooks-board-pack -- npx -y fairbooks-board-pack@0.2.0 mcp --r
 | `board_portal_upload` | **block** | Listed so agents see the refusal. Fairbooks Board Pack never uploads. |
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks Board Pack never sends. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -80,7 +80,7 @@ fairbooks-board-pack call board_check_claims '{"figures":"figures.csv","docs":["
 fairbooks-board-pack eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

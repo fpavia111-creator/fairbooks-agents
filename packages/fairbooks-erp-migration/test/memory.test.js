@@ -97,13 +97,13 @@ test('Fairbooks ERP Migration: the readiness report lists the learned facts it u
   const r = await rt.call('migration_readiness_report', { source: 'src.csv', target: 'tgt.csv', amount_column: 'net_due' });
   assert.equal(r.status, 'executed', JSON.stringify(r));
   assert.equal(r.result.go_live, 'not_approved');
-  const md = readFileSync(join(dir, 'mythos-out/migration/readiness-report.md'), 'utf8');
+  const md = readFileSync(join(dir, 'fairbooks-out/migration/readiness-report.md'), 'utf8');
   assert.match(md, /## Learned facts used/);
   assert.match(md, /key is column "legacy_ref" \(accepted by Morgan Hale \(fictional\)\)/);
   assert.match(md, /terms-known/);
-  const html = readFileSync(join(dir, 'mythos-out/migration/readiness-report.html'), 'utf8');
+  const html = readFileSync(join(dir, 'fairbooks-out/migration/readiness-report.html'), 'utf8');
   assert.match(html, /Learned facts used/);
-  const findings = JSON.parse(readFileSync(join(dir, 'mythos-out/migration/findings.json'), 'utf8'));
+  const findings = JSON.parse(readFileSync(join(dir, 'fairbooks-out/migration/findings.json'), 'utf8'));
   assert.equal(findings.learned_facts.used.length, 2);
 });
 

@@ -11,7 +11,7 @@ const fixtures = fileURLToPath(new URL('../fixtures', import.meta.url));
 const figs = () => variances(parseCsv(readFileSync(join(fixtures, 'figures.csv'), 'utf8')));
 const priorFigs = () => variances(parseCsv(readFileSync(join(fixtures, 'prior/figures-2026-09.csv'), 'utf8')));
 const tmpRoot = () => { const r = mkdtempSync(join(tmpdir(), 'board-v2-')); cpSync(fixtures, r, { recursive: true }); return r; };
-const rtFor = (root, opts = {}) => new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.mythos'), mode: 'auto', autoActions: ['board_lock_figures'], ...opts });
+const rtFor = (root, opts = {}) => new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.fairbooks'), mode: 'auto', autoActions: ['board_lock_figures'], ...opts });
 const claim = (t) => checkClaims([{ path: 'x', text: t }], figs()).claims[0];
 
 test('percent claims: rounding as written, hedges widen by one unit', () => {
@@ -74,10 +74,10 @@ test('charts tool refuses unlocked figures, then writes SVGs and charts.json wit
   const r = await rt.call('board_charts', { figures: 'figures.csv', charts: ['variance', 'actual_vs_basis'] });
   assert.equal(r.status, 'executed'); assert.equal(r.decision, 'allow');
   assert.match(r.result.output_sha256, /^[0-9a-f]{64}$/);
-  const index = JSON.parse(readFileSync(join(root, 'mythos-out/board/charts/charts.json'), 'utf8'));
+  const index = JSON.parse(readFileSync(join(root, 'fairbooks-out/board/charts/charts.json'), 'utf8'));
   assert.equal(index.charts.length, 2);
   for (const c of index.charts) {
-    const svg = readFileSync(join(root, 'mythos-out/board/charts', c.file), 'utf8');
+    const svg = readFileSync(join(root, 'fairbooks-out/board/charts', c.file), 'utf8');
     assert.deepEqual(svgPoints(svg), c.points); assert.deepEqual(tracePoints(c.points, figs()), []);
   }
   const bad = await rt.call('board_charts', { figures: 'figures.csv', charts: ['pie'] });
@@ -128,7 +128,7 @@ test('HTML pack: self-contained, charts inline, hash in the manifest, sign-off r
   await rt.call('board_lock_figures', { figures: 'figures.csv' });
   const p = await rt.call('board_assemble_pack', { figures: 'figures.csv', docs: ['docs/cfo-notes.md'], html: true, title: 'Pack <b>' });
   assert.equal(p.status, 'executed'); assert.equal(p.result.output_sha256, p.result.pack_sha256);
-  const mf = 'mythos-out/board/pack-manifest.json'; const m = JSON.parse(readFileSync(join(root, mf), 'utf8'));
+  const mf = 'fairbooks-out/board/pack-manifest.json'; const m = JSON.parse(readFileSync(join(root, mf), 'utf8'));
   const html = readFileSync(join(root, m.html), 'utf8');
   assert.match(html, /default-src 'none'/); assert.doesNotMatch(html, /<script/i); assert.match(html, /data-figure-id="F1"/);
   assert.match(html, /Pack &lt;b&gt;/); assert.match(html, /direction_mismatch/);

@@ -55,20 +55,20 @@ test('drafts on Auto; publish is one-click, hash-bound and tamper-checked; deplo
   const before = readFileSync(join(root, 'site/contact.html'), 'utf8');
   const d = await rt.call('pages_draft_fixes', { site: 'site', lang: 'en' }); assert.equal(d.status, 'executed');
   assert.equal(readFileSync(join(root, 'site/contact.html'), 'utf8'), before, 'site untouched');
-  const prop = readFileSync(join(root, 'mythos-out/pages/proposed/contact.html'), 'utf8');
+  const prop = readFileSync(join(root, 'fairbooks-out/pages/proposed/contact.html'), 'utf8');
   assert.match(prop, /<html lang="en">/); assert.doesNotMatch(prop, /user-scalable/); assert.match(prop, /tabindex="0"/);
-  assert.match(readFileSync(join(root, 'mythos-out/pages/changes.md'), 'utf8'), /\[TO DO\] `about.html:11` img_alt_missing/);
+  assert.match(readFileSync(join(root, 'fairbooks-out/pages/changes.md'), 'utf8'), /\[TO DO\] `about.html:11` img_alt_missing/);
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['pages_request_publish'] }), /one-click/);
   const args = { proposal: d.result.proposal, proposal_sha256: d.result.proposal_sha256 };
   const a = await rt.call('pages_request_publish', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Sam');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Sam');
   const b = await rt.call('pages_request_publish', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Sam');
   assert.equal(parseCsv(readFileSync(b.result.file, 'utf8'))[0].status, 'approved - a person publishes it');
   // tamper with a proposed file after approval of a fresh proposal
-  const d2 = await rt.call('pages_draft_fixes', { site: 'site', lang: 'en', out_dir: 'mythos-out/d2' });
-  writeFileSync(join(root, 'mythos-out/d2/proposed/contact.html'), 'changed');
+  const d2 = await rt.call('pages_draft_fixes', { site: 'site', lang: 'en', out_dir: 'fairbooks-out/d2' });
+  writeFileSync(join(root, 'fairbooks-out/d2/proposed/contact.html'), 'changed');
   const args2 = { proposal: d2.result.proposal, proposal_sha256: d2.result.proposal_sha256 };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('pages_request_publish', args2)).approval_id, 'Sam');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('pages_request_publish', args2)).approval_id, 'Sam');
   const t = await rt.call('pages_request_publish', args2); assert.equal(t.status, 'error'); assert.match(t.reason, /changed after the proposal/);
   assert.equal((await rt.call('pages_request_publish', { ...args, proposal_sha256: 'x'.repeat(64) })).status, 'needs_approval');
   assert.equal((await rt.call('deploy_site', {})).status, 'blocked'); assert.equal((await rt.call('http_fetch', {})).status, 'blocked');

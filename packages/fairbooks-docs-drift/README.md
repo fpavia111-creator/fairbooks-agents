@@ -6,7 +6,7 @@ Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent
 
 ## What it does
 
-Point Fairbooks Docs Drift at a package folder and, ideally, its tool list: an MCP `tools/list` result, `mythos_info` output, or a plain array. It reads `README.md`, `SKILL.md`, `docs/` and `skills/`, and reports drift with the file and line:
+Point Fairbooks Docs Drift at a package folder and, ideally, its tool list: an MCP `tools/list` result, `fairbooks_info` output, or a plain array. It reads `README.md`, `SKILL.md`, `docs/` and `skills/`, and reports drift with the file and line:
 - **tools**: tools in the code that no doc mentions; tools in the docs (tables, backticks, `call` examples) that no longer exist, with the nearest real name when one is one or two letters off; allow/ask/block labels that differ from the tool list; one-click tools whose docs do not say so; "N tools" counts that are wrong;
 - **examples**: `call <tool> '{...}'` examples with invalid JSON, parameters the input schema does not have, or required parameters left out; `npm run` scripts that do not exist; `npx` for a package with no bin;
 - **package.json**: version pins (`name@x.y.z`), "Node ≥ N" and the License section that differ from package.json;
@@ -47,14 +47,14 @@ claude mcp add fairbooks-docs-drift -- npx -y fairbooks-docs-drift@0.2.0 mcp --r
 | Tool | Policy | What it does |
 |---|---|---|
 | `docsdrift_check` | **allow** | Drift findings with severity, file and line; reads files only |
-| `docsdrift_write_report` | **allow** | Write `docs-drift.md` and `drift.csv` to `mythos-out/docs` |
+| `docsdrift_write_report` | **allow** | Write `docs-drift.md` and `drift.csv` to `fairbooks-out/docs` |
 | `docsdrift_ci` | **allow** | CI gate: write `fairbooks-docs-drift.sarif` and `drift.json`, pass or fail by `fail_on`, compare with a `baseline` |
-| `docsdrift_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `mythos-out/docs/proposed` within caps, plus `changes.md` and `proposal.json` (your docs untouched) |
+| `docsdrift_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `fairbooks-out/docs/proposed` within caps, plus `changes.md` and `proposal.json` (your docs untouched) |
 | `docsdrift_request_publish` | **ask · one-click** | After a named human approves, record the proposal (bound to its hash; originals must be unchanged) for whoever publishes |
 | `write_docs` | **block** | Listed so agents see the refusal. Fairbooks Docs Drift never overwrites docs in place. |
 | `git_push` | **block** | Listed so agents see the refusal. Fairbooks Docs Drift never commits, pushes or publishes. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -103,7 +103,7 @@ fairbooks-docs-drift eval          # private evals on the bundled fixtures
 
 `docsdrift_drift_review` (arguments: `pack`, optional `tools` and `openapi`) walks a host model through getting a tool list, checking, reporting, drafting fixes and the one-click publish a named person approves.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

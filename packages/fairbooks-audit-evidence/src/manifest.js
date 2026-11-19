@@ -100,14 +100,14 @@ export const manifest = defineManifest({
     },
     {
       name: 'evidence_build_evidence', kind: 'report', title: 'Build the evidence folder',
-      description: 'Write an evidence folder (README, index.html, events/approvals/blocked CSVs, chain and signature verification, optional control map with control-evidence.csv and gaps.csv, evidence file hashes, a diff against the previous period, Alethea decisions, MANIFEST.sha256) into out_dir (default mythos-out/evidence). The manifest hash is recorded in the audit log.',
+      description: 'Write an evidence folder (README, index.html, events/approvals/blocked CSVs, chain and signature verification, optional control map with control-evidence.csv and gaps.csv, evidence file hashes, a diff against the previous period, Alethea decisions, MANIFEST.sha256) into out_dir (default fairbooks-out/evidence). The manifest hash is recorded in the audit log.',
       inputSchema: { type: 'object', properties: { logs: logsSchema, log: str, out_dir: str, period_start: date, period_end: date, as_of: date, controls: controlsArg, template: templateArg, evidence_dir: str, previous_evidence_dir: { ...str, description: 'Last period\'s evidence folder, to add evidence-diff.csv' }, alethea_dir: str, public_keys: publicKeysArg, title: str } },
       handler: async (a, ctx) => {
         const { logs, events } = loadLogs(logsArg(a).map(ctx.path), { ...a, publicKeys: keysOf(a, ctx) });
         const controls = controlsOf(a, ctx) || [];
         const decisions = a.alethea_dir ? readAletheaDecisions(ctx.path(a.alethea_dir)) : [];
         const files = a.evidence_dir ? dirFiles(ctx, a.evidence_dir) : [];
-        const out = ctx.outDir(a.out_dir || 'mythos-out/evidence');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/evidence');
         const r = buildFolder({ logs, events, controls, decisions, files, title: a.title, period_start: a.period_start, period_end: a.period_end, generatedAt: new Date().toISOString(), asOf: asOfOf(a) });
         if (a.previous_evidence_dir) {
           if (!a.evidence_dir) throw new Error('previous_evidence_dir needs evidence_dir');
@@ -140,7 +140,7 @@ export const manifest = defineManifest({
       name: 'evidence_evidence_review', title: 'Prepare a controls evidence folder',
       description: 'Walk through building an evidence folder for a period: verify logs (and signatures), map evidence to your controls, find gaps and stale evidence, diff against last period, and build the folder. Sharing stays with a person.',
       arguments: [
-        { name: 'logs', description: 'Comma-separated audit log paths under --root (e.g. .mythos/audit.jsonl,.agent-guard/audit.jsonl)', required: true },
+        { name: 'logs', description: 'Comma-separated audit log paths under --root (e.g. .fairbooks/audit.jsonl,.agent-guard/audit.jsonl)', required: true },
         { name: 'controls', description: 'Your control list JSON, or leave empty and pick a template', required: false },
         { name: 'period_start', description: 'YYYY-MM-DD', required: false },
         { name: 'period_end', description: 'YYYY-MM-DD', required: false },
@@ -151,7 +151,7 @@ export const manifest = defineManifest({
       text: [
         'You are helping a reviewer package evidence of how AI agents were controlled during a period. Use the fairbooks-audit-evidence tools only. The output is evidence, not certification: never say a control is "effective", "compliant" or "certified".',
         '',
-        '1. For each log in {{logs}}, call evidence_verify_chain (with public_keys={{public_keys}} when given). Report any BROKEN chain or failed signature with line numbers first; a broken log must be explained by a person before the folder is shared. If a log is mythos-format and unsigned, say that a verified chain cannot rule out a full rewrite.',
+        '1. For each log in {{logs}}, call evidence_verify_chain (with public_keys={{public_keys}} when given). Report any BROKEN chain or failed signature with line numbers first; a broken log must be explained by a person before the folder is shared. If a log is fairbooks-format and unsigned, say that a verified chain cannot rule out a full rewrite.',
         '2. Call evidence_summarize_logs for the period {{period_start}} to {{period_end}}.',
         '3. If no control list is given ({{controls}}), call evidence_list_templates and suggest one as a starting point the user must rename to their own ids.',
         '4. Call evidence_map_controls with the logs, controls (or template), evidence_dir={{evidence_dir}} and period_end. List gaps and stale controls with the reason, and how many events map to no control.',

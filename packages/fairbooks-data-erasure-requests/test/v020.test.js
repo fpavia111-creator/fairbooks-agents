@@ -108,7 +108,7 @@ test('evidence pack: hashes sources, cites rules, lists approved deletions, mask
   assert.ok(pack.open_items.some((o) => /newsletter/.test(o)));
   for (const f of e.result.files) assert.ok(!readFileSync(f, 'utf8').toLowerCase().includes('jamie.doe'));
   assert.match(readFileSync(e.result.files[1], 'utf8'), /default-src 'none'/);
-  const line = readAudit(join(root, '.mythos', 'audit.jsonl')).filter((l) => l.tool === 'erasure_evidence_pack').pop();
+  const line = readAudit(join(root, '.fairbooks', 'audit.jsonl')).filter((l) => l.tool === 'erasure_evidence_pack').pop();
   assert.equal(line.output_sha256, e.result.output_sha256);
 });
 
@@ -116,7 +116,7 @@ async function oneClickOnce(root, args) {
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['erasure_request_deletion'] }), /one-click/);
   const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
   const a = await rt.call('erasure_request_deletion', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin (fictional)');
   const b = await rt.call('erasure_request_deletion', args); assert.equal(b.status, 'executed');
   assert.equal((await rt.call('erasure_request_deletion', args)).status, 'needs_approval');
 }

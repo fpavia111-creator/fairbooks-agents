@@ -26,7 +26,7 @@ export async function demo(manifest) {
   for (const i of t.result.items.filter((x) => x.severity === 'high')) w(`    ${i.id.padEnd(30)} ${i.server}/${i.tool}: ${i.snippet || i.title}`);
 
   printStep('Pin the reviewed tool definitions', await rt.call('mcpreview_pin_tools', { tools: 'tools/notes-v1.json', server: 'notes' }));
-  const p = await rt.call('mcpreview_check_pins', { tools: 'tools/notes-v2.json', pins: 'mythos-out/mcpreview/tool-pins.json' });
+  const p = await rt.call('mcpreview_check_pins', { tools: 'tools/notes-v2.json', pins: 'fairbooks-out/mcpreview/tool-pins.json' });
   printStep('A later tools/list: rug-pull check against the pins', p);
   for (const ch of p.result.changes) w(`    ${ch.change.padEnd(8)} ${ch.server}/${ch.tool}${ch.new_risky_text?.length ? '  new text: ' + ch.new_risky_text.join(', ') : ''}`);
 

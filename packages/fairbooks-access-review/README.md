@@ -57,7 +57,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 |---|---|---|
 | BambooHR | Employee report (CSV or Excel) | no |
 
-Columns named differently? Run `npx fairbooks-access-review inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-access-review inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -100,17 +100,17 @@ claude mcp add fairbooks-access-review -- npx -y fairbooks-access-review@0.2.0 m
 | Tool | Policy | What it does |
 |---|---|---|
 | `access_review_access` | **allow** | Flag risky accounts, highest risk first |
-| `access_recert_sheet` | **allow** | Write `recertification.csv` (reviewers, delegations, due dates) + summary to `mythos-out/access` |
+| `access_recert_sheet` | **allow** | Write `recertification.csv` (reviewers, delegations, due dates) + summary to `fairbooks-out/access` |
 | `access_access_diff` | **allow** | Compare a previous and a current export; review-first list of changes |
 | `access_campaign_status` | **allow** | Progress of a filled sheet: overdue, incomplete, self-review, chase list, revoke decisions |
-| `access_evidence_pack` | **allow** | Write `recertification-evidence.json/.html` to `mythos-out/access/evidence`; hash logged as `output_sha256` |
+| `access_evidence_pack` | **allow** | Write `recertification-evidence.json/.html` to `fairbooks-out/access/evidence`; hash logged as `output_sha256` |
 | `access_request_revocation` | **ask · one-click** | After a named human approves, append a request to `revocation-requests.csv` for the system admin |
 | `access_recall` | **allow** | Search what Fairbooks Access Review has learned about this customer: accepted facts and facts waiting for a person |
 | `access_learn` | **allow** | Propose a fact to remember (extra privileged role, SoD rule, standing delegation, note). Stored as waiting; changes nothing |
 | `access_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
 | `access_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Memory: what Fairbooks Access Review remembers about your setup
 
@@ -132,7 +132,7 @@ fairbooks-access-review memory accept MEM-1a2b3c4d5e6f --as "Your Name" --reason
 fairbooks-access-review memory verify
 ```
 
-Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`), lines privileged only by a learned role say so in `reasons` and `privileged_by`, and the recertification summary has a "Learned facts used" section. Memory lives in `.mythos/memory/fairbooks-access-review.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it. Fairbooks Access Review refuses to store passwords, keys, personal identifiers and text that reads like instructions to an AI.
+Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`), lines privileged only by a learned role say so in `reasons` and `privileged_by`, and the recertification summary has a "Learned facts used" section. Memory lives in `.fairbooks/memory/fairbooks-access-review.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it. Fairbooks Access Review refuses to store passwords, keys, personal identifiers and text that reads like instructions to an AI.
 
 ## MCP prompt
 
@@ -156,7 +156,7 @@ fairbooks-access-review call access_review_access '{"access":"access-export.csv"
 fairbooks-access-review eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

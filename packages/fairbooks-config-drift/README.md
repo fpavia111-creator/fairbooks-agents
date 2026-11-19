@@ -52,13 +52,13 @@ claude mcp add fairbooks-config-drift -- npx -y fairbooks-config-drift@0.2.0 mcp
 |---|---|---|
 | `drift_diff` | **allow** | Compare two snapshots |
 | `drift_timeline` | **allow** | Drift across a folder of dated snapshots |
-| `drift_write_report` | **allow** | Write `drift-report.md`, `drift.json`, `drift.sarif`, `revert-plan.json` to `mythos-out/drift` |
+| `drift_write_report` | **allow** | Write `drift-report.md`, `drift.json`, `drift.sarif`, `revert-plan.json` to `fairbooks-out/drift` |
 | `drift_write_revert_patch` | **allow** | Write `revert.patch` + `revert-patch.json` (JSON and `.env` snapshots). Applies nothing. |
 | `drift_approve_baseline` | **ask (Auto-eligible)** | Record drift a person accepted in `approved-drift.json` |
 | `drift_apply_fix` | **ask · one-click** | After a named human approves, record the fix in `apply-request-*.json` for your change process |
 | `production_push_config` | **block** | Listed so agents see the refusal. Fairbooks Config Drift never writes to a live system. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -82,7 +82,7 @@ fairbooks-config-drift call drift_timeline '{"dir":"snapshots","ignore":["meta.g
 fairbooks-config-drift eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

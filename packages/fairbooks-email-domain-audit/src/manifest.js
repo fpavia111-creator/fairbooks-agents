@@ -62,10 +62,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'maildomain_write_report', kind: 'report', openWorld: true,
-      description: 'Write mail-dns-audit.md, a self-contained mail-dns-audit.html (no scripts) and findings.csv (blank owner and status columns) into out_dir (default mythos-out/maildomain). With reports, also totals the DMARC aggregate reports into the report and dmarc-sources.csv. Returns output_sha256 of the Markdown report, which is written into the audit log.',
+      description: 'Write mail-dns-audit.md, a self-contained mail-dns-audit.html (no scripts) and findings.csv (blank owner and status columns) into out_dir (default fairbooks-out/maildomain). With reports, also totals the DMARC aggregate reports into the report and dmarc-sources.csv. Returns output_sha256 of the Markdown report, which is written into the audit log.',
       inputSchema: { type: 'object', required: ['domain'], properties: { ...props, reports: reportsProp, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = await run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/maildomain');
+        const r = await run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/maildomain');
         const s = a.reports ? loadReports(a.reports, ctx, { domain: r.domain }) : null;
         const csv = toCsv(r.findings.map((f) => ({ domain: r.domain, severity: f.severity, check: f.check, record: f.record, detail: f.detail, ref: f.ref || '', owner: '', status: '' })), ['domain', 'severity', 'check', 'record', 'detail', 'ref', 'owner', 'status']);
         let md = reportMarkdown(r);
@@ -101,7 +101,7 @@ export const manifest = defineManifest({
         const threshold = a.pass_threshold ?? config.pass_threshold ?? DEFAULT_ROLLOUT.pass_threshold;
         const s = a.reports ? loadReports(a.reports, ctx, { domain: r.domain, threshold }) : null;
         const p = planRollout(r, { start_date: a.start_date, config: { ...config, pass_threshold: threshold }, readiness: s ? s.readiness : null, rua: a.rua || '' });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/maildomain');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/maildomain');
         const md = safeMarkdown(rolloutMarkdown(p));
         const ics = toIcs(p.stages.map((st) => ({ uid: `${r.domain}-dmarc-step-${st.step}@maildomain.local`, date: st.earliest_date, summary: `DMARC step ${st.step} for ${r.domain}: ${st.policy}${st.pct < 100 ? ` pct=${st.pct}` : ''}`, description: `${st.gate} Proposed: ${st.record}. A person approves the change (maildomain_request_dns_change).`, reminders: p.reminder_days, categories: ['DMARC'] })), { calName: `DMARC rollout ${r.domain}`, prodId: '-//Fairbooks Machine//fairbooks-email-domain-audit//EN' });
         const files = [ctx.writeFile(out, 'dmarc-rollout.md', md), ctx.writeFile(out, 'dmarc-rollout.json', JSON.stringify(p, null, 2) + '\n'), ctx.writeFile(out, 'dmarc-rollout.ics', ics)];
@@ -120,7 +120,7 @@ export const manifest = defineManifest({
       description: 'Pre-stage DNS record changes into out_dir: zone-change.md (current vs proposed) and proposed-records.json with its hash. Only safe, mechanical proposals: add SPF from the senders you list, merge duplicate SPF, fix the all term, add DMARC at p=none with reports, add TLS-RPT. Never creates DKIM keys or an enforcing DMARC policy; those are listed for a person. Unknown values are left as [TO CONFIRM] markers. DNS is not changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['domain'], properties: { ...props, senders: { type: 'array', items: str, description: 'SPF terms for services that send as you, e.g. ["include:_spf.google.com"]' }, rua: { ...str, description: 'Mailbox for DMARC/TLS reports, e.g. dmarc@example.com' }, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = await run(a, ctx); const d = draftChanges(r, a); const out = ctx.outDir(a.out_dir || 'mythos-out/maildomain');
+        const r = await run(a, ctx); const d = draftChanges(r, a); const out = ctx.outDir(a.out_dir || 'fairbooks-out/maildomain');
         const proposal = { domain: r.domain, created_at: new Date().toISOString(), source: source(a), changes: d.changes, needs_person: d.needs_person, open_markers: d.open_markers, note: 'Proposal only. A person makes the change at the DNS host.' };
         const text = JSON.stringify(proposal, null, 2) + '\n'; const pf = ctx.writeFile(out, 'proposed-records.json', text);
         const L = [`# Proposed DNS changes for ${r.domain} (not applied)`, '', 'Suggested TTL 3600. Check each value with your mail provider before you add it.', ''];
@@ -142,7 +142,7 @@ export const manifest = defineManifest({
         if (!p.changes?.length) throw new Error('the proposal has no record changes');
         const open = p.changes.filter((c) => hasMarkers(c.proposed) || hasMarkers(c.note || ''));
         if (open.length) throw new Error(`${open.length} change(s) still have [TO CONFIRM] or [CHECK MERGE] markers (${open.map((c) => c.name).join(', ')}); fill them in or remove the change first`);
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/maildomain'); const f = join(dir, 'dns-change-requests.csv');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/maildomain'); const f = join(dir, 'dns-change-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), domain: p.domain, change: a.change, change_sha256: a.change_sha256, records: p.changes.map((c) => `${c.action} ${c.type} ${c.name}`).join('; '), status: 'approved - a person edits DNS' }], ['requested_at', 'domain', 'change', 'change_sha256', 'records', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: `DNS change approved and recorded for ${p.domain} (${p.changes.length} record(s)). DNS was not changed.`, file: f };

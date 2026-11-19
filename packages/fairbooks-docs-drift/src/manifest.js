@@ -8,7 +8,7 @@ const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url),
 const str = { type: 'string' };
 const props = {
   pack: { ...str, description: 'Package folder with package.json and README.md (docs/, skills/ and SKILL.md are read too), relative to --root. Required unless the config file names it' },
-  tools: { ...str, description: 'Tool list as JSON: an MCP tools/list result, mythos_info output, or a plain array. An object may also carry "prompts" and "config_schemas" (names that are not tools). Without it only package.json and link checks run' },
+  tools: { ...str, description: 'Tool list as JSON: an MCP tools/list result, fairbooks_info output, or a plain array. An object may also carry "prompts" and "config_schemas" (names that are not tools). Without it only package.json and link checks run' },
   ignore: { type: 'array', items: str, description: 'Check ids to leave out, e.g. ["count_mismatch"]' },
   openapi: { ...str, description: 'Optional OpenAPI 3.x / Swagger 2.0 spec as JSON, relative to --root. Endpoints in the docs ("GET /notes/{id}") are compared with it' },
   require_changelog: { type: 'boolean', description: 'Flag a package with no CHANGELOG.md (an existing CHANGELOG.md is always checked against the version)' },
@@ -57,10 +57,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'docsdrift_write_report', kind: 'report',
-      description: 'Write docs-drift.md and drift.csv (blank owner and status columns) into out_dir (default mythos-out/docs).',
+      description: 'Write docs-drift.md and drift.csv (blank owner and status columns) into out_dir (default fairbooks-out/docs).',
       inputSchema: { type: 'object', properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/docs');
+        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/docs');
         const L = [`# Docs drift: ${r.package}@${r.version}`, '', line(r), '', '| Severity | Check | Where | Detail |', '|---|---|---|---|', ...r.findings.map((f) => `| ${f.severity} | ${f.check} | ${f.file}${f.line ? ':' + f.line : ''} | ${f.detail.replace(/\|/g, '\\|')} |`), ...(r.findings.length ? [] : ['| | none | | |']), '', '## Limits', '', r.limits, ''];
         const csv = toCsv(r.findings.map((f) => ({ severity: f.severity, check: f.check, file: f.file, line: f.line ?? '', detail: f.detail, owner: '', status: '' })), ['severity', 'check', 'file', 'line', 'detail', 'owner', 'status']);
         const md = safeMarkdown(L.join('\n'));
@@ -69,10 +69,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'docsdrift_ci', kind: 'report', title: 'Docs drift CI gate',
-      description: 'Run the drift check as a CI gate: writes fairbooks-docs-drift.sarif (SARIF 2.1.0 for code scanning, paths relative to --root) and drift.json (findings with line-independent fingerprints) into out_dir (default mythos-out/docs). fail_on sets which severities fail the gate (error, warning, any, none; default error). With baseline (an earlier drift.json), it reports new and fixed findings, and new_only fails on new drift only. Returns pass, the failing findings and output_sha256 of the SARIF. The fairbooks-docs-drift ci command exits 1 when the gate fails.',
+      description: 'Run the drift check as a CI gate: writes fairbooks-docs-drift.sarif (SARIF 2.1.0 for code scanning, paths relative to --root) and drift.json (findings with line-independent fingerprints) into out_dir (default fairbooks-out/docs). fail_on sets which severities fail the gate (error, warning, any, none; default error). With baseline (an earlier drift.json), it reports new and fixed findings, and new_only fails on new drift only. Returns pass, the failing findings and output_sha256 of the SARIF. The fairbooks-docs-drift ci command exits 1 when the gate fails.',
       inputSchema: { type: 'object', properties: { ...props, fail_on: { enum: FAIL_ON, description: 'Severities that fail the gate (default error)' }, baseline: { ...str, description: 'Earlier drift.json to compare with' }, new_only: { type: 'boolean', description: 'Fail only on findings that are not in the baseline' }, out_dir: str } },
       handler: async (aIn, ctx) => {
-        const { a, r } = load(aIn, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/docs');
+        const { a, r } = load(aIn, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/docs');
         for (const f of r.findings) f.fingerprint = fingerprint(f);
         let base = null; if (a.baseline) { if (!ctx.exists(a.baseline)) throw new Error(`baseline not found: ${a.baseline}`); base = JSON.parse(ctx.readText(a.baseline)); if (!Array.isArray(base.findings)) throw new Error('baseline must be a drift.json written by docsdrift_ci'); }
         const diff = base ? compareBaseline(r.findings, base) : null;
@@ -90,7 +90,7 @@ export const manifest = defineManifest({
       description: 'Write fixed copies of docs into out_dir/proposed for mechanical fixes only: version pins that differ from package.json and tool names one or two letters off a single real tool. Capped by max_fixes (default 20) and max_per_file (default 10). Writes changes.md and proposal.json with before/after hashes; your docs are not touched, so there is nothing to roll back. Everything else is listed for a person. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', properties: { ...props, max_fixes: { type: 'integer', minimum: 1, maximum: 100 }, max_per_file: { type: 'integer', minimum: 1, maximum: 50 }, out_dir: str } },
       handler: async (a, ctx) => {
-        const { a: aa, dir, r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/docs');
+        const { a: aa, dir, r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/docs');
         const fx = applyFixes(dir, r.fixes, { maxFixes: a.max_fixes || 20, maxPerFile: a.max_per_file || 10 });
         const files = [];
         for (const f of fx.files) { const dest = join(out, 'proposed', f.file); mkdirSync(dirname(dest), { recursive: true }); ctx.writeFile(dirname(dest), f.file.split('/').pop(), f.after, { raw: true }); files.push({ file: f.file, proposed: `proposed/${f.file}`, applied: f.applied, sha256_before: sha256(f.before), sha256_after: sha256(f.after) }); }
@@ -115,7 +115,7 @@ export const manifest = defineManifest({
           const fp = join(dirname(pf), f.proposed); if (!existsSync(fp) || sha256(readFileSync(fp, 'utf8')) !== f.sha256_after) throw new Error(`${f.proposed} changed after the proposal was written`);
           const orig = join(packDir, f.file); if (!existsSync(orig) || sha256(readFileSync(orig, 'utf8')) !== f.sha256_before) throw new Error(`${f.file} changed since the proposal; draft the fixes again`);
         }
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/docs'); const f = join(dir, 'publish-requests.csv');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/docs'); const f = join(dir, 'publish-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), package: p.package, proposal: a.proposal, proposal_sha256: a.proposal_sha256, files: p.files.map((x) => x.file).join('; '), status: 'approved - a person publishes it' }], ['requested_at', 'package', 'proposal', 'proposal_sha256', 'files', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: `Docs publish approved and recorded for ${p.files.length} file(s). Nothing was overwritten or pushed.`, file: f };
@@ -139,7 +139,7 @@ export const manifest = defineManifest({
 2. Call docsdrift_check with pack {{pack}}, tools {{tools}} and openapi {{openapi}} (leave out the ones you do not have). Group the findings by file and list errors first, with file:line.
 3. Explain each finding in one line. Do not claim the docs are complete: "no drift found" only means these checks passed.
 4. Call docsdrift_write_report so the person has docs-drift.md and drift.csv. For CI, docsdrift_ci writes SARIF and a drift.json baseline.
-5. Ask the person before calling docsdrift_draft_fixes (it needs their yes). It only fixes version pins and tool-name typos, as copies in mythos-out/docs/proposed. Everything else is for a person to edit.
+5. Ask the person before calling docsdrift_draft_fixes (it needs their yes). It only fixes version pins and tool-name typos, as copies in fairbooks-out/docs/proposed. Everything else is for a person to edit.
 6. Publishing the copies is docsdrift_request_publish with the proposal and proposal_sha256. It is a production deploy: a named person approves it with one click, even in Auto, and it is refused if the docs changed since the proposal. A person then copies the files over; Fairbooks Docs Drift never pushes.`,
   }],
   policy: { rules: [

@@ -41,7 +41,7 @@ test('invalid TIN patterns are flagged and never printed in full', async () => {
   const root = tmpRoot('taxforms-tin-');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['taxforms_draft_requests'] });
   const outs = [await rt.call('taxforms_check', { vendors: 'vendors.csv', payments: 'payments.csv', as_of }), await rt.call('auxo_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_find_duplicates', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_write_tracker', { vendors: 'vendors.csv', as_of }), await rt.call('taxforms_draft_requests', { vendors: 'vendors.csv', as_of })];
-  const files = [...outs.flatMap((o) => o.result.files || []), ...readdirSync(join(root, 'mythos-out/taxforms/requests')).map((f) => join(root, 'mythos-out/taxforms/requests', f)), join(root, '.mythos/audit.jsonl')];
+  const files = [...outs.flatMap((o) => o.result.files || []), ...readdirSync(join(root, 'fairbooks-out/taxforms/requests')).map((f) => join(root, 'fairbooks-out/taxforms/requests', f)), join(root, '.fairbooks/audit.jsonl')];
   const all = JSON.stringify(outs) + files.map((f) => readFileSync(f, 'utf8')).join('\n');
   for (const t of ['00-0000101', '000000101', '000-00-0104', '000000104', '00-0000106', '000000106']) assert.ok(!all.includes(t), `${t} leaked`);
 });
@@ -68,12 +68,12 @@ test('W-8 request draft asks for the W-8, and the tracker shows the open checkli
   const root = tmpRoot('taxforms-w8-');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['taxforms_draft_requests'] });
   await rt.call('taxforms_draft_requests', { vendors: 'vendors-merged.csv', as_of });
-  const t = readFileSync(join(root, 'mythos-out/taxforms/requests/V12-fjord-consulting-as.md'), 'utf8');
+  const t = readFileSync(join(root, 'fairbooks-out/taxforms/requests/V12-fjord-consulting-as.md'), 'utf8');
   assert.match(t, /^DRAFT — not sent/); assert.match(t, /Subject: W-8 needed/); assert.match(t, /past its usual validity period/); assert.doesNotMatch(t, /Form W-9/);
   const w = await rt.call('taxforms_write_tracker', { vendors: 'vendors-merged.csv', as_of });
   const rows = Object.fromEntries(parseCsv(readFileSync(w.result.files[0], 'utf8')).map((x) => [x.vendor_id, x]));
   assert.equal(rows.V12.form_expected, 'W-8BEN-E'); assert.match(rows.V12.checklist_open, /validity period/);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).at(-1).output_sha256, w.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, w.result.output_sha256);
 });
 
 test('1099 readiness: vendors over the threshold missing data are listed; still no e-file', async () => {
@@ -93,7 +93,7 @@ test('1099 readiness: vendors over the threshold missing data are listed; still 
   const md = readFileSync(r.result.files[0], 'utf8');
   assert.match(md, /Not tax advice and not a filing: Fairbooks Vendor Tax Forms never e-files/); assert.match(md, /not matched with the IRS/); assert.match(md, /V99: 750.00/);
   assert.equal(parseCsv(readFileSync(r.result.files[1], 'utf8')).length, 4);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).at(-1).output_sha256, r.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, r.result.output_sha256);
   assert.equal((await rt.call('irs_efile', { year: 2026 })).status, 'blocked');
   assert.equal((await new AgentRuntime(manifest, { root, audit: false, mode: 'review' }).call('auxo_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of })).status, 'executed', 'a report runs in review mode');
 });
@@ -114,9 +114,9 @@ test('send stays one-click for W-8 requests too (different args per approval)', 
   const root = tmpRoot('taxforms-send-');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['taxforms_draft_requests'] });
   await rt.call('taxforms_draft_requests', { vendors: 'vendors-merged.csv', as_of });
-  const args = { vendor_id: 'V12', draft: 'mythos-out/taxforms/requests/V12-fjord-consulting-as.md' };
+  const args = { vendor_id: 'V12', draft: 'fairbooks-out/taxforms/requests/V12-fjord-consulting-as.md' };
   const a = await rt.call('taxforms_request_send', args); assert.equal(a.status, 'needs_approval'); assert.match(a.reason, /binding_send stays one-click/);
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin');
   const b = await rt.call('taxforms_request_send', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Robin');
 });
 

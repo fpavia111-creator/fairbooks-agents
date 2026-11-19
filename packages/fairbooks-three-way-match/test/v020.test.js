@@ -103,7 +103,7 @@ test('HTML report and PO status CSV are written; the hash matches the file', asy
 test('output_sha256 lands in the audit line', async () => {
   const root = tmpRoot('match-aud-');
   const r = await new AgentRuntime(manifest, { root }).call('match_write_report', { ...MAIN });
-  const lines = readFileSync(join(root, '.mythos', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const lines = readFileSync(join(root, '.fairbooks', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(lines.at(-1).output_sha256, r.result.output_sha256);
 });
 
@@ -114,7 +114,7 @@ test('invalid arguments are refused before any approval; posting stays one-click
   const root = tmpRoot('match-oc-'); const r2 = new AgentRuntime(manifest, { root, mode: 'auto' });
   const args = { invoice: 'INV-3001', vendor: 'Wayne Paper Co (fictional)', amount: 320, reason: 'matched, partial fixture' };
   const a = await r2.call('match_request_posting', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin');
   assert.equal((await r2.call('match_request_posting', args)).approved_by, 'Robin');
   assert.equal((await r2.call('match_request_posting', args)).status, 'needs_approval');
 });

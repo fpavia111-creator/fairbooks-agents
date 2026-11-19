@@ -61,4 +61,4 @@ export function planSchedule(drafts, { suppression, config = {}, start_from, max
 
 export const scheduleCsv = (p) => toCsv(p.slots, ['row', 'to', 'subject', 'send_at', 'local', 'sender_day']);
 /** One all-day calendar entry per sending day (count and first/last slot; no addresses). */
-export const scheduleIcs = (p) => toIcs(p.days.map((d) => ({ date: d.date, summary: `Outreach: send ${d.count} reviewed draft(s)`, description: `First slot ${d.first}; last slot ${d.last}. Send from your own mail tool. Fairbooks Outreach Email Gate sends nothing.`, reminders: [0], uid: `outreach-${d.date}@mythos.local` })), { calName: 'Outreach send plan' });
+export const scheduleIcs = (p) => toIcs(p.days.map((d) => ({ date: d.date, summary: `Outreach: send ${d.count} reviewed draft(s)`, description: `First slot ${d.first}; last slot ${d.last}. Send from your own mail tool. Fairbooks Outreach Email Gate sends nothing.`, reminders: [0], uid: `outreach-${d.date}@fairbooks.local` })), { calName: 'Outreach send plan' });

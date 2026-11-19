@@ -29,9 +29,9 @@ test('AWS Certificate Manager list: ids from the ARN, key from KeyAlgorithm, aut
   assert.match(s.note, /imported certificates do not renew by themselves/);
 });
 
-test('an owner can be set for the whole file in mythos-sources.json', async () => {
+test('an owner can be set for the whole file in fairbooks-sources.json', async () => {
   const root = mkdtempSync(join(tmpdir(), 'certs-src-')); cpSync(fixtures, root, { recursive: true });
-  writeFileSync(join(root, 'mythos-sources.json'), JSON.stringify({ files: { 'exports/acm-list-certificates.json': { set: { owner: 'Web team' } } } }));
+  writeFileSync(join(root, 'fairbooks-sources.json'), JSON.stringify({ files: { 'exports/acm-list-certificates.json': { set: { owner: 'Web team' } } } }));
   const r = await scan({ certificates: 'exports/acm-list-certificates.json' }, root);
   assert.ok(r.result.items.every((i) => i.owner === 'Web team' && !i.flags.includes('no_owner')));
 });

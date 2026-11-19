@@ -80,23 +80,23 @@ test('playbook schema: unknown key, wrong type and missing field fail with JSON 
 
 test('memo cites the playbook version and hash, redlines against the previous memo; report hash in the audit log', async () => {
   const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['clauses_draft_markup'] });
-  const first = await rt.call('clauses_draft_markup', { contract: 'contracts/msa.md', playbook: 'playbook.json', out_dir: 'mythos-out/v1' });
+  const first = await rt.call('clauses_draft_markup', { contract: 'contracts/msa.md', playbook: 'playbook.json', out_dir: 'fairbooks-out/v1' });
   const memo1 = readFileSync(join(root, first.result.draft), 'utf8');
   const sha = createHash('sha256').update(readFileSync(join(root, 'playbook.json'))).digest('hex');
   assert.match(memo1, new RegExp(`playbook version 3\\.0\\.0 \\(playbook file sha256 ${sha.slice(0, 12)}\\)`));
   assert.equal(first.result.playbook_sha256, sha);
   assert.match(memo1, /Capitalised term "Effective Date" is used \(line 19\) but not defined/);
   assert.equal((memo1.match(/\[COUNSEL REVIEW\]/g) || []).length, 8);
-  const second = await rt.call('clauses_draft_markup', { contract: 'contracts/msa-v2-tracked.docx', playbook: 'playbook.json', previous_contract: 'contracts/msa.md', previous_draft: 'mythos-out/v1/issues-for-counsel.md', out_dir: 'mythos-out/v2' });
+  const second = await rt.call('clauses_draft_markup', { contract: 'contracts/msa-v2-tracked.docx', playbook: 'playbook.json', previous_contract: 'contracts/msa.md', previous_draft: 'fairbooks-out/v1/issues-for-counsel.md', out_dir: 'fairbooks-out/v2' });
   assert.equal(second.status, 'executed'); assert.ok(second.result.redline.added > 0);
   const memo2 = readFileSync(join(root, second.result.draft), 'utf8');
   assert.match(memo2, /## Changes since contracts\/msa\.md \[COUNSEL REVIEW\]/); assert.match(memo2, /Payment terms: needs_attention → present \(better\), value 60 → 30/);
-  const diff = readFileSync(join(root, 'mythos-out/v2/issues-for-counsel.diff'), 'utf8');
+  const diff = readFileSync(join(root, 'fairbooks-out/v2/issues-for-counsel.diff'), 'utf8');
   assert.equal(applyUnifiedDiff(memo1, diff), memo2, 'the redline turns the old memo into the new one');
-  const w = await rt.call('clauses_write_report', { contract: 'contracts/msa-v2-tracked.docx', previous_contract: 'contracts/msa.md', playbook: 'playbook.json', out_dir: 'mythos-out/rep' });
-  assert.match(readFileSync(join(root, 'mythos-out/rep/contract.diff'), 'utf8'), /^-.*sixty \(60\)/m);
-  assert.match(readFileSync(join(root, 'mythos-out/rep/draft-changes.md'), 'utf8'), /\| Payment terms \| needs_attention \(60\) \| present \(30\) \| better \|/);
-  const lineRec = readAudit(join(root, '.mythos/audit.jsonl')).filter((e) => e.tool === 'clauses_write_report').pop();
+  const w = await rt.call('clauses_write_report', { contract: 'contracts/msa-v2-tracked.docx', previous_contract: 'contracts/msa.md', playbook: 'playbook.json', out_dir: 'fairbooks-out/rep' });
+  assert.match(readFileSync(join(root, 'fairbooks-out/rep/contract.diff'), 'utf8'), /^-.*sixty \(60\)/m);
+  assert.match(readFileSync(join(root, 'fairbooks-out/rep/draft-changes.md'), 'utf8'), /\| Payment terms \| needs_attention \(60\) \| present \(30\) \| better \|/);
+  const lineRec = readAudit(join(root, '.fairbooks/audit.jsonl')).filter((e) => e.tool === 'clauses_write_report').pop();
   assert.equal(lineRec.output_sha256, w.result.output_sha256);
 });
 
@@ -104,11 +104,11 @@ test('e-signing stays blocked and sending stays one-click after a named reviewer
   const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['clauses_draft_markup'] });
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['e_sign'] }));
   for (const t of ['e_sign', 'send_email']) { const r = await rt.call(t, {}); assert.equal(r.status, 'blocked'); assert.equal(r.decision, 'block'); }
-  const d = await rt.call('clauses_draft_markup', { contract: 'contracts/msa.docx', playbook: 'playbook.json', out_dir: 'mythos-out/dx' });
+  const d = await rt.call('clauses_draft_markup', { contract: 'contracts/msa.docx', playbook: 'playbook.json', out_dir: 'fairbooks-out/dx' });
   const file = join(root, d.result.draft); const reviewed = readFileSync(file, 'utf8').replace(/ ?\[COUNSEL REVIEW\]/g, ''); writeFileSync(file, reviewed);
   const req = { draft: d.result.draft, draft_sha256: createHash('sha256').update(reviewed).digest('hex'), to: 'Kettle Labs legal (fictional)', reviewed_by: 'Morgan Counsel (fictional)' };
   const a = await rt.call('clauses_request_send', req); assert.equal(a.status, 'needs_approval'); assert.match(a.reason, /binding_send stays one-click/);
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Jo');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Jo');
   const ok = await rt.call('clauses_request_send', req); assert.equal(ok.status, 'executed'); assert.equal(ok.approved_by, 'Jo');
   assert.match((await rt.call('clauses_request_send', { ...req, reviewed_by: 'Robin Counsel (fictional)' })).status, /needs_approval/, 'a different request needs its own click');
   assert.equal((await rt.call('clauses_request_send', { ...req, reviewed_by: '' })).status, 'error', 'a blank reviewer is refused before any click');

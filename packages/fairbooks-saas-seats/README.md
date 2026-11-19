@@ -43,7 +43,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | BambooHR | Employee report (CSV or Excel) | no |
 | Google Workspace Admin | Users > Download users (CSV) | no |
 
-Columns named differently? Run `npx fairbooks-saas-seats inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-saas-seats inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -80,14 +80,14 @@ claude mcp add fairbooks-saas-seats -- npx -y fairbooks-saas-seats@0.2.0 mcp --r
 | Tool | Policy | What it does |
 |---|---|---|
 | `seats_find_waste` | **allow** | Flag waste, per seat and per app, with estimated savings |
-| `seats_write_review` | **allow** | Write `seat-review.csv`, `renewal-actions.csv` and a summary to `mythos-out/seats` |
+| `seats_write_review` | **allow** | Write `seat-review.csv`, `renewal-actions.csv` and a summary to `fairbooks-out/seats` |
 | `seats_renewal_calendar` | **allow** | Write `renewals.ics` (notice-due and renewal events) |
 | `seats_draft_confirmations` | **allow** | Write owner confirmation drafts (Markdown) and `drafts-index.csv`; sends nothing |
 | `seats_compare_reviews` | **allow** | Compare an earlier export with the current one |
 | `seats_request_downgrade` | **ask (Auto-eligible)** | Record a downgrade request for the app admin |
 | `seats_request_revoke` | **ask · one-click** | After a named human approves, record a revocation request for the app admin |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision. Report tools record the hash of what they wrote in the audit log (`output_sha256`).
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision. Report tools record the hash of what they wrote in the audit log (`output_sha256`).
 
 ### Prompt
 
@@ -128,7 +128,7 @@ fairbooks-saas-seats call seats_compare_reviews '{"previous":"seats-october.csv"
 fairbooks-saas-seats eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

@@ -3,8 +3,8 @@ Sample logs, decisions and evidence files for demos and tests. Fictional; no cus
 | Path | What it is |
 |---|---|
 | `talos-audit.jsonl` | Talos (agent-guard) log, valid chain |
-| `olympus-audit.jsonl` | Unsigned (v1) fairbooks-core log, valid chain |
-| `tampered-audit.jsonl` | The Olympus log with a line edited and one removed |
+| `fairbooks-audit.jsonl` | Unsigned (v1) fairbooks-core log, valid chain |
+| `tampered-audit.jsonl` | The fairbooks-core log with a line edited and one removed |
 | `signed-audit.jsonl` | Signed (v2) fairbooks-core log with a signed key rotation on line 3 |
 | `signed-rechained-audit.jsonl` | `signed-audit.jsonl` with line 4 edited and the hash chain recomputed without the key; the chain checks out, the signature does not |
 | `keys/audit-public.pem` | Public key for `signed-audit.jsonl` (the first key; the second is introduced by the rotation line). The private keys were generated outside the repository for the sample and are not included |

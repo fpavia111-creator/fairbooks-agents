@@ -12,7 +12,7 @@
 //                 not checked against documentation or a live account.
 // Neither kind was tested against a live account. When a header differs, the
 // file still maps by each column's "also called" list, `inspect` shows what was
-// matched, and mythos-sources.json names the columns by hand.
+// matched, and fairbooks-sources.json names the columns by hand.
 
 const e = (id, system, label, signature, extra = {}) => Object.freeze({ id, system, label, signature, basis: 'recalled', ...extra });
 

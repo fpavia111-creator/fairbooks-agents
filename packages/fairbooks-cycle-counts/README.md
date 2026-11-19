@@ -36,7 +36,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 
 No named exports: other column names are matched by a list of common alternatives.
 
-Columns named differently? Run `npx fairbooks-cycle-counts inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-cycle-counts inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -73,7 +73,7 @@ claude mcp add fairbooks-cycle-counts -- npx -y fairbooks-cycle-counts@0.2.0 mcp
 | Tool | Policy | What it does |
 |---|---|---|
 | `counts_compare` | **allow** | Status, flags and notes per item and location, ranked by value |
-| `counts_write_report` | **allow** | Write `variance-review.md`, `variances.csv` and a blind `recount-sheet.csv` to `mythos-out/counts` |
+| `counts_write_report` | **allow** | Write `variance-review.md`, `variances.csv` and a blind `recount-sheet.csv` to `fairbooks-out/counts` |
 | `counts_count_plan` | **allow** | ABC classes, blind count sheets and a `.ics` count calendar |
 | `counts_accuracy` | **allow** | Record and value accuracy by location, counter and class, with change since the last count |
 | `counts_draft_adjustments` | **ask (Auto-eligible)** | Draft `adjustments-draft.csv` + `adjustment.json` (nothing posted) |
@@ -82,7 +82,7 @@ claude mcp add fairbooks-cycle-counts -- npx -y fairbooks-cycle-counts@0.2.0 mcp
 
 CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
 
-Any other tool name is blocked. MCP hosts also get the prompt `cycle_count_review`, which walks a model through the whole count review and stops for the human click. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. MCP hosts also get the prompt `cycle_count_review`, which walks a model through the whole count review and stops for the human click. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -106,7 +106,7 @@ fairbooks-cycle-counts validate-config count_policy count-policy.json
 
 Reason codes for lot lines are keyed `"SKU@LOCATION#LOT"`. Config files are checked against a JSON Schema: unknown keys, wrong types and missing fields fail with the JSON pointer of the problem.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

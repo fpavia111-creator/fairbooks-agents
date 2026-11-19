@@ -53,7 +53,7 @@
       "args": {
         "contract": "fixtures/contracts/msa.md",
         "playbook": "fixtures/playbook.json",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -213,7 +213,7 @@
       "args": {
         "contract": "fixtures/contracts/msa.docx",
         "playbook": "fixtures/playbook.json",
-        "out_dir": "mythos-out/eval-v2"
+        "out_dir": "fairbooks-out/eval-v2"
       },
       "expect": {
         "status": "executed",
@@ -250,7 +250,7 @@
         "contract": "fixtures/contracts/msa-v2-tracked.docx",
         "previous_contract": "fixtures/contracts/msa.md",
         "playbook": "fixtures/playbook.json",
-        "out_dir": "mythos-out/eval-rep"
+        "out_dir": "fairbooks-out/eval-rep"
       },
       "expect": {
         "status": "executed",

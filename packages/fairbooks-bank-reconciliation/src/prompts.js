@@ -19,7 +19,7 @@ export const PROMPTS = [
 3. If a prior workpaper is given, call recon_roll_forward with prior, bank, gl and gl_balance. Report which carried items cleared, which are still open and any stale items, and whether the roll-forward and balances tie.
 4. Call recon_write_workpaper so the bookkeeper has reconciliation.csv, reconciliation.md, reconciliation.html (with blank sign-off lines) and proposed-entries.csv. Quote output_sha256.
 5. Matches the bookkeeper confirms can be recorded with recon_accept_match (needs a yes unless opted in to Auto). After a few months of accepted matches, call recon_suggest_rules and show each suggestion in plain words. Only call recon_accept_rule for a suggestion the bookkeeper explicitly accepts; it needs their yes.
-6. For each bank fee or interest line, you may call recon_request_adjusting_entry. It returns needs_approval: a named person must approve it (mythos-approve <id> --as "Name" or the approvals page), then repeat the same call. Never call ledger_post_journal; it is blocked. Fairbooks Bank Reconciliation never posts.
+6. For each bank fee or interest line, you may call recon_request_adjusting_entry. It returns needs_approval: a named person must approve it (fairbooks-approve <id> --as "Name" or the approvals page), then repeat the same call. Never call ledger_post_journal; it is blocked. Fairbooks Bank Reconciliation never posts.
 
 Say clearly that matches are proposals and that this is not accounting or audit advice.`,
   },

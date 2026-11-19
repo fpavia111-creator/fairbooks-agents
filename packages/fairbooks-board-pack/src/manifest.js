@@ -10,8 +10,8 @@ import { PROMPTS } from './prompts.js';
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' }; const num = { type: 'number' };
 const strs = { type: 'array', items: str };
-const base = { figures: { ...str, description: 'Source figures CSV/JSON: id, metric, period, actual, budget, prior, source' }, materiality_abs: num, materiality_pct: num, out_dir: { ...str, description: 'Default mythos-out/board' } };
-const OUT = (a) => a.out_dir || 'mythos-out/board';
+const base = { figures: { ...str, description: 'Source figures CSV/JSON: id, metric, period, actual, budget, prior, source' }, materiality_abs: num, materiality_pct: num, out_dir: { ...str, description: 'Default fairbooks-out/board' } };
+const OUT = (a) => a.out_dir || 'fairbooks-out/board';
 const text = (ctx, p) => { const f = ctx.path(p); if (!existsSync(f)) throw new Error(`file not found: ${p}`); return readFileSync(f, 'utf8'); };
 const fileHash = (ctx, p) => sha256(readFileSync(ctx.path(p)));
 function lockState(a, ctx) {

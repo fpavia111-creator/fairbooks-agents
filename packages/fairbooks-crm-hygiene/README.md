@@ -37,7 +37,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | Salesforce | Data Loader / Data Export of Contact (API field names) | no |
 | Mailchimp | Audience > Export audience (CSV) | no |
 
-Columns named differently? Run `npx fairbooks-crm-hygiene inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-crm-hygiene inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -78,7 +78,7 @@ claude mcp add fairbooks-crm-hygiene -- npx -y fairbooks-crm-hygiene@0.2.0 mcp -
 | Tool | Policy | What it does |
 |---|---|---|
 | `crm_audit` | **allow** | Flag every contact with a suggested action |
-| `crm_write_cleanup` | **allow** | Write `hygiene-review.csv` + `suppression-additions.csv` to `mythos-out/crm` |
+| `crm_write_cleanup` | **allow** | Write `hygiene-review.csv` + `suppression-additions.csv` to `fairbooks-out/crm` |
 | `crm_merge_plan` | **allow** | Survivor and field-level winners per duplicate group, rules explained; `merge-plan.csv` |
 | `crm_consent_provenance` | **allow** | Flag opted-in contacts with no consent source or date |
 | `crm_compare` | **allow** | Compare with the previous export: health change, new flags, added/removed |
@@ -89,7 +89,7 @@ claude mcp add fairbooks-crm-hygiene -- npx -y fairbooks-crm-hygiene@0.2.0 mcp -
 
 CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MX check (opt-in, off by default)
 
@@ -131,7 +131,7 @@ fairbooks-crm-hygiene call crm_audit '{"contacts":"contacts.csv","suppression":"
 fairbooks-crm-hygiene eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

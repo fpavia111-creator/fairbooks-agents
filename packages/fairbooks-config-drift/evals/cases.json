@@ -213,7 +213,7 @@
           "server.log_level"
         ],
         "reason": "debugging window (fictional)",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -234,7 +234,7 @@
         "ignore": [
           "meta.generated_at"
         ],
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -275,7 +275,7 @@
       "args": {
         "before": "fixtures/k8s/2026-10-01.yaml",
         "after": "fixtures/k8s/2026-11-01.yaml",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",

@@ -88,7 +88,7 @@ export const manifest = defineManifest({
         const day = a.as_of || new Date().toISOString().slice(0, 10);
         const ics = deadlineIcs(items, { as_of: day, reminders: [...new Set(a.reminder_days || [30, 14, 7, 1])].sort((x, y) => y - x), includePeriodEnd: a.include_period_end !== false });
         const v = validateIcs(ics); if (!v.ok) throw new Error(`calendar failed validation: ${v.errors.join('; ')}`);
-        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'mythos-out/grants'), 'grant-deadlines.ics', ics);
+        const file = ctx.writeFile(ctx.outDir(a.out_dir || 'fairbooks-out/grants'), 'grant-deadlines.ics', ics);
         return { summary: `${v.events} calendar event(s) written for ${items.filter((g) => g.status !== 'submitted').length} open grant(s).`, events: v.events, file, output_sha256: sha256(ics), as_of: day };
       },
     },
@@ -97,7 +97,7 @@ export const manifest = defineManifest({
       description: 'Write a draft packet per grant (report-draft.md, checklist.md, evidence-index.csv) into out_dir/packets/<grant_id>. Includes a budget-vs-actual variance table with [EXPLAIN VARIANCE] markers. With template, the report follows the funder template\'s sections and marks missing sections and attachments. Narrative is left for a person; gaps are marked. Skips submitted grants. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['grants'], properties: { ...props, ...vprops, ...tprop, grant_id: str, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const base = join(ctx.outDir(a.out_dir || 'mythos-out/grants'), 'packets');
+        const r = run(a, ctx); const base = join(ctx.outDir(a.out_dir || 'fairbooks-out/grants'), 'packets');
         const t = loadTemplate(a, ctx); const blines = budgetFor(a, ctx);
         const pick = r.items.filter((g) => (a.grant_id ? g.grant_id === a.grant_id : g.status !== 'submitted'));
         if (a.grant_id && !pick.length) throw new Error(`grant ${a.grant_id} not found`);
@@ -120,7 +120,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const r = run(a, ctx); const g = r.items.find((x) => x.grant_id === a.grant_id);
         if (!g) throw new Error(`grant ${a.grant_id} not found`);
-        const pdir = join(ctx.outDir(a.out_dir || 'mythos-out/grants'), 'packets', safeFileName(g.grant_id));
+        const pdir = join(ctx.outDir(a.out_dir || 'fairbooks-out/grants'), 'packets', safeFileName(g.grant_id));
         const files = {}; const missing = [];
         for (const n of ['report-draft.md', 'checklist.md', 'evidence-index.csv']) { const f = join(pdir, n); if (existsSync(f)) files[`packet/${n}`] = readFileSync(f); else missing.push(`packet/${n}`); }
         if (!Object.keys(files).length) throw new Error(`no packet for ${g.grant_id}: run grants_build_packet first`);
@@ -128,7 +128,7 @@ export const manifest = defineManifest({
         for (const o of g.outcomes) { if (!o.evidence) continue; if (o.flags.includes('evidence_not_found')) { missing.push(`evidence/${o.evidence}`); continue; } files[`evidence/${o.evidence.replace(/^\.?\/+/, '')}`] = readFileSync(evPath(a, ctx, o.evidence)); }
         const manifest = { ...evidenceManifest(g, files, { as_of: r.as_of }), missing };
         files['manifest.json'] = JSON.stringify(manifest, null, 2) + '\n';
-        const zip = writeZip(files); const file = ctx.writeFile(join(ctx.outDir(a.out_dir || 'mythos-out/grants'), 'packets'), `${safeFileName(g.grant_id)}-evidence-pack.zip`, zip);
+        const zip = writeZip(files); const file = ctx.writeFile(join(ctx.outDir(a.out_dir || 'fairbooks-out/grants'), 'packets'), `${safeFileName(g.grant_id)}-evidence-pack.zip`, zip);
         return { summary: `Evidence pack for ${g.grant_id}: ${Object.keys(files).length} file(s)${missing.length ? `, ${missing.length} cited file(s) missing` : ''}. Nothing was sent.`, file, files: manifest.files, missing, output_sha256: sha256(zip) };
       },
     },
@@ -140,7 +140,7 @@ export const manifest = defineManifest({
         for (const k of ['grant_id', 'packet']) if (!String(a[k] ?? '').trim()) throw new Error(`${k} is required`);
         const p = ctx.path(a.packet); if (!existsSync(p)) throw new Error(`packet not found: ${a.packet}`);
         const open = (readFileSync(p, 'utf8').match(/\[(TO WRITE|EXPLAIN|MISSING)[^\]]*\]/g) || []).length;
-        const out = ctx.outDir(a.out_dir || 'mythos-out/grants'); const f = join(out, 'submission-requests.csv');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/grants'); const f = join(out, 'submission-requests.csv');
         const csv = toCsv([{ requested_at: new Date().toISOString(), grant_id: a.grant_id, packet: a.packet, open_markers: open, note: a.note || '', status: 'approved - a person submits in the funder portal' }], ['requested_at', 'grant_id', 'packet', 'open_markers', 'note', 'status']);
         appendFileSync(f, existsSync(f) ? csv.split('\n').slice(1).join('\n') : csv);
         return { summary: `Submission approved and recorded for ${a.grant_id}${open ? ` (warning: ${open} open marker(s) still in the packet)` : ''}. Nothing was submitted.`, open_markers: open, file: f };

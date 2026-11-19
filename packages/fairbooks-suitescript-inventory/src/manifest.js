@@ -58,13 +58,13 @@ export const manifest = defineManifest({
     },
     {
       name: 'scripts_write_plan', kind: 'report', title: 'Write inventory and test plan',
-      description: 'Write inventory.csv (with effort and dependency order) and conversion-test-plan.md into an output folder (default mythos-out/scripts). Does not modify any script.',
+      description: 'Write inventory.csv (with effort and dependency order) and conversion-test-plan.md into an output folder (default fairbooks-out/scripts). Does not modify any script.',
       inputSchema: { type: 'object', properties: { dir: dirArg, out_dir: str, estimate_config: estimateArg } },
       handler: async (a, ctx) => {
         const inv = inventory(dirOf(ctx, a.dir), { weights: weightsOf(a, ctx) });
         const graph = dependencyGraph(inv);
         const orderOf = new Map(graph.order.map((o) => [o.file, o.n]));
-        const out = ctx.outDir(a.out_dir || 'mythos-out/scripts');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/scripts');
         const rows = inv.items.map((i) => ({ file: i.file, version: i.version, script_type: i.script_type || '', risk: i.risk, score: i.score, loc: i.loc, api_calls: i.call_count, effort_hours: i.effort.hours, conversion_order: orderOf.get(i.file), depends_on: i.custom_dependencies.join(' '), writes: i.writes.join(' '), external: i.external.join(' '), reasons: i.reasons.join('; '), owner: '', reviewer: '', target_release: '' }));
         const csv = toCsv(rows); const md = safeMarkdown(testPlanMarkdown(inv, new Date().toISOString(), graph));
         const f1 = ctx.writeFile(out, 'inventory.csv', csv);
@@ -82,7 +82,7 @@ export const manifest = defineManifest({
         const v = validateSarif(doc);
         if (!v.ok) throw new Error(`internal SARIF error: ${v.errors.join('; ')}`);
         const text = JSON.stringify(doc, null, 2);
-        const f = ctx.writeFile(ctx.outDir(a.out_dir || 'mythos-out/scripts'), 'scripts.sarif', text);
+        const f = ctx.writeFile(ctx.outDir(a.out_dir || 'fairbooks-out/scripts'), 'scripts.sarif', text);
         return { summary: `Wrote SARIF with ${doc.runs[0].results.length} result(s).`, files: [f], results: doc.runs[0].results.length, output_sha256: sha256(text) };
       },
     },

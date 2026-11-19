@@ -65,7 +65,7 @@ test('ABC count plan: A items counted more often, deterministic, blind sheets an
   const sheet = readFileSync(r.result.files[1], 'utf8'); assert.ok(!sheet.split('\n')[0].includes('system_qty'), 'blind count sheet'); assert.equal(parseCsv(sheet).length, 36);
   const ics = readFileSync(r.result.files[2], 'utf8'); const v = validateIcs(ics); assert.ok(v.ok, v.errors.join('; ')); assert.equal(v.events, p.per_day.length);
   writeFileSync(join(root, 'open.json'), JSON.stringify({ ...policy, blind: false }));
-  const open = await new AgentRuntime(manifest, { root, audit: false }).call('counts_count_plan', { on_hand: 'on-hand.csv', count_policy: 'open.json', out_dir: 'mythos-out/open' });
+  const open = await new AgentRuntime(manifest, { root, audit: false }).call('counts_count_plan', { on_hand: 'on-hand.csv', count_policy: 'open.json', out_dir: 'fairbooks-out/open' });
   assert.equal(parseCsv(readFileSync(open.result.files[1], 'utf8')).find((x) => x.sku === 'LAMP-3').system_qty, '40');
 });
 
@@ -118,16 +118,16 @@ test('blind recount sheet; lot adjustments need lot reason codes; posting stays 
   const rec = parseCsv(readFileSync(w.result.files[2], 'utf8'));
   assert.deepEqual(rec.map((x) => x.sku).sort(), ['BOLT-12', 'CLAMP-4', 'GLUE-1', 'LAMP-3']); assert.ok(!('system_qty' in rec[0]) && !('counted_qty' in rec[0]), 'blind');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['counts_draft_adjustments'] });
-  const f = { counts: 'counts-lots.csv', on_hand: 'on-hand-lots.csv', uom_table: 'uom-table.json', tolerance_units: 1, out_dir: 'mythos-out/lots' };
+  const f = { counts: 'counts-lots.csv', on_hand: 'on-hand-lots.csv', uom_table: 'uom-table.json', tolerance_units: 1, out_dir: 'fairbooks-out/lots' };
   const counts = rd('counts-lots.csv'); counts[0].counted_qty = '41'; counts[1].counted_qty = '60';
   writeFileSync(join(root, 'counts-lots.csv'), ['sku,location,lot,serial,counted_qty,recount_qty,uom,counter,counted_at', ...counts.map((c) => Object.values(c).join(','))].join('\n') + '\n');
   const d = await rt.call('counts_draft_adjustments', { ...f, reasons: { 'MILK-1@F-01#L2601': 'COUNT-CORR' } });
   assert.equal(d.status, 'executed', d.reason);
-  const rows = parseCsv(readFileSync(join(root, 'mythos-out/lots/adjustments-draft.csv'), 'utf8'));
+  const rows = parseCsv(readFileSync(join(root, 'fairbooks-out/lots/adjustments-draft.csv'), 'utf8'));
   assert.deepEqual(rows.map((x) => [x.sku, x.lot, x.adjust_qty, x.reason_code]), [['MILK-1', 'L2601', '1', 'COUNT-CORR']]);
-  const args = { batch: d.result.batch, batch_sha256: d.result.batch_sha256, out_dir: 'mythos-out/lots' };
+  const args = { batch: d.result.batch, batch_sha256: d.result.batch_sha256, out_dir: 'fairbooks-out/lots' };
   const a = await rt.call('counts_request_post', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Ria');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Ria');
   const ok = await rt.call('counts_request_post', args); assert.equal(ok.status, 'executed');
   assert.equal(parseCsv(readFileSync(ok.result.file, 'utf8'))[0].lot, 'L2601');
   const tools = Object.fromEntries(rt.listTools().map((t) => [t.name, t]));

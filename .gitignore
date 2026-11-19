@@ -1,5 +1,8 @@
 node_modules/
-.mythos/
-mythos-out/
+.fairbooks/
+fairbooks-out/
 *.tgz
 .npmrc
+# state and output folders of the older mythos-agent-core builds
+.mythos/
+mythos-out/

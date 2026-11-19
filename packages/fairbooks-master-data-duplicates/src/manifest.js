@@ -12,7 +12,7 @@ const common = {
   threshold: { type: 'number', minimum: 0.5, maximum: 1, description: `Name similarity 0..1 for a name-only link (default ${DEFAULT_THRESHOLD})` },
   rules: { ...str, description: 'Optional dupes-rules JSON (survivor order, per-field survivorship, protected fields)' },
 };
-const OUT = 'mythos-out/dupes';
+const OUT = 'fairbooks-out/dupes';
 const loadRules = (a, ctx) => (a.rules ? ctx.readJson(a.rules, 'dupes-rules') : {});
 const find = (a, ctx) => { const rules = loadRules(a, ctx); return findDuplicates(ctx.records(a.path), { ...a, survivor_rules: { ...(rules.survivor || {}), date_column: rules.date_column } }); };
 const copyPaths = (a) => { const dir = a.out_dir || OUT; const name = basename(a.output || basename(a.path, extname(a.path)) + '.merged.csv'); return { dir, name, rel: `${dir}/${name}`, undoName: `${name}.undo.jsonl` }; };
@@ -52,7 +52,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'dupes_propose_merges', kind: 'report', title: 'Write merge proposals',
-      description: 'Write merge-proposals.csv (with blank reviewer columns), merge-proposals.json and a self-contained merge-proposals.html review page into out_dir (default mythos-out/dupes).',
+      description: 'Write merge-proposals.csv (with blank reviewer columns), merge-proposals.json and a self-contained merge-proposals.html review page into out_dir (default fairbooks-out/dupes).',
       inputSchema: { type: 'object', required: ['path'], additionalProperties: false, properties: { ...common, out_dir: str } },
       handler: async (a, ctx) => {
         const r = find(a, ctx); const out = ctx.outDir(a.out_dir || OUT);
@@ -93,7 +93,7 @@ export const manifest = defineManifest({
     {
       name: 'dupes_undo_merge', kind: 'write', title: 'Undo the last merge on a copy',
       description: 'Reverse the last merge recorded in <copy>.undo.jsonl: restores the merged copy byte-for-byte to its state before that merge (removes the copy if that merge created it). Refuses if the copy was edited since. Needs a human yes (or an Auto opt-in).',
-      inputSchema: { type: 'object', required: ['copy'], additionalProperties: false, properties: { copy: { ...str, description: 'The merged copy, e.g. mythos-out/dupes/vendors.merged.csv' } } },
+      inputSchema: { type: 'object', required: ['copy'], additionalProperties: false, properties: { copy: { ...str, description: 'The merged copy, e.g. fairbooks-out/dupes/vendors.merged.csv' } } },
       handler: async (a, ctx) => {
         const undoRel = `${a.copy}.undo.jsonl`;
         if (!ctx.exists(undoRel)) throw new Error(`no undo log at ${undoRel}`);

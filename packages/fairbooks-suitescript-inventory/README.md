@@ -53,11 +53,11 @@ claude mcp add fairbooks-suitescript-inventory -- npx -y fairbooks-suitescript-i
 | `scripts_explain_file` | **allow** | Line-by-line 1.0 calls with 2.1 hints |
 | `scripts_dependency_graph` | **allow** | Custom-module graph, cycles, unresolved paths, conversion order, Mermaid diagram |
 | `scripts_progress` | **allow** | Compare an earlier `inventory.csv` with the folder now |
-| `scripts_write_plan` | **allow** | Write `inventory.csv` (with effort and conversion order) + `conversion-test-plan.md` to `mythos-out/scripts` |
-| `scripts_write_sarif` | **allow** | Write `scripts.sarif` to `mythos-out/scripts` |
+| `scripts_write_plan` | **allow** | Write `inventory.csv` (with effort and conversion order) + `conversion-test-plan.md` to `fairbooks-out/scripts` |
+| `scripts_write_sarif` | **allow** | Write `scripts.sarif` to `fairbooks-out/scripts` |
 | `scripts_deploy_conversion` | **block** | Listed so agents see the refusal. Deploys go through your own release process. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 The MCP prompt `scripts_conversion_plan` walks a host model through the planning workflow and stops at the human deploy step.
 
@@ -87,7 +87,7 @@ fairbooks-suitescript-inventory call scripts_inventory '{"dir":"src/FileCabinet"
 fairbooks-suitescript-inventory eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

@@ -33,7 +33,7 @@ test('a re-chained tampered signed log fails with the line number', () => {
 test('stripping signatures fails when a key is given; v1 logs still verify as chained, unsigned', () => {
   const stripped = readJsonl(join(fixtures, 'signed-audit.jsonl')).map(({ sig, ...rest }) => rest);
   assert.equal(verifyLog(stripped, { publicKeys: keys() }).ok, false);
-  const v1 = verifyLog(readJsonl(join(fixtures, 'olympus-audit.jsonl')));
+  const v1 = verifyLog(readJsonl(join(fixtures, 'fairbooks-audit.jsonl')));
   assert.equal(v1.ok, true); assert.equal(v1.signing, 'chained, unsigned');
   assert.match(verifyLog(readJsonl(join(fixtures, 'talos-audit.jsonl')), { publicKeys: keys() }).signing, /not supported for Talos/);
 });
@@ -51,7 +51,7 @@ test('verify tool with public_keys: signed ok, re-chained fails; key under root 
 test('every evidence item cites a control id and unmapped controls are listed as gaps', async () => {
   const root = tmpRoot();
   const rt = new AgentRuntime(manifest, { root, audit: false });
-  const r = await rt.call('evidence_build_evidence', { logs: ['talos-audit.jsonl', 'olympus-audit.jsonl'], template: 'itgc-starter', evidence_dir: 'evidence/2026-Q4', as_of: '2026-11-15', out_dir: 'out-map' });
+  const r = await rt.call('evidence_build_evidence', { logs: ['talos-audit.jsonl', 'fairbooks-audit.jsonl'], template: 'itgc-starter', evidence_dir: 'evidence/2026-Q4', as_of: '2026-11-15', out_dir: 'out-map' });
   assert.equal(r.status, 'executed', r.reason);
   const dir = r.result.out_dir;
   const rows = readFileSync(join(dir, 'control-evidence.csv'), 'utf8').trim().split('\n').slice(1);
@@ -102,7 +102,7 @@ test('evidence folder diff lists added, removed and changed items with hashes', 
 test('build with previous_evidence_dir writes evidence-diff.csv covered by the manifest', async () => {
   const root = tmpRoot();
   const rt = new AgentRuntime(manifest, { root, audit: false });
-  const r = await rt.call('evidence_build_evidence', { logs: ['olympus-audit.jsonl'], controls: 'controls.json', evidence_dir: 'evidence/2026-Q4', previous_evidence_dir: 'evidence/2026-Q3', out_dir: 'out-diff' });
+  const r = await rt.call('evidence_build_evidence', { logs: ['fairbooks-audit.jsonl'], controls: 'controls.json', evidence_dir: 'evidence/2026-Q4', previous_evidence_dir: 'evidence/2026-Q3', out_dir: 'out-diff' });
   assert.equal(r.status, 'executed', r.reason);
   const dir = r.result.out_dir;
   const diff = readFileSync(join(dir, 'evidence-diff.csv'), 'utf8');
@@ -161,7 +161,7 @@ test('templates list and load; unknown template names are refused by the schema'
 
 test('MCP prompt walks the workflow', async () => {
   const h = createMcpHandler(new AgentRuntime(manifest, { root: fixtures, audit: false }));
-  const got = await h({ jsonrpc: '2.0', id: 1, method: 'prompts/get', params: { name: 'evidence_evidence_review', arguments: { logs: '.mythos/audit.jsonl' } } });
+  const got = await h({ jsonrpc: '2.0', id: 1, method: 'prompts/get', params: { name: 'evidence_evidence_review', arguments: { logs: '.fairbooks/audit.jsonl' } } });
   const text = got.result.messages[0].content.text;
   for (const s of ['evidence_verify_chain', 'evidence_map_controls', 'evidence_diff_evidence', 'evidence_build_evidence', 'named person', 'not certification']) assert.ok(text.includes(s), s);
 });

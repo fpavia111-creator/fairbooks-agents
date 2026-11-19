@@ -168,7 +168,7 @@
       "args": {
         "sheet": "fixtures/recertification-filled.csv",
         "as_of": "2026-12-01",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -203,7 +203,7 @@
         "system": "Slack",
         "user": "Riley Park (fictional)",
         "reason": "Campaign line 5: revoke",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",

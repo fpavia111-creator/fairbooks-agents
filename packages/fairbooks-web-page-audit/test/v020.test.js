@@ -11,7 +11,7 @@ const pkgDir = fileURLToPath(new URL('..', import.meta.url));
 const fixtures = join(pkgDir, 'fixtures');
 const shop = join(fixtures, 'shop');
 const tmpRoot = () => { const r = mkdtempSync(join(tmpdir(), 'pages-v2-')); cpSync(fixtures, r, { recursive: true }); return r; };
-const rtFor = (root, o = {}) => new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.mythos'), ...o });
+const rtFor = (root, o = {}) => new AgentRuntime(manifest, { root, audit: false, stateDir: join(root, '.fairbooks'), ...o });
 const at = (r, check) => r.items.filter((i) => i.check === check).map((i) => `${i.page}|${i.selector}`);
 const pageAudit = (html, files = {}) => {
   const d = mkdtempSync(join(tmpdir(), 'pages-one-'));
@@ -88,22 +88,22 @@ test('fix drafts as one unified diff that applies cleanly to a copy', async () =
   const root = tmpRoot(); const rt = rtFor(root, { mode: 'auto', autoActions: ['pages_draft_fixes'] });
   const d = await rt.call('pages_draft_fixes', { site: 'site', lang: 'en' });
   assert.equal(d.status, 'executed'); assert.match(d.result.output_sha256, /^[0-9a-f]{64}$/);
-  const diff = readFileSync(join(root, 'mythos-out/pages/fixes.diff'), 'utf8');
+  const diff = readFileSync(join(root, 'fairbooks-out/pages/fixes.diff'), 'utf8');
   assert.match(diff, /^--- a\/contact\.html\n\+\+\+ b\/contact\.html\n@@ /);
-  const p = JSON.parse(readFileSync(join(root, 'mythos-out/pages/proposal.json'), 'utf8'));
+  const p = JSON.parse(readFileSync(join(root, 'fairbooks-out/pages/proposal.json'), 'utf8'));
   for (const f of p.files) {
     const part = diff.split(/(?=^--- a\/)/m).find((x) => x.startsWith(`--- a/${f.page}\n`));
     const copy = readFileSync(join(root, 'site', f.page), 'utf8');
-    assert.equal(applyUnifiedDiff(copy, part), readFileSync(join(root, 'mythos-out/pages', f.proposed), 'utf8'), `${f.page}: diff reproduces the proposed copy`);
+    assert.equal(applyUnifiedDiff(copy, part), readFileSync(join(root, 'fairbooks-out/pages', f.proposed), 'utf8'), `${f.page}: diff reproduces the proposed copy`);
   }
   // Several pages in one diff.
   writeFileSync(join(root, 'site/about.html'), readFileSync(join(root, 'site/about.html'), 'utf8').replace('<html lang="en">', '<html>'));
-  const d2 = await rt.call('pages_draft_fixes', { site: 'site', lang: 'fr', out_dir: 'mythos-out/d2' });
-  const diff2 = readFileSync(join(root, 'mythos-out/d2/fixes.diff'), 'utf8');
+  const d2 = await rt.call('pages_draft_fixes', { site: 'site', lang: 'fr', out_dir: 'fairbooks-out/d2' });
+  const diff2 = readFileSync(join(root, 'fairbooks-out/d2/fixes.diff'), 'utf8');
   assert.equal((diff2.match(/^--- a\//gm) || []).length, 2);
   for (const part of diff2.split(/(?=^--- a\/)/m)) { const page = /^--- a\/(\S+)/.exec(part)[1]; assert.match(applyUnifiedDiff(readFileSync(join(root, 'site', page), 'utf8'), part), /<html lang="fr">/); }
   // Publish refuses a diff edited after the proposal.
-  writeFileSync(join(root, 'mythos-out/d2/fixes.diff'), diff2 + '+tampered\n');
+  writeFileSync(join(root, 'fairbooks-out/d2/fixes.diff'), diff2 + '+tampered\n');
   const args = { proposal: d2.result.proposal, proposal_sha256: d2.result.proposal_sha256 };
   const a = await rt.call('pages_request_publish', args); rt.approvals.approve(a.approval_id, 'Sam');
   const t = await rt.call('pages_request_publish', args); assert.equal(t.status, 'error'); assert.match(t.reason, /fixes.diff changed/);
@@ -151,9 +151,9 @@ test('no claim of WCAG conformance anywhere (code, docs, prompt, outputs)', asyn
   const outs = [];
   for (const site of ['site', 'shop']) {
     outs.push(JSON.stringify(await rt.call('pages_audit', { site })));
-    const w = await rt.call('pages_write_report', { site, out_dir: `mythos-out/${site}` });
+    const w = await rt.call('pages_write_report', { site, out_dir: `fairbooks-out/${site}` });
     for (const f of w.result.files) outs.push(readFileSync(f, 'utf8'));
-    const d = await rt.call('pages_draft_fixes', { site, lang: 'en', out_dir: `mythos-out/${site}` });
+    const d = await rt.call('pages_draft_fixes', { site, lang: 'en', out_dir: `fairbooks-out/${site}` });
     for (const f of d.result.files) outs.push(readFileSync(f, 'utf8'));
   }
   const walk = (d) => readdirSync(d).flatMap((f) => { const p = join(d, f); return statSync(p).isDirectory() ? walk(p) : [p]; });

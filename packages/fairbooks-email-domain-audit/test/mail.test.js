@@ -64,21 +64,21 @@ test('draft: merge, never enforcing DMARC or keys, markers', async () => {
 test('stage on Auto; DNS change is one-click, hash-bound, marker-gated; editing DNS blocked', async () => {
   const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['maildomain_draft_records'] });
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['maildomain_request_dns_change'] }), /one-click/);
-  const m = await rt.call('maildomain_draft_records', { domain: 'nomail.example.net', records: 'records.json', out_dir: 'mythos-out/m' });
+  const m = await rt.call('maildomain_draft_records', { domain: 'nomail.example.net', records: 'records.json', out_dir: 'fairbooks-out/m' });
   const ma = { change: m.result.change, change_sha256: m.result.change_sha256 };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('maildomain_request_dns_change', ma)).approval_id, 'Lee');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('maildomain_request_dns_change', ma)).approval_id, 'Lee');
   const refused = await rt.call('maildomain_request_dns_change', ma); assert.equal(refused.status, 'error'); assert.match(refused.reason, /TO CONFIRM/);
   const d = await rt.call('maildomain_draft_records', { domain: 'nomail.example.net', records: 'records.json', senders: ['include:spf.crm.example.org'], rua: 'dmarc@example.net' });
   assert.equal(d.status, 'executed');
   const args = { change: d.result.change, change_sha256: d.result.change_sha256 };
   const a = await rt.call('maildomain_request_dns_change', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Lee');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Lee');
   const b = await rt.call('maildomain_request_dns_change', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Lee');
-  const rows = parseCsv(readFileSync(join(root, 'mythos-out/maildomain/dns-change-requests.csv'), 'utf8'));
+  const rows = parseCsv(readFileSync(join(root, 'fairbooks-out/maildomain/dns-change-requests.csv'), 'utf8'));
   assert.equal(rows[0].status, 'approved - a person edits DNS'); assert.equal(rows[0].records, 'add TXT nomail.example.net; add TXT _dmarc.nomail.example.net');
-  const again = await rt.call('maildomain_draft_records', { domain: 'nomail.example.net', records: 'records.json', senders: ['include:x.example'], rua: 'r@example.net', out_dir: 'mythos-out/t' });
+  const again = await rt.call('maildomain_draft_records', { domain: 'nomail.example.net', records: 'records.json', senders: ['include:x.example'], rua: 'r@example.net', out_dir: 'fairbooks-out/t' });
   const ta = { change: again.result.change, change_sha256: again.result.change_sha256 };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('maildomain_request_dns_change', ta)).approval_id, 'Lee');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('maildomain_request_dns_change', ta)).approval_id, 'Lee');
   writeFileSync(join(root, again.result.change), '{"changes":[]}');
   const t = await rt.call('maildomain_request_dns_change', ta); assert.equal(t.status, 'error'); assert.match(t.reason, /does not match/);
   assert.equal((await rt.call('dns_update', {})).status, 'blocked'); assert.equal((await rt.call('send_test_email', {})).status, 'blocked');

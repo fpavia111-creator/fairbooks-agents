@@ -50,12 +50,12 @@ claude mcp add fairbooks-grant-reporting -- npx -y fairbooks-grant-reporting@0.2
 | `grants_variance` | **allow** | Budget-vs-actual variance by line, explanation flags, spend-down projection |
 | `grants_template_check` | **allow** | Map a funder template onto each grant: filled, to write, missing |
 | `grants_calendar` | **allow** | Write `grant-deadlines.ics` with reminders |
-| `grants_build_packet` | **ask (Auto-eligible)** | Write draft packets to `mythos-out/grants/packets/<grant_id>` (optionally in template order) |
+| `grants_build_packet` | **ask (Auto-eligible)** | Write draft packets to `fairbooks-out/grants/packets/<grant_id>` (optionally in template order) |
 | `grants_evidence_pack` | **ask (Auto-eligible)** | Zip a packet, its evidence and a hash manifest |
 | `grants_request_submission` | **ask · one-click** | After a named human approves, record a packet as approved to submit (warns about open markers) |
 | `funder_portal_submit` | **block** | Listed so agents see the refusal. Fairbooks Grant Reporting never submits. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## MCP prompt
 
@@ -79,7 +79,7 @@ fairbooks-grant-reporting call grants_review '{"grants":"grants.csv","budget":"b
 fairbooks-grant-reporting eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

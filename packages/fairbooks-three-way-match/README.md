@@ -59,7 +59,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | NetSuite | Transaction saved search (default column labels) | no |
 | Xero | Bills > Export (CSV) | no |
 
-Columns named differently? Run `npx fairbooks-three-way-match inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-three-way-match inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -97,13 +97,13 @@ claude mcp add fairbooks-three-way-match -- npx -y fairbooks-three-way-match@0.2
 |---|---|---|
 | `match_match` | **allow** | Three-way match with tolerances and $ impact |
 | `match_explain_exception` | **allow** | Explain one invoice: why it matters, next step |
-| `match_write_worklist` | **allow** | Write `ap-exceptions.csv` + `ap-match.json` to `mythos-out/match` |
+| `match_write_worklist` | **allow** | Write `ap-exceptions.csv` + `ap-match.json` to `fairbooks-out/match` |
 | `match_po_status` | **allow** | PO line status: received, billed, GRNI estimate, billed-not-received |
 | `match_write_report` | **allow** | Write `ap-report.html` + `ap-po-status.csv`; logs the report hash |
 | `match_request_posting` | **ask · one-click** | After a named human approves, record that an invoice is cleared for posting |
 | `erp_post_invoice` | **block** | Listed so agents see the refusal. Fairbooks Three-Way Match never writes to an ERP. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -127,7 +127,7 @@ fairbooks-three-way-match call match_match '{"pos":"pos.csv","receipts":"receipt
 fairbooks-three-way-match eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

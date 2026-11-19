@@ -6,7 +6,7 @@
 //
 // Written from common ERP, bank, HR and expense exports (DATEV, SAP, Sage,
 // freee, Yayoi, Kingdee, Yonyou, Douzone and others). A wrong or missing word
-// can always be fixed with "columns" in mythos-sources.json; the result's
+// can always be fixed with "columns" in fairbooks-sources.json; the result's
 // source report lists every column that was matched by a translated name.
 //
 // Kept out on purpose: US-only forms (W-9, W-8, TIN), US insurance terms, and

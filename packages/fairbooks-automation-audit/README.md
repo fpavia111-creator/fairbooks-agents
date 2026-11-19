@@ -51,14 +51,14 @@ claude mcp add fairbooks-automation-audit -- npx -y fairbooks-automation-audit@0
 | Tool | Policy | What it does |
 |---|---|---|
 | `flows_audit` | **allow** | Findings and risk score per flow; secret values never returned |
-| `flows_write_report` | **allow** | Write `flow-audit.md`, `findings.csv` and `findings.sarif` to `mythos-out/flows` |
+| `flows_write_report` | **allow** | Write `flow-audit.md`, `findings.csv` and `findings.sarif` to `fairbooks-out/flows` |
 | `flows_dependency_map` | **allow** | Shared credentials, secrets, webhooks and hosts; flow-to-flow calls; secret rotation plan; writes `dependency-map.md` (with a Mermaid graph) and `dependency-map.csv` |
 | `flows_draft_changes` | **ask (Auto-eligible)** | Write proposals and `<export>.redacted.json` copies (nothing applied) |
 | `flows_request_flow_change` | **ask · one-click** | After a named human approves, record an enable, disable or modify request for the flow owner |
 | `automation_update_flow` | **block** | Listed so agents see the refusal. Fairbooks Automation Audit never edits a platform. |
 | `automation_run_flow` | **block** | Listed so agents see the refusal. Fairbooks Automation Audit never runs a flow, so it never orders, sends or pays. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -82,7 +82,7 @@ fairbooks-automation-audit call flows_audit '{"exports":["n8n-orders.json","zapi
 fairbooks-automation-audit eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

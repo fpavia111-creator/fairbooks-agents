@@ -35,10 +35,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'crm_write_cleanup', kind: 'report',
-      description: 'Write hygiene-review.csv (blank reviewer columns) and suppression-additions.csv into out_dir (default mythos-out/crm).',
+      description: 'Write hygiene-review.csv (blank reviewer columns) and suppression-additions.csv into out_dir (default fairbooks-out/crm).',
       inputSchema: { type: 'object', required: ['contacts'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/crm');
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/crm');
         const add = toCsv(r.items.filter((i) => ['suppress', 'delete_candidate'].includes(i.suggested_action) && i.email).map((i) => ({ email: i.email.toLowerCase(), reason: i.flags.filter((f) => /bounce|invalid|suppression|consent|unsub/.test(f)).join('; ') })), ['email', 'reason']);
         return { summary: `Cleanup files written: ${r.contacts - r.keep} contact(s) to review.`, files: [ctx.writeFile(out, 'hygiene-review.csv', cleanupCsv(r)), ctx.writeFile(out, 'suppression-additions.csv', add)] };
       },
@@ -48,7 +48,7 @@ export const manifest = defineManifest({
       description: 'Write <name>.clean.csv: a copy with hygiene_flags, suggested_action and do_not_email columns added. Rows are never removed and the input is never changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['contacts'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const raw = ctx.records(a.contacts); const out = ctx.outDir(a.out_dir || 'mythos-out/crm');
+        const r = run(a, ctx); const raw = ctx.records(a.contacts); const out = ctx.outDir(a.out_dir || 'fairbooks-out/crm');
         const cols = [...Object.keys(raw[0] || {}), 'hygiene_flags', 'suggested_action', 'do_not_email'];
         const rows = raw.map((x, i) => ({ ...x, hygiene_flags: r.items[i].flags.join('; '), suggested_action: r.items[i].suggested_action, do_not_email: ['suppress', 'delete_candidate'].includes(r.items[i].suggested_action) ? 'yes' : '' }));
         return { summary: `Clean copy written with all ${rows.length} row(s) kept; ${rows.filter((x) => x.do_not_email).length} marked do-not-email.`, file: ctx.writeFile(out, `${basename(a.contacts, extname(a.contacts))}.clean.csv`, toCsv(rows, cols)) };
@@ -56,11 +56,11 @@ export const manifest = defineManifest({
     },
     {
       name: 'crm_merge_plan', kind: 'report', title: 'Merge suggestions for duplicates',
-      description: 'For each group of duplicates (same canonical email): suggest a survivor and a winning value for each field, each with the rule that decided it. Opt-outs and hard bounces always carry over. Writes merge-plan.csv (blank reviewer columns) into out_dir (default mythos-out/crm). Nothing is merged in your CRM.',
+      description: 'For each group of duplicates (same canonical email): suggest a survivor and a winning value for each field, each with the rule that decided it. Opt-outs and hard bounces always carry over. Writes merge-plan.csv (blank reviewer columns) into out_dir (default fairbooks-out/crm). Nothing is merged in your CRM.',
       inputSchema: { type: 'object', required: ['contacts'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
         const contacts = normContacts(ctx.records(a.contacts)); const r = audit(contacts, auditOpts(a, ctx)); const p = mergePlan(contacts, r.items);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/crm');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/crm');
         return { summary: `${p.groups} duplicate group(s); ${p.contacts_merged_away} record(s) would merge into a survivor.`, ...p, file: ctx.writeFile(out, 'merge-plan.csv', mergeCsv(p)) };
       },
     },
@@ -96,7 +96,7 @@ export const manifest = defineManifest({
         const r = await checkDomains([...byDomain.keys()], resolver, { maxDomains: a.max_domains || 50 });
         const results = r.results.map((x) => ({ ...x, contacts: byDomain.get(x.domain)?.length || 0, contact_ids: byDomain.get(x.domain) || [] }));
         const bad = results.filter((x) => ['domain_not_found', 'no_mail_host', 'invalid_domain'].includes(x.status));
-        const out = ctx.outDir(a.out_dir || 'mythos-out/crm');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/crm');
         const file = ctx.writeFile(out, 'mx-check.csv', toCsv(results.map((x) => ({ domain: x.domain, status: x.status, mx: x.mx.join('; '), contacts: x.contacts, contact_ids: x.contact_ids.join('; ') })), ['domain', 'status', 'mx', 'contacts', 'contact_ids']));
         return { summary: `${r.checked} of ${r.domains} domain(s) checked via ${source}: ${bad.length} cannot receive mail (${bad.reduce((n, x) => n + x.contacts, 0)} contact(s)).`, source, ...r, results, file };
       },
@@ -108,7 +108,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         if (!Array.isArray(a.ids) || !a.ids.length) throw new Error('ids must list at least one contact id');
         if (!String(a.reason || '').trim()) throw new Error('reason is required');
-        const out = ctx.outDir(a.out_dir || 'mythos-out/crm'); const f = join(out, 'delete-requests.csv');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/crm'); const f = join(out, 'delete-requests.csv');
         const csv = toCsv(a.ids.map((id) => ({ requested_at: new Date().toISOString(), id, reason: a.reason, status: 'approved request - CRM admin deletes' })), ['requested_at', 'id', 'reason', 'status']);
         appendFileSync(f, existsSync(f) ? csv.split('\n').slice(1).join('\n') : csv);
         return { summary: `Bulk delete request recorded for ${a.ids.length} contact(s). Nothing was deleted.`, file: f };

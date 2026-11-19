@@ -46,10 +46,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'match_write_worklist', kind: 'report', title: 'Write the AP worklist',
-      description: 'Write ap-exceptions.csv (blank owner and resolution columns) and ap-match.json into out_dir (default mythos-out/match).',
+      description: 'Write ap-exceptions.csv (blank owner and resolution columns) and ap-match.json into out_dir (default fairbooks-out/match).',
       inputSchema: { type: 'object', required: ['pos', 'receipts', 'invoices'], properties: { ...files, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/match');
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/match');
         const csv = worklistCsv(r);
         return { summary: `Worklist written: ${r.exceptions} exception(s), est. $${r.est_impact_total}.`, files: [ctx.writeFile(out, 'ap-exceptions.csv', csv), ctx.writeFile(out, 'ap-match.json', JSON.stringify(r, null, 2))], exceptions: r.exceptions, output_sha256: sha256(csv) };
       },
@@ -66,10 +66,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'match_write_report', kind: 'report', title: 'Write the AP match report (HTML + PO status CSV)',
-      description: 'Write ap-report.html (self-contained, no scripts: totals, exceptions by $ impact, vendor scorecard, PO line status) and ap-po-status.csv into out_dir (default mythos-out/match). The HTML hash is logged in the audit line.',
+      description: 'Write ap-report.html (self-contained, no scripts: totals, exceptions by $ impact, vendor scorecard, PO line status) and ap-po-status.csv into out_dir (default fairbooks-out/match). The HTML hash is logged in the audit line.',
       inputSchema: { type: 'object', required: ['pos', 'receipts', 'invoices'], properties: { ...files, out_dir: str, title: str } },
       handler: async (a, ctx) => {
-        const { pos, receipts, r } = load(a, ctx); const s = poStatus(pos, receipts, r); const out = ctx.outDir(a.out_dir || 'mythos-out/match');
+        const { pos, receipts, r } = load(a, ctx); const s = poStatus(pos, receipts, r); const out = ctx.outDir(a.out_dir || 'fairbooks-out/match');
         const html = reportHtml(r, s, { title: a.title || 'AP three-way match report', at: new Date().toISOString() });
         return { summary: `Report written: ${r.exceptions} exception(s), est. $${r.est_impact_total}; GRNI estimate $${s.grni_value_total}.`, files: [ctx.writeFile(out, 'ap-report.html', html), ctx.writeFile(out, 'ap-po-status.csv', poStatusCsv(s))], output_sha256: sha256(html) };
       },
@@ -80,7 +80,7 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['invoice', 'vendor', 'amount', 'reason'], properties: { invoice: { ...str, minLength: 1 }, vendor: { ...str, minLength: 1 }, amount: num, reason: { ...str, minLength: 1 }, out_dir: str } },
       handler: async (a, ctx) => {
         for (const k of ['invoice', 'vendor', 'reason']) if (!String(a[k] || '').trim()) throw new Error(`${k} is required`);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/match'); const f = join(out, 'posting-requests.csv');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/match'); const f = join(out, 'posting-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), invoice: a.invoice, vendor: a.vendor, amount: a.amount, reason: a.reason, status: 'approved request - AP to post in the ERP' }], ['requested_at', 'invoice', 'vendor', 'amount', 'reason', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: `Posting request recorded for ${a.invoice}. Nothing was posted or paid.`, file: f };

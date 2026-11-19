@@ -58,10 +58,10 @@ claude mcp add fairbooks-mcp-server-review -- npx -y fairbooks-mcp-server-review
 | `mcpreview_scan_tools` | **allow** | Check a saved `tools/list` result for tool poisoning, shadowing and risky schemas |
 | `mcpreview_pin_tools` | **allow** | Write `tool-pins.json` for reviewed tool definitions |
 | `mcpreview_check_pins` | **allow** | Compare a new `tools/list` with the pins (rug-pull check) |
-| `mcpreview_write_report` | **allow** | Write `mcpreview-report.md`, `findings.json`, `mcpreview.sarif` to `mythos-out/mcpreview` |
+| `mcpreview_write_report` | **allow** | Write `mcpreview-report.md`, `findings.json`, `mcpreview.sarif` to `fairbooks-out/mcpreview` |
 | `mcpreview_run_server` | **block** | Listed so agents see the refusal. Fairbooks MCP Server Review never installs, starts or deploys code. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### Prompt
 
@@ -114,7 +114,7 @@ fairbooks-mcp-server-review eval          # private evals on the bundled fixture
 
 `uri_prefix` makes SARIF paths repository-relative when `--root` is not the repository root.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## Rules
 

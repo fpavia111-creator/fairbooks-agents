@@ -32,7 +32,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 |---|---|---|
 | BambooHR | Employee report (CSV or Excel) | no |
 
-Columns named differently? Run `npx fairbooks-onboarding-checklists inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-onboarding-checklists inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -69,19 +69,19 @@ claude mcp add fairbooks-onboarding-checklists -- npx -y fairbooks-onboarding-ch
 | Tool | Policy | What it does |
 |---|---|---|
 | `onboarding_status` | **allow** | Task states, percent done, next tasks and flags per person |
-| `onboarding_write_tracker` | **allow** | Write `onboarding-tracker.csv`, `onboarding.md`, `owner-actions.csv` and `onboarding-calendar.ics` to `mythos-out/onboarding` |
+| `onboarding_write_tracker` | **allow** | Write `onboarding-tracker.csv`, `onboarding.md`, `owner-actions.csv` and `onboarding-calendar.ics` to `fairbooks-out/onboarding` |
 | `onboarding_offboarding` | **allow** | Offboarding mirror checklist (removals, returns, template tasks) from the end date |
 | `onboarding_owner_actions` | **allow** | Prioritised open actions per owner, each with its reason |
 | `onboarding_readiness_report` | **allow** | Day-one readiness HTML + JSON (hash in the audit log) |
-| `onboarding_draft_offboarding` | **ask (Auto-eligible)** | Write offboarding checklists and removal drafts to `mythos-out/onboarding/offboarding` (not submitted) |
-| `onboarding_draft_access_requests` | **ask (Auto-eligible)** | Write grant and removal drafts to `mythos-out/onboarding/access-requests` (not submitted) |
+| `onboarding_draft_offboarding` | **ask (Auto-eligible)** | Write offboarding checklists and removal drafts to `fairbooks-out/onboarding/offboarding` (not submitted) |
+| `onboarding_draft_access_requests` | **ask (Auto-eligible)** | Write grant and removal drafts to `fairbooks-out/onboarding/access-requests` (not submitted) |
 | `onboarding_request_access_grant` | **ask · one-click** | After a named human approves, re-check prerequisites and record the grant for IT |
 | `onboarding_request_access_removal` | **ask · one-click** | After a named human approves, record the removal for IT |
 | `idp_grant_access` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never grants access. |
 | `idp_remove_access` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never removes access. |
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never sends. |
 
-Any other tool name is blocked. MCP hosts also get the prompt `run_onboarding`, which walks a model through onboarding and offboarding and stops for each human click. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. MCP hosts also get the prompt `run_onboarding`, which walks a model through onboarding and offboarding and stops for each human click. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -104,7 +104,7 @@ fairbooks-onboarding-checklists validate-config template template.json   # typos
 
 The template is checked against a JSON Schema before every run: unknown keys (`"requries"`), wrong types, unknown task kinds and a missing `types` fail with the JSON pointer of the problem.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

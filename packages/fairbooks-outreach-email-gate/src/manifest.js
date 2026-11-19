@@ -83,11 +83,11 @@ Passing these checks does not make a campaign lawful under CAN-SPAM, GDPR, CASL 
     },
     {
       name: 'outreach_prepare_outbox', kind: 'report',
-      description: 'Write ready.csv, held.csv and one text file per ready draft (with the footer appended) into out_dir (default mythos-out/outreach). Nothing is sent.',
+      description: 'Write ready.csv, held.csv and one text file per ready draft (with the footer appended) into out_dir (default fairbooks-out/outreach). Nothing is sent.',
       inputSchema: { type: 'object', required: ['drafts'], properties: { drafts: str, out_dir: str, ...cfgProps } },
       handler: async (a, ctx) => {
         const o = load(a, ctx); const drafts = ctx.records(a.drafts); const b = checkBatch(drafts, o);
-        const out = ctx.outDir(a.out_dir || 'mythos-out/outreach'); const dd = join(out, 'drafts'); mkdirSync(dd, { recursive: true });
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/outreach'); const dd = join(out, 'drafts'); mkdirSync(dd, { recursive: true });
         const files = [ctx.writeFile(out, 'ready.csv', readyCsv(b, drafts)), ctx.writeFile(out, 'held.csv', heldCsv(b))];
         for (const r of b.results.filter((x) => x.ok)) files.push(ctx.writeFile(dd, `row-${r.row}.txt`, draftText(drafts[r.row - 2], r)));
         return { summary: `Outbox prepared: ${b.ready} ready, ${b.held} held. Nothing was sent.`, ready: b.ready, held: b.held, files };
@@ -125,12 +125,12 @@ Passing these checks does not make a campaign lawful under CAN-SPAM, GDPR, CASL 
     },
     {
       name: 'outreach_plan_schedule', kind: 'report', title: 'Plan send slots',
-      description: 'For drafts that pass every check, plan send slots from start_from: inside the window in each recipient\'s time zone (or the config\'s), at most max_per_day per day, at least min_gap_minutes apart, skipping blackout dates. Writes schedule.csv and schedule.ics (one all-day entry per sending day, no addresses) into out_dir (default mythos-out/outreach). Nothing is sent.',
+      description: 'For drafts that pass every check, plan send slots from start_from: inside the window in each recipient\'s time zone (or the config\'s), at most max_per_day per day, at least min_gap_minutes apart, skipping blackout dates. Writes schedule.csv and schedule.ics (one all-day entry per sending day, no addresses) into out_dir (default fairbooks-out/outreach). Nothing is sent.',
       inputSchema: { type: 'object', required: ['drafts', 'start_from'], additionalProperties: false, properties: { drafts: str, start_from: { type: 'string', format: 'date-time' }, max_per_day: { type: 'integer', minimum: 1, maximum: 100000 }, min_gap_minutes: { type: 'integer', minimum: 1, maximum: 1440 }, out_dir: str, ...cfgProps } },
       handler: async (a, ctx) => {
         const o = load(a, ctx);
         const p = planSchedule(ctx.records(a.drafts), { ...o, start_from: a.start_from, max_per_day: a.max_per_day, min_gap_minutes: a.min_gap_minutes });
-        const out = ctx.outDir(a.out_dir || 'mythos-out/outreach');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/outreach');
         const csv = scheduleCsv(p);
         const files = [ctx.writeFile(out, 'schedule.csv', csv), ctx.writeFile(out, 'schedule.ics', scheduleIcs(p))];
         return { summary: `${p.scheduled} draft(s) scheduled over ${p.days.length} day(s); ${p.held} held, ${p.unplaced} without a slot. Nothing was sent.`, files, ...p, output_sha256: sha256(csv) };
@@ -144,7 +144,7 @@ Passing these checks does not make a campaign lawful under CAN-SPAM, GDPR, CASL 
         const o = load(a, ctx); const drafts = ctx.records(a.drafts); const b = checkBatch(drafts, o);
         const ready = b.results.filter((r) => r.ok);
         if (!ready.length) throw new Error('no drafts pass the gate; nothing to release');
-        const out = ctx.outDir(a.out_dir || 'mythos-out/outreach');
+        const out = ctx.outDir(a.out_dir || 'fairbooks-out/outreach');
         const rel = { released_at: new Date().toISOString(), drafts: ready.map((r) => ({ row: r.row, to: r.to, subject: r.subject, sha256: sha256(draftText(drafts[r.row - 2], r)) })), held: b.held, note: 'Released for a person to send from their own mail tool. Fairbooks Outreach Email Gate did not send anything.' };
         const text = JSON.stringify(rel, null, 2);
         const f = ctx.writeFile(out, 'release.json', text);

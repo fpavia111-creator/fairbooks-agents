@@ -10,7 +10,7 @@ import { seededVendors, pairMetrics } from './helpers/seeded-vendors.js';
 
 const fixtures = fileURLToPath(new URL('../fixtures', import.meta.url));
 const sandbox = () => { const root = mkdtempSync(join(tmpdir(), 'dupes-v02-')); cpSync(fixtures, root, { recursive: true }); return root; };
-const approve = (root, id, who = 'Dana Reviewer (fictional)') => new ApprovalStore(join(root, '.mythos')).approve(id, who);
+const approve = (root, id, who = 'Dana Reviewer (fictional)') => new ApprovalStore(join(root, '.fairbooks')).approve(id, who);
 async function approved(rt, root, tool, args) { const a = await rt.call(tool, args); if (a.status !== 'needs_approval') return a; approve(root, a.approval_id); return rt.call(tool, args); }
 
 test('seeded 1k-row fixture: precision and recall are at or above the thresholds', () => {
@@ -87,14 +87,14 @@ test('applying a previewed merge changes only the copy, and only the merged rows
     else assert.deepEqual(rest, orig[i], `row ${orig[i].internalid} unchanged`);
     assert.equal(merged_into, orig[i].internalid === 'V103' ? 'V102' : '');
   }
-  const line = readAudit(join(root, '.mythos', 'audit.jsonl')).filter((e) => e.tool === 'dupes_apply_merge' && e.status === 'executed').pop();
+  const line = readAudit(join(root, '.fairbooks', 'audit.jsonl')).filter((e) => e.tool === 'dupes_apply_merge' && e.status === 'executed').pop();
   assert.equal(line.output_sha256, sha256(readFileSync(r.result.file, 'utf8')));
 });
 
 test('applying the undo restores a byte-identical copy; edited copies are refused', async () => {
   const root = sandbox();
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['dupes_apply_merge', 'dupes_undo_merge'] });
-  const copy = 'mythos-out/dupes/vendors.merged.csv';
+  const copy = 'fairbooks-out/dupes/vendors.merged.csv';
   assert.equal((await rt.call('dupes_apply_merge', { path: 'vendors.csv', survivor: 'V100', merge: ['V101'] })).status, 'executed');
   const afterFirst = readFileSync(join(root, copy));
   assert.equal((await rt.call('dupes_apply_merge', { path: 'vendors.csv', survivor: 'V102', merge: ['V103'], fill_survivor: true })).status, 'executed');
@@ -122,9 +122,9 @@ test('undo entries round-trip when the line count changes', () => {
 test('undo asks a human in Assist; Review mode blocks it', async () => {
   const root = sandbox();
   const rt = new AgentRuntime(manifest, { root, audit: false });
-  assert.equal((await rt.call('dupes_undo_merge', { copy: 'mythos-out/dupes/x.csv' })).status, 'needs_approval');
+  assert.equal((await rt.call('dupes_undo_merge', { copy: 'fairbooks-out/dupes/x.csv' })).status, 'needs_approval');
   const review = new AgentRuntime(manifest, { root, audit: false, mode: 'review' });
-  assert.equal((await review.call('dupes_undo_merge', { copy: 'mythos-out/dupes/y.csv' })).status, 'blocked');
+  assert.equal((await review.call('dupes_undo_merge', { copy: 'fairbooks-out/dupes/y.csv' })).status, 'blocked');
   assert.equal((await review.call('dupes_merge_preview', { path: 'vendors.csv', survivor: 'V100', merge: ['V101'] })).status, 'executed');
 });
 

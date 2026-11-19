@@ -42,7 +42,7 @@ test('revocation request only after a named human approves; even Auto cannot opt
   const args = { system: 'NetSuite', user: 'Riley', reason: 'left' };
   const a = await rt.call('access_request_revocation', args);
   assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana Reviewer');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana Reviewer');
   const b = await rt.call('access_request_revocation', args);
   assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Dana Reviewer');
   assert.match(readFileSync(b.result.file, 'utf8'), /Riley/);

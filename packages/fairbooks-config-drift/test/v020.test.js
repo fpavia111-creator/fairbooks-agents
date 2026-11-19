@@ -82,10 +82,10 @@ test('baseline approval: approved drift does not re-alert until it changes', asy
   const args = { ...CFG, keys: ['features.new_invoice_pdf', 'db.pool_max', 'security.api_key'], reason: 'Feature launch CHG-1042 (fictional)' };
   const ask = await new AgentRuntime(manifest, { root }).call('drift_approve_baseline', args);
   assert.equal(ask.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(ask.approval_id, 'Robin');
+  new ApprovalStore(join(root, '.fairbooks')).approve(ask.approval_id, 'Robin');
   const ok = await new AgentRuntime(manifest, { root }).call('drift_approve_baseline', args);
   assert.equal(ok.status, 'executed', ok.reason); assert.equal(ok.approved_by, 'Robin');
-  const file = 'mythos-out/drift/approved-drift.json'; const stored = readFileSync(join(root, file), 'utf8');
+  const file = 'fairbooks-out/drift/approved-drift.json'; const stored = readFileSync(join(root, file), 'utf8');
   noSecrets(stored); assert.ok(validate(APPROVED_DRIFT_SCHEMA, JSON.parse(stored)).ok);
   const plain = await rt(root).call('drift_diff', CFG); assert.equal(plain.result.changes, 7);
   const base = await rt(root).call('drift_diff', { ...CFG, approved: file });
@@ -179,7 +179,7 @@ test('report adds valid SARIF without secret values; the hash reaches the audit 
   assert.equal(priv.locations[0].physicalLocation.artifactLocation.uri, K8.after); assert.equal(priv.locations[0].physicalLocation.region.startLine, 22);
   for (const f of ['drift.sarif', 'drift.json', 'drift-report.md', 'revert-plan.json']) noSecrets(readFileSync(join(root, 'out', f), 'utf8'));
   assert.equal(r.result.output_sha256, sha256(readFileSync(join(root, 'out', 'drift-report.md'), 'utf8')));
-  const audit = readFileSync(join(root, '.mythos', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const audit = readFileSync(join(root, '.fairbooks', 'audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(audit.at(-1).output_sha256, r.result.output_sha256);
 });
 
@@ -193,7 +193,7 @@ test('policy: baseline approval asks, apply stays one-click with new args, bad a
   const root = tmpRoot('tir-oc-'); const r2 = new AgentRuntime(manifest, { root, mode: 'auto' });
   const args = { environment: 'staging', keys: ['security.tls.verify'], reason: 'turn verification back on', ...CFG };
   const a = await r2.call('drift_apply_fix', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Robin');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Robin');
   const b = await r2.call('drift_apply_fix', args); assert.equal(b.approved_by, 'Robin'); assert.match(b.result.summary, /Nothing was changed/);
   assert.ok(manifest.prompts.find((x) => x.name === 'drift_review'));
 });

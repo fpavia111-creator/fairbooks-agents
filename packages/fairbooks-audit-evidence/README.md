@@ -6,7 +6,7 @@ Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent
 
 ## What it does
 
-Fairbooks Audit Evidence reads JSONL audit logs from **Talos** (`.agent-guard/audit.jsonl`) and from any **fairbooks-core** pack (`.mythos/audit.jsonl`), plus optional **Alethea** decision records (`.decisions/*.md`). It:
+Fairbooks Audit Evidence reads JSONL audit logs from **Talos** (`.agent-guard/audit.jsonl`) and from any **fairbooks-core** pack (`.fairbooks/audit.jsonl`), plus optional **Alethea** decision records (`.decisions/*.md`). It:
 - verifies each log's hash chain and names edited, removed or reordered lines;
 - verifies **Ed25519 signatures** on signed fairbooks-core logs when you give it the public key (`public_keys`), following signed key rotations recorded in the log. A log that was edited and re-chained passes a chain-only check but fails here, with the line number;
 - summarizes what was allowed, what waited for a person, who approved it, what ran on Auto and what was blocked;
@@ -32,7 +32,7 @@ Two starter lists ship in `templates/` (`agent-guardrails`, `itgc-starter`); use
 
 ### Signed logs
 
-Start your agents with `--signing-key /outside/root/private.pem` (make one with `<agent> keygen --out DIR`, outside `--root`). Give Fairbooks Audit Evidence only the **public** key (`public_keys: ["keys/audit-public.pem"]`). With a key given, every mythos-format log in that call must be signed: an unsigned or signature-stripped log fails rather than passing as "chained". Talos logs are chain-checked only. Logs without signatures still verify as "chained, unsigned".
+Start your agents with `--signing-key /outside/root/private.pem` (make one with `<agent> keygen --out DIR`, outside `--root`). Give Fairbooks Audit Evidence only the **public** key (`public_keys: ["keys/audit-public.pem"]`). With a key given, every fairbooks-format log in that call must be signed: an unsigned or signature-stripped log fails rather than passing as "chained". Talos logs are chain-checked only. Logs without signatures still verify as "chained, unsigned".
 
 ## Install
 
@@ -62,14 +62,14 @@ claude mcp add fairbooks-audit-evidence -- npx -y fairbooks-audit-evidence@0.2.0
 | Tool | Policy | What it does |
 |---|---|---|
 | `evidence_summarize_logs` | **allow** | Counts by decision, status, agent, tool; approvers |
-| `evidence_verify_chain` | **allow** | Verify a Talos or mythos log's hash chain, and signatures with `public_keys` |
+| `evidence_verify_chain` | **allow** | Verify a Talos or fairbooks-core log's hash chain, and signatures with `public_keys` |
 | `evidence_list_templates` | **allow** | List or show the starter control lists |
 | `evidence_map_controls` | **allow** | Map events and evidence files to your controls; gaps, stale, unmapped |
 | `evidence_diff_evidence` | **allow** | Diff two evidence folders by path and SHA-256 |
-| `evidence_build_evidence` | **allow** | Write the evidence folder to `mythos-out/evidence` |
+| `evidence_build_evidence` | **allow** | Write the evidence folder to `fairbooks-out/evidence` |
 | `evidence_send_to_auditor` | **block** | Listed so agents see the refusal. A person reviews and shares the folder. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 The MCP prompt `evidence_evidence_review` walks a host model through verify → summarize → map → diff → build, and stops at the human sharing step.
 
@@ -87,11 +87,11 @@ Go-live, revoking access, deleting personal data, moving money, legally binding 
 
 ```bash
 fairbooks-audit-evidence tools
-fairbooks-audit-evidence call evidence_build_evidence '{"logs":[".agent-guard/audit.jsonl",".mythos/audit.jsonl"],"controls":"controls.json","period_start":"2026-10-01","period_end":"2026-10-31"}'
+fairbooks-audit-evidence call evidence_build_evidence '{"logs":[".agent-guard/audit.jsonl",".fairbooks/audit.jsonl"],"controls":"controls.json","period_start":"2026-10-01","period_end":"2026-10-31"}'
 fairbooks-audit-evidence eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

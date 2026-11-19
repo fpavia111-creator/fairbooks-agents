@@ -85,23 +85,23 @@ test('rollout: one stage at a time, never straight to reject, dates, inherited p
 test('rollout tool: .ics, marker-gated next stage, DNS change stays one-click; signed output hash in the audit log', async () => {
   const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['maildomain_plan_dmarc_rollout'] });
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['maildomain_request_dns_change'] }), /one-click/);
-  const noReports = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', out_dir: 'mythos-out/r1' });
+  const noReports = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', out_dir: 'fairbooks-out/r1' });
   assert.equal(noReports.status, 'executed');
-  const ics = readFileSync(join(root, 'mythos-out/r1/dmarc-rollout.ics'), 'utf8'); const v = validateIcs(ics);
+  const ics = readFileSync(join(root, 'fairbooks-out/r1/dmarc-rollout.ics'), 'utf8'); const v = validateIcs(ics);
   assert.ok(v.ok, v.errors.join('; ')); assert.equal(v.events, 3); assert.match(ics, /TRIGGER:-P3D/);
   const r1 = { change: noReports.result.change, change_sha256: noReports.result.change_sha256 };
-  new ApprovalStore(join(root, '.mythos')).approve((await rt.call('maildomain_request_dns_change', r1)).approval_id, 'Lee');
+  new ApprovalStore(join(root, '.fairbooks')).approve((await rt.call('maildomain_request_dns_change', r1)).approval_id, 'Lee');
   assert.match((await rt.call('maildomain_request_dns_change', r1)).reason, /TO CONFIRM/, 'enforcement without reports is refused even after the click');
-  const ready = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', reports: ['dmarc-brand'], out_dir: 'mythos-out/r2' });
+  const ready = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', reports: ['dmarc-brand'], out_dir: 'fairbooks-out/r2' });
   assert.match(ready.result.summary, /99\.5% of 1005/);
   const r2 = { change: ready.result.change, change_sha256: ready.result.change_sha256 };
   const ask = await rt.call('maildomain_request_dns_change', r2); assert.equal(ask.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(ask.approval_id, 'Lee');
+  new ApprovalStore(join(root, '.fairbooks')).approve(ask.approval_id, 'Lee');
   const ok = await rt.call('maildomain_request_dns_change', r2); assert.equal(ok.status, 'executed'); assert.equal(ok.approved_by, 'Lee');
-  const notReady = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'example.com', records: 'records.json', start_date: '2026-11-16', reports: ['dmarc'], config: 'dmarc-rollout.json', out_dir: 'mythos-out/r3' });
+  const notReady = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'example.com', records: 'records.json', start_date: '2026-11-16', reports: ['dmarc'], config: 'dmarc-rollout.json', out_dir: 'fairbooks-out/r3' });
   assert.deepEqual(notReady.result.plan.stages.map((s) => `${s.policy}:${s.pct}:${s.earliest_date}`), ['none:100:2026-11-16', 'quarantine:10:2026-12-14', 'quarantine:100:2026-12-28', 'reject:100:2027-01-18']);
   assert.equal(notReady.result.plan.pass_threshold, 99);
-  const line = readAudit(join(root, '.mythos/audit.jsonl')).filter((e) => e.tool === 'maildomain_plan_dmarc_rollout' && e.status === 'executed').pop();
+  const line = readAudit(join(root, '.fairbooks/audit.jsonl')).filter((e) => e.tool === 'maildomain_plan_dmarc_rollout' && e.status === 'executed').pop();
   assert.equal(line.output_sha256, notReady.result.output_sha256);
 });
 
@@ -115,7 +115,7 @@ test('rollout config schema: unknown key, wrong type and missing field fail with
   ];
   for (const [name, cfg, re] of cases) {
     writeFileSync(join(root, `${name}.json`), JSON.stringify(cfg));
-    const r = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', config: `${name}.json`, out_dir: `mythos-out/${name}` });
+    const r = await rt.call('maildomain_plan_dmarc_rollout', { domain: 'brand.example.net', records: 'records.json', start_date: '2026-11-16', config: `${name}.json`, out_dir: `fairbooks-out/${name}` });
     assert.equal(r.status, 'error', name); assert.match(r.reason, /not a valid dmarc_rollout/); assert.match(r.reason, re);
   }
   writeFileSync(join(root, 'skip.json'), JSON.stringify({ stages: [{ policy: 'none', pct: 100, min_days: 7 }, { policy: 'reject', pct: 100, min_days: 0 }] }));
@@ -125,11 +125,11 @@ test('rollout config schema: unknown key, wrong type and missing field fail with
 
 test('report tools: HTML report and sources CSV; read tools via the runtime; bad args refused', async () => {
   const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root });
-  const w = await rt.call('maildomain_write_report', { domain: 'example.com', records: 'records.json', reports: ['dmarc'], out_dir: 'mythos-out/w' });
+  const w = await rt.call('maildomain_write_report', { domain: 'example.com', records: 'records.json', reports: ['dmarc'], out_dir: 'fairbooks-out/w' });
   assert.equal(w.status, 'executed'); assert.match(w.result.output_sha256, /^[0-9a-f]{64}$/);
-  const html = readFileSync(join(root, 'mythos-out/w/mail-dns-audit.html'), 'utf8');
+  const html = readFileSync(join(root, 'fairbooks-out/w/mail-dns-audit.html'), 'utf8');
   assert.match(html, /default-src 'none'/); assert.doesNotMatch(html, /<script/i); assert.match(html, /198\.51\.100\.7/);
-  assert.match(readFileSync(join(root, 'mythos-out/w/dmarc-sources.csv'), 'utf8'), /^source_ip,status,messages/);
+  assert.match(readFileSync(join(root, 'fairbooks-out/w/dmarc-sources.csv'), 'utf8'), /^source_ip,status,messages/);
   const d = await rt.call('maildomain_dmarc_reports', { reports: ['dmarc'], domain: 'example.com', pass_threshold: 80 });
   assert.equal(d.result.readiness.ready, true); assert.equal(d.decision, 'allow');
   const h = await rt.call('maildomain_check_headers', { message: 'messages/broken-arc.eml' }); assert.equal(h.result.by_severity.error, 4);

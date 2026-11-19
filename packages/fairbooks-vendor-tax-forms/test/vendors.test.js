@@ -48,15 +48,15 @@ test('drafts on Auto (no TIN in text); send is one-click; IRS filing and email b
   const f = { vendors: 'vendors.csv', payments: 'payments.csv', as_of };
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['taxforms_draft_requests'] });
   const d = await rt.call('taxforms_draft_requests', f); assert.equal(d.status, 'executed');
-  const names = readdirSync(join(root, 'mythos-out/taxforms/requests')).sort();
+  const names = readdirSync(join(root, 'fairbooks-out/taxforms/requests')).sort();
   // 0.2.0: V1/V4 (TIN pattern) and V5 (W-8) now also get drafts.
   assert.deepEqual(names, ['V1-northwind-design-llc.md', 'V2-pat-rivera.md', 'V3-blue-fern-cleaning.md', 'V4-oak-iron-inc.md', 'V5-maple-studio-gmbh.md', 'V6-quick-courier-llc.md', 'V7-sunny-catering.md']);
-  const rem = readFileSync(join(root, 'mythos-out/taxforms/requests/V7-sunny-catering.md'), 'utf8');
+  const rem = readFileSync(join(root, 'fairbooks-out/taxforms/requests/V7-sunny-catering.md'), 'utf8');
   assert.match(rem, /^DRAFT — not sent/); assert.match(rem, /Subject: Reminder:/); assert.match(rem, /do not email your taxpayer identification number/);
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['taxforms_request_send'] }), /one-click/);
-  const args = { vendor_id: 'V2', draft: 'mythos-out/taxforms/requests/V2-pat-rivera.md' };
+  const args = { vendor_id: 'V2', draft: 'fairbooks-out/taxforms/requests/V2-pat-rivera.md' };
   const a = await rt.call('taxforms_request_send', args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Jo');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Jo');
   const b = await rt.call('taxforms_request_send', args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Jo');
   assert.equal(parseCsv(readFileSync(b.result.file, 'utf8'))[0].status, 'approved - a person sends it');
   assert.equal((await rt.call('taxforms_request_send', args)).status, 'needs_approval');

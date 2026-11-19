@@ -54,10 +54,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'onboarding_write_tracker', kind: 'report',
-      description: 'Write onboarding-tracker.csv (blank checked_by column), onboarding.md, owner-actions.csv (prioritised per owner, blank done_by column) and onboarding-calendar.ics (open tasks by due date, onboarding and offboarding) into out_dir (default mythos-out/onboarding).',
+      description: 'Write onboarding-tracker.csv (blank checked_by column), onboarding.md, owner-actions.csv (prioritised per owner, blank done_by column) and onboarding-calendar.ics (open tasks by due date, onboarding and offboarding) into out_dir (default fairbooks-out/onboarding).',
       inputSchema: { type: 'object', required: ['people', 'template'], properties: { ...props, window_days: windowProp, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const off = runOff(a, ctx); const acts = ownerActions(r, off); const out = ctx.outDir(a.out_dir || 'mythos-out/onboarding');
+        const r = run(a, ctx); const off = runOff(a, ctx); const acts = ownerActions(r, off); const out = ctx.outDir(a.out_dir || 'fairbooks-out/onboarding');
         return { summary: `Tracker written for ${r.people} people; ${acts.actions} open action(s) across ${acts.owners.length} owner(s).`, files: [ctx.writeFile(out, 'onboarding-tracker.csv', trackerCsv(r)), ctx.writeFile(out, 'onboarding.md', summaryMarkdown(r)), ctx.writeFile(out, 'owner-actions.csv', actionsCsv(acts)), ctx.writeFile(out, 'onboarding-calendar.ics', trackerIcs(r, off))] };
       },
     },
@@ -82,7 +82,7 @@ export const manifest = defineManifest({
       description: 'Check people starting within within_days (default 7) of as_of, or the listed person_ids: every task due on or before the start date done, no access granted before its prerequisites, contractors with an end date, a known role. Writes readiness.html (self-contained) and readiness.json; the JSON hash is recorded in the audit log as output_sha256.',
       inputSchema: { type: 'object', required: ['people', 'template'], properties: { ...props, within_days: { type: 'integer', minimum: 0, maximum: 90 }, person_ids: { type: 'array', items: str }, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = readiness(run(a, ctx), a); const out = ctx.outDir(a.out_dir || 'mythos-out/onboarding/readiness');
+        const r = readiness(run(a, ctx), a); const out = ctx.outDir(a.out_dir || 'fairbooks-out/onboarding/readiness');
         const json = JSON.stringify(r, null, 2) + '\n';
         const files = [ctx.writeFile(out, 'readiness.html', readinessHtml(r)), ctx.writeFile(out, 'readiness.json', json)];
         return { summary: `${r.ready} of ${r.people} ready for day one.${r.items.filter((p) => !p.ready).map((p) => ` ${p.person_id} blocked by: ${p.blocking.join('; ')}.`).join('')}`, ...r, output_sha256: sha256(json), files };
@@ -93,7 +93,7 @@ export const manifest = defineManifest({
       description: 'Write a request draft (marked DRAFT, not submitted) for each access task whose prerequisites are done, and a removal draft for access still granted after an engagement ended, into out_dir/access-requests. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['people', 'template'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/onboarding'), 'access-requests'); mkdirSync(dir, { recursive: true }); const files = [];
+        const r = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/onboarding'), 'access-requests'); mkdirSync(dir, { recursive: true }); const files = [];
         for (const p of r.items) for (const t of p.tasks) {
           if (t.ready_to_request) files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.task_id)}-grant.md`, accessDraft(p, t, 'grant')));
           if (t.revoke_due) files.push(ctx.writeFile(dir, `${safeFileName(p.person_id)}-${safeFileName(t.task_id)}-remove.md`, accessDraft(p, t, 'remove')));
@@ -106,7 +106,7 @@ export const manifest = defineManifest({
       description: 'For people in the offboarding window, write offboarding/<person>-offboarding.md (the mirror checklist) and a removal draft (marked DRAFT, not submitted) for every access still marked granted, dated for the end date. Recording a removal is a separate one-click step (onboarding_request_access_removal). Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['people', 'template'], properties: { ...props, window_days: windowProp, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = runOff(a, ctx); const st = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'mythos-out/onboarding'), 'offboarding'); mkdirSync(dir, { recursive: true }); const files = []; let drafts = 0;
+        const r = runOff(a, ctx); const st = run(a, ctx); const dir = join(ctx.outDir(a.out_dir || 'fairbooks-out/onboarding'), 'offboarding'); mkdirSync(dir, { recursive: true }); const files = []; let drafts = 0;
         const asOf = parseDate(r.as_of);
         const byPerson = new Map(); for (const x of st.items) if (!byPerson.has(x.person_id)) byPerson.set(x.person_id, x);
         for (const p of r.items) {
@@ -125,7 +125,7 @@ export const manifest = defineManifest({
         const { p, t } = find(run(a, ctx), a);
         if (t.state === 'done') throw new Error(`${a.task_id} is already marked done for ${a.person_id}`);
         if (!t.ready_to_request) throw new Error(t.waiting_on.length ? `prerequisites not done: ${t.waiting_on.join(', ')}` : `${a.task_id} is not ready to request (${t.state}${p.end_date ? `, end ${p.end_date}` : ''})`);
-        const file = appendRow(ctx.outDir(a.out_dir || 'mythos-out/onboarding'), 'access-requests.csv', { requested_at: new Date().toISOString(), action: 'grant', person_id: p.person_id, name: p.name, task_id: t.task_id, system: t.system, access_level: t.access_level, end_date: p.end_date, reason: 'onboarding', status: 'approved - a person grants it' }, COLS);
+        const file = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/onboarding'), 'access-requests.csv', { requested_at: new Date().toISOString(), action: 'grant', person_id: p.person_id, name: p.name, task_id: t.task_id, system: t.system, access_level: t.access_level, end_date: p.end_date, reason: 'onboarding', status: 'approved - a person grants it' }, COLS);
         return { summary: `Grant of ${t.system || t.title} for ${p.name} approved and recorded. Access was not changed.`, file };
       },
     },
@@ -137,7 +137,7 @@ export const manifest = defineManifest({
         if (!String(a.reason ?? '').trim()) throw new Error('reason is required');
         const { p, t } = find(run(a, ctx), a);
         if (t.state !== 'done') throw new Error(`${a.task_id} is not marked granted for ${a.person_id}`);
-        const file = appendRow(ctx.outDir(a.out_dir || 'mythos-out/onboarding'), 'access-requests.csv', { requested_at: new Date().toISOString(), action: 'remove', person_id: p.person_id, name: p.name, task_id: t.task_id, system: t.system, access_level: t.access_level, end_date: p.end_date, reason: a.reason, status: 'approved - a person removes it' }, COLS);
+        const file = appendRow(ctx.outDir(a.out_dir || 'fairbooks-out/onboarding'), 'access-requests.csv', { requested_at: new Date().toISOString(), action: 'remove', person_id: p.person_id, name: p.name, task_id: t.task_id, system: t.system, access_level: t.access_level, end_date: p.end_date, reason: a.reason, status: 'approved - a person removes it' }, COLS);
         return { summary: `Removal of ${t.system || t.title} for ${p.name} approved and recorded. Access was not changed.`, file };
       },
     },

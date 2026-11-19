@@ -60,11 +60,11 @@ claude mcp add fairbooks-process-evals -- npx -y fairbooks-process-evals@0.2.0 m
 | `evals_grade` | **allow** | Grade one recorded run (trials, tags, critical cases, optional gate) |
 | `evals_compare` | **allow** | Baseline vs candidate: regressions, fixes, delta, and a bootstrap interval with a noise/regression verdict |
 | `evals_grade_rubric` | **allow** | Grade against a rubric; every grade cites its criterion and evidence |
-| `evals_write_report` | **allow** | Write `eval-report.md`, `eval-results.json`, `junit.xml` to `mythos-out/evals` (optional baseline, rubric, gate) |
+| `evals_write_report` | **allow** | Write `eval-report.md`, `eval-results.json`, `junit.xml` to `fairbooks-out/evals` (optional baseline, rubric, gate) |
 | `evals_write_dashboard` | **allow** | Write the offline `dashboard.html` and `dashboard.json` for a series of runs |
 | `evals_publish_results` | **block** | Listed so agents see the refusal. Results stay private. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision. Report tools record the hash of what they wrote in the audit log (`output_sha256`).
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision. Report tools record the hash of what they wrote in the audit log (`output_sha256`).
 
 ### Prompt
 
@@ -113,7 +113,7 @@ fairbooks-process-evals call evals_write_dashboard '{"suite":"suite.json","runs"
 fairbooks-process-evals eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

@@ -25,7 +25,7 @@ export async function demo(manifest) {
   printStep('Draft THIRD-PARTY-NOTICES.md for the pnpm project (a draft for a person; not legal advice)', nt);
   for (const x of nt.result.needs_person.slice(0, 4)) process.stdout.write(`    needs a person: ${x}\n`);
   printStep('Auto: draft exception stubs and a review list (policy untouched)', await rt.call('licenses_draft_exceptions', f));
-  const failed = await rt.call('licenses_write_report', { ...f, out_dir: 'mythos-out/failed' });
+  const failed = await rt.call('licenses_write_report', { ...f, out_dir: 'fairbooks-out/failed' });
   const req = { check_summary: failed.result.check_summary, check_summary_sha256: failed.result.check_summary_sha256 };
   const a = await rt.call('licenses_request_release', req);
   printStep('Auto: publish the release — stays one-click (production deploy)', a);
@@ -37,7 +37,7 @@ export async function demo(manifest) {
   delete lock.packages['node_modules/gpl-widget']; delete lock.packages['node_modules/expired-ex'];
   writeFileSync(lockFile, JSON.stringify(lock, null, 2) + '\n');
   process.stdout.write('\n    (demo: the team removes gpl-widget and expired-ex from the project and runs the check again)\n');
-  const ok = await rt.call('licenses_write_report', { ...f, out_dir: 'mythos-out/fixed' });
+  const ok = await rt.call('licenses_write_report', { ...f, out_dir: 'fairbooks-out/fixed' });
   printStep('Check again', ok);
   const req2 = { check_summary: ok.result.check_summary, check_summary_sha256: ok.result.check_summary_sha256, review_note: 'Dana Counsel (fictional) reviewed the LGPL, MPL, CC-BY and custom-license items on 2026-11-14' };
   rt.approvals.approve((await rt.call('licenses_request_release', req2)).approval_id, 'Robin Release Manager (fictional)');

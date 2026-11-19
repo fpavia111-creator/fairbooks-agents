@@ -180,7 +180,7 @@
         "pos": "fixtures/partial-pos.csv",
         "receipts": "fixtures/partial-receipts.csv",
         "invoices": "fixtures/partial-invoices.csv",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",

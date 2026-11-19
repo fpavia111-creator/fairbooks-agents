@@ -70,7 +70,7 @@ test('owner confirmation drafts: drafts only, grouped by owner, managers in Cc; 
   const args = { app: 'Zoom', user: 'Jordan Lee (fictional)', reason: 'Owner confirmed in draft reply' };
   const a = await rt.call('seats_request_revoke', args);
   assert.equal(a.status, 'needs_approval'); assert.equal(a.decision, 'ask');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana (fictional)');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana (fictional)');
   assert.equal((await rt.call('seats_request_revoke', args)).status, 'executed');
 });
 
@@ -84,7 +84,7 @@ test('renewal calendar: valid .ics, act-by and renewal events, deterministic', a
   assert.match(text, /DTSTAMP:20261114T000000Z/);
   const again = await rt.call('seats_renewal_calendar', { seats: 'seats.csv', policy: 'seats-policy.json', as_of: '2026-11-14', out_dir: 'cal2' });
   assert.equal(again.result.output_sha256, c.result.output_sha256);
-  const log = readAudit(join(root, '.mythos', 'audit.jsonl'));
+  const log = readAudit(join(root, '.fairbooks', 'audit.jsonl'));
   assert.equal(log.find((e) => e.tool === 'seats_renewal_calendar').output_sha256, c.result.output_sha256);
   const none = renewalIcs(review([seat({})], {}));
   assert.equal(none.events, 0);
@@ -112,7 +112,7 @@ test('write_review adds act-by columns and renewal actions; hash in audit', asyn
   assert.equal(sheet.find((x) => x.app === 'Salesforce' && x.flags === 'leaver').act_by, '2026-12-31');
   assert.match(readFileSync(w.result.files[1], 'utf8'), /## Act first/);
   assert.equal(parseCsv(readFileSync(w.result.files[2], 'utf8'))[0].app, 'Salesforce');
-  assert.equal(readAudit(join(root, '.mythos', 'audit.jsonl')).find((e) => e.tool === 'seats_write_review').output_sha256, w.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks', 'audit.jsonl')).find((e) => e.tool === 'seats_write_review').output_sha256, w.result.output_sha256);
 });
 
 test('config schema: fixture validates; 3 mutated policies fail with JSON pointers before any work', async () => {

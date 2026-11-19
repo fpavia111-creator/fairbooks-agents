@@ -30,10 +30,10 @@ test('Microsoft 365 active user detail: latest activity across products, deleted
   assert.match(r.sources[0].note, /Seat prices are not in/);
 });
 
-test('a seat price set in mythos-sources.json turns unknown savings into estimates', async () => {
+test('a seat price set in fairbooks-sources.json turns unknown savings into estimates', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'seats-src-'));
   copyFileSync(join(fixtures, 'exports/m365-active-user-detail.csv'), join(dir, 'm365.csv'));
-  writeFileSync(join(dir, 'mythos-sources.json'), JSON.stringify({ files: { 'm365.csv': { set: { monthly_cost: 22 } } } }));
+  writeFileSync(join(dir, 'fairbooks-sources.json'), JSON.stringify({ files: { 'm365.csv': { set: { monthly_cost: 22 } } } }));
   const r = await find('m365.csv', {}, dir);
   assert.equal(item(r, /jordan/).est_monthly_saving, 22); assert.equal(item(r, /jordan/).cost_known, true);
   assert.match(r.sources[0].mapped.monthly_cost, /set to "22"/);

@@ -65,7 +65,7 @@ test('transmittal cites only indexed documents; markers for unknown and old revi
 });
 
 test('transmittal tool on Auto; sending it stays one-click and marker-gated', async () => {
-  const root = tmpRoot('rfis-tr-'); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['rfis_draft_transmittal'] }); const store = new ApprovalStore(join(root, '.mythos'));
+  const root = tmpRoot('rfis-tr-'); const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['rfis_draft_transmittal'] }); const store = new ApprovalStore(join(root, '.fairbooks'));
   const base = { documents: 'documents.csv', subject: 'Door package', to: 'Example Builders (fictional)', from: 'Example Architects (fictional)', project: 'P', date: as_of, purpose: 'For construction' };
   const t1 = await rt.call('rfis_draft_transmittal', { ...base, items: ['A-201', 'A-501'] });
   assert.equal(t1.status, 'executed', t1.reason); assert.equal(t1.result.transmittal_no, 'TR-001'); assert.equal(t1.result.open_markers, 0);
@@ -91,7 +91,7 @@ test('report writes ball-in-court.csv, a valid .ics, the diff and an output hash
   assert.match(ics, /DTSTAMP:20261114T000000Z/); assert.match(ics, /RFI 003 response due \(Architect\)/);
   assert.equal(parseCsv(readFileSync(r.result.files[3], 'utf8'))[0].party, 'Architect');
   assert.match(readFileSync(r.result.files[0], 'utf8'), /## Chase list/); assert.match(readFileSync(r.result.files[5], 'utf8'), /## Closed \(1\)/);
-  const audit = readFileSync(join(root, '.mythos/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const audit = readFileSync(join(root, '.fairbooks/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(audit.at(-1).output_sha256, r.result.output_sha256);
   const again = await new AgentRuntime(manifest, { root, audit: false }).call('rfis_write_log_report', { documents: 'documents.csv', rfis: 'rfis.csv', submittals: 'submittals.csv', previous_rfis: 'rfis-previous.csv', as_of });
   assert.equal(again.result.output_sha256, r.result.output_sha256, 'deterministic');

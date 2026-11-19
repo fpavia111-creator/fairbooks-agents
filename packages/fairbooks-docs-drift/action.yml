@@ -40,7 +40,7 @@ inputs:
   out-dir:
     description: Where fairbooks-docs-drift.sarif and drift.json are written, relative to the repository root.
     required: false
-    default: mythos-out/docs
+    default: fairbooks-out/docs
   version:
     description: fairbooks-docs-drift version to run with npx.
     required: false

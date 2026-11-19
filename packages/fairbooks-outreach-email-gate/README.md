@@ -70,14 +70,14 @@ claude mcp add fairbooks-outreach-email-gate -- npx -y fairbooks-outreach-email-
 |---|---|---|
 | `outreach_check_draft` | **allow** | Check one draft; every failure listed |
 | `outreach_check_batch` | **allow** | Check a CSV/JSON batch |
-| `outreach_prepare_outbox` | **allow** | Write `ready.csv`, `held.csv` and `drafts/` to `mythos-out/outreach` |
+| `outreach_prepare_outbox` | **allow** | Write `ready.csv`, `held.csv` and `drafts/` to `fairbooks-out/outreach` |
 | `outreach_plan_schedule` | **allow** | Plan send slots; write `schedule.csv` and `schedule.ics` (no addresses in the calendar) |
 | `outreach_add_suppression` | **ask (Auto-eligible)** | Add an opt-out to the suppression list (adds only, never removes) |
 | `outreach_import_suppression` | **ask (Auto-eligible)** | Import opt-outs and bounces from a Mailchimp, HubSpot or Resend export (adds only) |
 | `outreach_release_batch` | **ask · one-click** | Re-check and write `release.json` for a person to send; sends nothing |
 | `outreach_send_email` | **block** | Listed so agents see the refusal. Fairbooks Outreach Email Gate never sends email. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## MCP prompt
 
@@ -101,7 +101,7 @@ fairbooks-outreach-email-gate call outreach_check_batch '{"drafts":"drafts.csv",
 fairbooks-outreach-email-gate eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

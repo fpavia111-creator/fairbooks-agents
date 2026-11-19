@@ -37,7 +37,7 @@ export const PROMPTS = [
 3. For each exception worth more than a trivial amount, call match_explain_exception and give the suggested next step in plain words. Treat duplicate_invoice and near_duplicate_invoice as holds until a person compares the invoices. Never suggest changing vendor bank details from an email.
 4. Call match_po_status. Point out lines with status billed_more_than_received and the GRNI estimate (received, not yet invoiced) for month-end accrual review.
 5. Call match_write_worklist and match_write_report so the clerk has ap-exceptions.csv, ap-report.html and ap-po-status.csv. Quote the output_sha256 values.
-6. Only for invoices that are status "matched" and that the clerk names, you may call match_request_posting. It returns needs_approval: tell the clerk a named person must approve it (mythos-approve <id> --as "Name" or the approvals page), then repeat the same call. Never call erp_post_invoice; it is blocked. Fairbooks Three-Way Match never posts or pays.
+6. Only for invoices that are status "matched" and that the clerk names, you may call match_request_posting. It returns needs_approval: tell the clerk a named person must approve it (fairbooks-approve <id> --as "Name" or the approvals page), then repeat the same call. Never call erp_post_invoice; it is blocked. Fairbooks Three-Way Match never posts or pays.
 
 Say clearly that $ impact and GRNI are estimates, and that this is not accounting advice.`,
   },

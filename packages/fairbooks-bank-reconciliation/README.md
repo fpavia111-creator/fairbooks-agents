@@ -45,7 +45,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | QuickBooks Online | Transaction Detail by Account / General Ledger report | no |
 | Xero | Account Transactions report (Excel or CSV) | no |
 
-Columns named differently? Run `npx fairbooks-bank-reconciliation inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-bank-reconciliation inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -87,7 +87,7 @@ claude mcp add fairbooks-bank-reconciliation -- npx -y fairbooks-bank-reconcilia
 |---|---|---|
 | `recon_reconcile` | **allow** | Propose matches, list reconciling items, tie balances |
 | `recon_read_statement` | **allow** | Parse a bank file (CSV/JSON, CAMT.053, BAI2, OFX) and check its balances |
-| `recon_write_workpaper` | **allow** | Write `reconciliation.csv`, `reconciliation.md`, `reconciliation.html`, `proposed-entries.csv` to `mythos-out/recon` |
+| `recon_write_workpaper` | **allow** | Write `reconciliation.csv`, `reconciliation.md`, `reconciliation.html`, `proposed-entries.csv` to `fairbooks-out/recon` |
 | `recon_roll_forward` | **allow** | Carry last period's outstanding items forward, age them and tie out |
 | `recon_suggest_rules` | **allow** | Suggest match rules from accepted matches |
 | `recon_accept_rule` | **ask (Auto-eligible)** | Record a rule a person accepted in `match-rules.json` |
@@ -95,7 +95,7 @@ claude mcp add fairbooks-bank-reconciliation -- npx -y fairbooks-bank-reconcilia
 | `recon_request_adjusting_entry` | **ask · one-click** | After a named human approves, record an entry for a person to post |
 | `ledger_post_journal` | **block** | Listed so agents see the refusal. Fairbooks Bank Reconciliation never writes to a ledger. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### MCP prompt
 
@@ -119,7 +119,7 @@ fairbooks-bank-reconciliation call recon_reconcile '{"bank":"bank.csv","gl":"gl-
 fairbooks-bank-reconciliation eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

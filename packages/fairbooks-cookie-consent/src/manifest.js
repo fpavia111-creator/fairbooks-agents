@@ -57,10 +57,10 @@ export const manifest = defineManifest({
     {
       name: 'consent_write_report', kind: 'report',
       title: 'Write the consent audit report',
-      description: 'Write consent-audit.md, consent-audit.html (self-contained, no scripts), cookie-inventory.csv and third-parties.csv (blank owner and status columns) and inventory.json (a snapshot without cookie values, for consent_diff_inventory next time) into out_dir (default mythos-out/consent). The output hash goes into the audit line.',
+      description: 'Write consent-audit.md, consent-audit.html (self-contained, no scripts), cookie-inventory.csv and third-parties.csv (blank owner and status columns) and inventory.json (a snapshot without cookie values, for consent_diff_inventory next time) into out_dir (default fairbooks-out/consent). The output hash goes into the audit line.',
       inputSchema: { type: 'object', properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/consent');
+        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/consent');
         const cc = toCsv(r.cookies.map((c) => ({ name: c.name, domain: c.domain, party: c.party, purpose: c.purpose || '', purpose_source: c.purpose_source, declared: c.declared ? 'yes' : 'no', lifetime_days: c.lifetime_days ?? '', secure: c.secure ?? '', samesite: c.samesite || '', seen_in: c.seen_in.join('; '), owner: '', status: '' })), ['name', 'domain', 'party', 'purpose', 'purpose_source', 'declared', 'lifetime_days', 'secure', 'samesite', 'seen_in', 'owner', 'status']);
         const tc = toCsv(r.third_parties.map((t) => ({ host: t.host, vendor: t.vendor || '', purpose: t.purpose || '', purpose_source: t.purpose_source, declared: t.declared ? 'yes' : 'no', seen_in: t.seen_in.join('; '), owner: '', status: '' })), ['host', 'vendor', 'purpose', 'purpose_source', 'declared', 'seen_in', 'owner', 'status']);
         const html = htmlPage({ title: `Cookie and consent audit${r.site_host ? `: ${r.site_host}` : ''}`, bodyHtml: reportHtml(r, escapeHtml), footer: 'A technical inventory from the files you gave Fairbooks Cookie Consent. Not legal advice and not a compliance finding.' });
@@ -84,7 +84,7 @@ export const manifest = defineManifest({
       description: 'Draft a cookie table for your policy page from what was observed and declared: cookie-table.md, declared.proposed.json and proposal.json with hashes, in out_dir. Unknown purposes, providers and durations are [TO CONFIRM] markers; Fairbooks Cookie Consent does not decide what a cookie is for. Fixes to scripts and the banner are listed for a person. Your site and policy are not changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, declared } = load(a, ctx); const d = draftTable(r, declared); const out = ctx.outDir(a.out_dir || 'mythos-out/consent');
+        const { r, declared } = load(a, ctx); const d = draftTable(r, declared); const out = ctx.outDir(a.out_dir || 'fairbooks-out/consent');
         const L = ['# Proposed cookie table (draft, not published)', '', `Based on: ${r.captures.join(', ') || 'HTML only'}${r.declared_source ? `; compared with ${r.declared_source}` : ''}. A person confirms every row before it goes on the site.`, '', '| Cookie | Provider | Purpose | Duration | Status |', '|---|---|---|---|---|', ...d.rows.map((x) => `| ${x.name} | ${x.provider} | ${x.purpose} | ${x.duration} | ${x.status} |`), '', '## Third parties', '', '| Host | Vendor | Purpose | Status |', '|---|---|---|---|', ...d.hosts.map((x) => `| ${x.host} | ${x.vendor} | ${x.purpose} | ${x.status} |`), '', `## Needs a person (${d.needs_person.length})`, '', 'Fairbooks Cookie Consent does not edit scripts, the banner or the policy text.', '', ...d.needs_person.map((x) => `- [ ] ${x}`), ''];
         const table = safeMarkdown(L.join('\n')); const proposedDecl = JSON.stringify({ source: declared?.source || '[TO CONFIRM policy name and date]', cookies: d.rows.map(({ name, provider, purpose, duration }) => ({ name, provider, purpose, duration })), third_parties: d.hosts.map(({ host, vendor, purpose }) => ({ host, name: vendor, purpose })) }, null, 2) + '\n';
         const f1 = ctx.writeFile(out, 'cookie-table.md', table); const f2 = ctx.writeFile(out, 'declared.proposed.json', proposedDecl);
@@ -103,7 +103,7 @@ export const manifest = defineManifest({
         const p = JSON.parse(text); let open = 0;
         for (const f of p.files) { const fp = join(dirname(pf), f.file); if (!existsSync(fp)) throw new Error(`${f.file} is missing`); const t = readFileSync(fp, 'utf8'); if (sha256(t) !== f.sha256) throw new Error(`${f.file} changed after the proposal was written; draft again`); if (MARK.test(t)) open++; }
         if (open) throw new Error(`${open} drafted file(s) still have [TO CONFIRM] markers; a person fills them in and drafts the proposal again`);
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/consent'); const f = join(dir, 'publish-requests.csv');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/consent'); const f = join(dir, 'publish-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), proposal: a.proposal, proposal_sha256: a.proposal_sha256, files: p.files.map((x) => x.file).join('; '), status: 'approved - a person publishes it' }], ['requested_at', 'proposal', 'proposal_sha256', 'files', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: 'Publish approved and recorded. Nothing was deployed.', file: f };

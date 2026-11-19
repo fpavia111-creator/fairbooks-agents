@@ -100,20 +100,20 @@ test('the same export as Excel, TSV and semicolon text gives the same review', a
   }
 });
 
-test('mythos-sources.json names columns by hand and sets the date order', async () => {
+test('fairbooks-sources.json names columns by hand and sets the date order', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'access-ovr-'));
   writeFileSync(join(dir, 'accounts.csv'), 'Tool,Person,Mailbox,Niveau,Derniere connexion,Etat\nERP,Avery Stone (fictional),avery.stone@example.com,Administrator,03/11/2026,active\nERP,Jordan Lee (fictional),jordan.lee@example.com,Clerk,01/06/2026,active\n');
   const before = await review('accounts.csv', {}, dir);
   assert.ok(before.result.items.every((i) => !i.email), 'without a mapping the unknown headers are not guessed');
-  writeFileSync(join(dir, 'mythos-sources.json'), JSON.stringify({ sources: { access: { columns: { user: 'Person', email: 'Mailbox', role: 'Niveau', last_login: 'Derniere connexion', status: 'Etat' }, date_order: 'dmy' } } }));
+  writeFileSync(join(dir, 'fairbooks-sources.json'), JSON.stringify({ sources: { access: { columns: { user: 'Person', email: 'Mailbox', role: 'Niveau', last_login: 'Derniere connexion', status: 'Etat' }, date_order: 'dmy' } } }));
   const r = await review('accounts.csv', {}, dir);
   assert.equal(r.sources[0].mapped.last_login, 'Derniere connexion'); assert.equal(r.sources[0].dates_read_as, 'day/month/year');
   assert.equal(item(r, /avery/).last_login, '2026-11-03'); assert.ok(item(r, /jordan/).flags.some((f) => /^stale_/.test(f)));
-  writeFileSync(join(dir, 'mythos-sources.json'), JSON.stringify({ sources: { access: { columns: { user: 'Nobody' } } } }));
+  writeFileSync(join(dir, 'fairbooks-sources.json'), JSON.stringify({ sources: { access: { columns: { user: 'Nobody' } } } }));
   const bad = await rt(dir).call('access_review_access', { access: 'accounts.csv' });
   assert.equal(bad.status, 'error'); assert.match(bad.reason, /does not have/);
-  writeFileSync(join(dir, 'mythos-sources.json'), JSON.stringify({ sources: { access: { date_order: 'ymd' } } }));
-  assert.match((await rt(dir).call('access_review_access', { access: 'accounts.csv' })).reason, /mythos-sources\.json is not valid/);
+  writeFileSync(join(dir, 'fairbooks-sources.json'), JSON.stringify({ sources: { access: { date_order: 'ymd' } } }));
+  assert.match((await rt(dir).call('access_review_access', { access: 'accounts.csv' })).reason, /fairbooks-sources\.json is not valid/);
 });
 
 test('inspect describes a file without returning any cell value', async () => {

@@ -74,14 +74,14 @@ claude mcp add fairbooks-erp-migration -- npx -y fairbooks-erp-migration@0.2.0 m
 | `migration_tie_out_balances` | **allow** | Trial balance tie-out by account |
 | `migration_check_fields` | **allow** | Check one export against field rules |
 | `migration_compare_runs` | **allow** | Compare two `findings.json` files (trial load N vs N+1) |
-| `migration_readiness_report` | **allow** | Write `readiness-report.md`, `readiness-report.html`, `findings.json` and `exceptions.csv` to `mythos-out/migration`; records the report hash in the audit log |
+| `migration_readiness_report` | **allow** | Write `readiness-report.md`, `readiness-report.html`, `findings.json` and `exceptions.csv` to `fairbooks-out/migration`; records the report hash in the audit log |
 | `migration_approve_go_live` | **block** | Listed so agents see the refusal. Go-live is a human decision. |
 | `migration_recall` | **allow** | Search what Fairbooks ERP Migration has learned about this customer's exports: accepted facts and facts waiting for a person |
 | `migration_learn` | **allow** | Propose a fact to remember (a column name, an extra field rule, a note). Stored as waiting; changes nothing |
 | `migration_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
 | `migration_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 The MCP prompt `migration_go_live_readiness` walks a host model through the whole check (recall what Fairbooks ERP Migration has learned, compare, tie-out, field rules, run comparison, report) and stops at the human go-live sign-off.
 
@@ -104,7 +104,7 @@ fairbooks-erp-migration memory accept MEM-1a2b3c4d5e6f --as "Your Name"
 fairbooks-erp-migration memory verify
 ```
 
-Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`); the readiness report and `findings.json` have a "Learned facts used" section. Memory lives in `.mythos/memory/fairbooks-erp-migration.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it.
+Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`); the readiness report and `findings.json` have a "Learned facts used" section. Memory lives in `.fairbooks/memory/fairbooks-erp-migration.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it.
 
 ## Modes
 
@@ -124,7 +124,7 @@ fairbooks-erp-migration call migration_compare_exports '{"source":"legacy-open-i
 fairbooks-erp-migration eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

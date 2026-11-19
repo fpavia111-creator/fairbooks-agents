@@ -1,7 +1,7 @@
 // Offline licence keys for a paid tier (node:crypto, no dependencies, no network).
 //
 // A licence key is a short signed text:
-//     MYTHOS1.<payload, base64url JSON>.<Ed25519 signature, base64url>
+//     FAIRBOOKS1.<payload, base64url JSON>.<Ed25519 signature, base64url>
 // payload: { v, id, licensee, plan, agents, features, issued, expires, seats?, kid }
 //   agents    ['*'] or package names the key covers
 //   features  ['*'] or feature names (a tool may name one with `feature`)
@@ -23,7 +23,7 @@ import { keyId, verifySignature } from './signing.js';
 import { canonical } from './util.js';
 import { LICENSE_PUBLIC_KEYS, LICENSE_REVOKED_IDS } from './license-keys.js';
 
-export const LICENSE_PREFIX = 'MYTHOS1';
+export const LICENSE_PREFIX = 'FAIRBOOKS1';
 export const LICENSE_FILE = 'license.key';
 export const TIERS = Object.freeze(['free', 'pro']);
 const MAX_TOKEN = 8192;
@@ -136,7 +136,7 @@ export const licenseHas = (status, feature) => !!(status && status.valid && (!fe
 
 /**
  * Find the installed licence key. Order: an explicit token, an explicit file,
- * MYTHOS_LICENSE, MYTHOS_LICENSE_FILE, then <stateDir>/license.key.
+ * FAIRBOOKS_LICENSE, FAIRBOOKS_LICENSE_FILE, then <stateDir>/license.key.
  * Returns { token, source } with token null when there is none. Never throws.
  */
 export function readLicenseToken({ token = null, file = null, stateDir = null, env = process.env } = {}) {
@@ -145,8 +145,8 @@ export function readLicenseToken({ token = null, file = null, stateDir = null, e
   };
   if (token && String(token).trim()) return { token: String(token).trim(), source: 'option' };
   if (file) return fromFile(file, 'file') || { token: null, source: null };
-  if (env && env.MYTHOS_LICENSE && String(env.MYTHOS_LICENSE).trim()) return { token: String(env.MYTHOS_LICENSE).trim(), source: 'MYTHOS_LICENSE' };
-  if (env && env.MYTHOS_LICENSE_FILE) return fromFile(env.MYTHOS_LICENSE_FILE, 'MYTHOS_LICENSE_FILE') || { token: null, source: null };
+  if (env && env.FAIRBOOKS_LICENSE && String(env.FAIRBOOKS_LICENSE).trim()) return { token: String(env.FAIRBOOKS_LICENSE).trim(), source: 'FAIRBOOKS_LICENSE' };
+  if (env && env.FAIRBOOKS_LICENSE_FILE) return fromFile(env.FAIRBOOKS_LICENSE_FILE, 'FAIRBOOKS_LICENSE_FILE') || { token: null, source: null };
   if (stateDir) return fromFile(join(stateDir, LICENSE_FILE), LICENSE_FILE) || { token: null, source: null };
   return { token: null, source: null };
 }

@@ -69,7 +69,7 @@ test('COI text extraction: limits and dates found, every row marked for review',
   assert.ok(rows.every((x) => x.needs_review === 'yes' && x.reviewed_by === ''));
   const v = checkCois(rows, rd('requirements.csv'), { as_of });
   assert.ok(v.find((x) => x.vendor.startsWith('Bright')).gaps.some((g) => g.issue === 'limit_below_required'), 'extracted CSV feeds the COI check');
-  const audit = readAudit(join(root, '.mythos/audit.jsonl')); assert.match(audit.at(-1).output_sha256, /^[0-9a-f]{64}$/);
+  const audit = readAudit(join(root, '.fairbooks/audit.jsonl')); assert.match(audit.at(-1).output_sha256, /^[0-9a-f]{64}$/);
 });
 
 test('inventory diff: riskiest changes first', async () => {
@@ -87,7 +87,7 @@ test('write_report adds HTML and records the output hash in the audit line', asy
   const html = readFileSync(r.result.files[3], 'utf8');
   assert.match(html, /Content-Security-Policy/); assert.doesNotMatch(html, /<script/i); assert.match(html, /Not insurance or legal advice/);
   assert.match(readFileSync(r.result.files[2], 'utf8'), /TRIGGER:-P45D/);
-  assert.equal(readAudit(join(root, '.mythos/audit.jsonl')).at(-1).output_sha256, r.result.output_sha256);
+  assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, r.result.output_sha256);
 });
 
 // A fake TLS socket: no network at all.
@@ -131,7 +131,7 @@ test('live TLS check: ask in assist, blocked in review, runs against a local TLS
     assert.equal((await new AgentRuntime(manifest, { root, audit: false, mode: 'review' }).call('certs_tls_live_check', args)).status, 'blocked', 'off in review mode');
     const rt = new AgentRuntime(manifest, { root });
     const a = await rt.call('certs_tls_live_check', args); assert.equal(a.status, 'needs_approval', 'off until a person says yes');
-    new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+    new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
     const b = await rt.call('certs_tls_live_check', args); assert.equal(b.status, 'executed', JSON.stringify(b));
     const row = b.result.rows[0];
     assert.equal(row.not_after, '2026-12-01'); assert.equal(row.days_left, 17); assert.equal(row.status, 'warning'); assert.match(row.key, /^EC (P-256|prime256v1)$/);

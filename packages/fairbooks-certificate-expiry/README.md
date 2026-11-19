@@ -41,7 +41,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 
 No named exports: other column names are matched by a list of common alternatives.
 
-Columns named differently? Run `npx fairbooks-certificate-expiry inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-certificate-expiry inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -78,11 +78,11 @@ claude mcp add fairbooks-certificate-expiry -- npx -y fairbooks-certificate-expi
 | Tool | Policy | What it does |
 |---|---|---|
 | `certs_scan` | **allow** | Days left, status, flags and next step per item; COI gaps per vendor |
-| `certs_write_report` | **allow** | Write `expiry-report.md`, `expiry-report.html`, `expiry.csv`, `renewals.ics` to `mythos-out/certs` (output hash in the audit line) |
+| `certs_write_report` | **allow** | Write `expiry-report.md`, `expiry-report.html`, `expiry.csv`, `renewals.ics` to `fairbooks-out/certs` (output hash in the audit line) |
 | `certs_diff_inventory` | **allow** | What changed between a previous and the current inventory export |
 | `certs_extract_coi` | **allow** | Extract COI rows from certificate text into `coi-extracted.csv`, every row `needs_review` |
 | `certs_tls_live_check` | **ask (Auto-eligible) · network** | Opt-in TLS handshake per listed host; writes `live-tls.csv`. Blocked in review mode |
-| `certs_draft_chase` | **ask (Auto-eligible)** | Write chase email drafts to `mythos-out/certs/chase-drafts` (not sent) |
+| `certs_draft_chase` | **ask (Auto-eligible)** | Write chase email drafts to `fairbooks-out/certs/chase-drafts` (not sent) |
 | `certs_request_chase_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |
 | `certs_request_renewal` | **ask · one-click** | After a named human approves, record a paid renewal for whoever holds the card |
 | `certs_request_production_change` | **ask · one-click** | After a named human approves, record a certificate install or rotation for your change process |
@@ -90,7 +90,7 @@ claude mcp add fairbooks-certificate-expiry -- npx -y fairbooks-certificate-expi
 | `deploy_certificate` | **block** | Listed so agents see the refusal. Fairbooks Certificate Expiry never touches a server. |
 | `send_email` | **block** | Listed so agents see the refusal. Fairbooks Certificate Expiry never sends. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## MCP prompt
 
@@ -114,7 +114,7 @@ fairbooks-certificate-expiry call certs_scan '{"certificates":"certificates.csv"
 fairbooks-certificate-expiry eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

@@ -51,14 +51,14 @@ claude mcp add fairbooks-email-domain-audit -- npx -y fairbooks-email-domain-aud
 | `maildomain_audit` | **allow** | Look up and check the records; findings with severity, record, meaning and RFC |
 | `maildomain_dmarc_reports` | **allow** | Read saved DMARC aggregate reports offline; pass/fail by source with reasons and a readiness verdict |
 | `maildomain_check_headers` | **allow** | Read a saved message's headers offline; receiver results, alignment, selectors in use, ARC chain |
-| `maildomain_write_report` | **allow** | Write `mail-dns-audit.md`, `mail-dns-audit.html`, `findings.csv` (and `dmarc-sources.csv`) to `mythos-out/maildomain` |
+| `maildomain_write_report` | **allow** | Write `mail-dns-audit.md`, `mail-dns-audit.html`, `findings.csv` (and `dmarc-sources.csv`) to `fairbooks-out/maildomain` |
 | `maildomain_draft_records` | **ask (Auto-eligible)** | Pre-stage record changes in `zone-change.md` and `proposed-records.json` with its hash (DNS untouched) |
 | `maildomain_plan_dmarc_rollout` | **ask (Auto-eligible)** | Write a staged DMARC plan (`.md`, `.json`, `.ics`) and a proposal for the next stage only (DNS untouched) |
 | `maildomain_request_dns_change` | **ask · one-click** | After a named human approves, record the change (bound to its hash) for whoever edits DNS; refused while `[TO CONFIRM]` markers remain |
 | `dns_update` | **block** | Listed so agents see the refusal. Fairbooks Email Domain Audit never edits DNS. |
 | `send_test_email` | **block** | Listed so agents see the refusal. Fairbooks Email Domain Audit never sends mail. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## Modes
 
@@ -86,7 +86,7 @@ fairbooks-email-domain-audit eval          # private evals on the bundled fixtur
 
 `mail_dns_review` (arguments: `domain`, optional `reports`, `message`, `start_date`) walks a host model through the whole workflow: headers, audit, reports, report files, drafting, the rollout plan, and the one-click DNS change a named person approves.
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

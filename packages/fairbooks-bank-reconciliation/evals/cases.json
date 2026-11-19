@@ -67,7 +67,7 @@
       "args": {
         "bank_ids": "B2",
         "gl_ids": "G2",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed"
@@ -243,7 +243,7 @@
         "gl_pattern": "receipt",
         "direction": "in",
         "max_days": 1,
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",
@@ -298,7 +298,7 @@
         "gl": "fixtures/gl-cash.csv",
         "bank_balance": 12422.88,
         "gl_balance": 12844.76,
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "status": "executed",

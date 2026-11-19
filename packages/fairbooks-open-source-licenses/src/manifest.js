@@ -49,10 +49,10 @@ export const manifest = defineManifest({
     },
     {
       name: 'licenses_write_report', kind: 'report', title: 'Write the license report, SBOM and SARIF',
-      description: 'Write license-report.md, licenses.csv, sbom.cdx.json (CycloneDX 1.5), results.sarif (SARIF 2.1.0 for code scanning), check-summary.json with the lockfile and policy hashes and, when the policy has dated exceptions, exceptions.ics into out_dir (default mythos-out/licenses). The output hash goes into the audit line. The project is not changed.',
+      description: 'Write license-report.md, licenses.csv, sbom.cdx.json (CycloneDX 1.5), results.sarif (SARIF 2.1.0 for code scanning), check-summary.json with the lockfile and policy hashes and, when the policy has dated exceptions, exceptions.ics into out_dir (default fairbooks-out/licenses). The output hash goes into the audit line. The project is not changed.',
       inputSchema: { type: 'object', required: ['project', 'policy'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, policyText, policy } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/licenses');
+        const { r, policyText, policy } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/licenses');
         const csv = toCsv(r.packages.map((p) => ({ name: p.name, version: p.version || '', dev: p.dev ? 'yes' : 'no', license: p.license || '', license_source: p.license_source, text_match: p.detected ? `${p.detected.id || 'not identified'} (${p.detected.level}${p.detected.id ? ' ' + p.detected.confidence : ''})` : '', decision: p.decision, exception: p.exception ? `${p.exception.approved_by}${p.exception.expires ? ' until ' + p.exception.expires : ''}` : '', policy_section: p.policy_section || '', why: p.why, owner: '', status: '' })), ['name', 'version', 'dev', 'license', 'license_source', 'text_match', 'decision', 'exception', 'policy_section', 'why', 'owner', 'status']);
         const summary = { project: r.project, project_dir: a.project, policy: a.policy, policy_source: r.policy_source, policy_sha256: sha256(policyText), ecosystem: r.ecosystem, lockfile: r.lockfile, lockfile_sha256: r._lockText ? sha256(r._lockText) : null, check: r.check, counts: r.counts, as_of: r.as_of, created_at: new Date().toISOString(), note: 'Matches the policy as written. Not legal advice and not a clearance for distribution.' };
         const sText = JSON.stringify(summary, null, 2) + '\n';
@@ -67,7 +67,7 @@ export const manifest = defineManifest({
       description: 'Write THIRD-PARTY-NOTICES.md and attribution.csv into out_dir: every shipped dependency the policy lets through, except those whose licenses are all on the policy\'s attribution.not_required list, with its license, copyright lines and license text taken from installed license files (identical texts are printed once). Packages with no local license file get a [TO ADD] marker; denied packages are left out and listed. A draft for a person to review; not legal advice. The project is not changed.',
       inputSchema: { type: 'object', required: ['project', 'policy'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r, policy } = load(a, ctx); const n = notices(r, policy, tool); const out = ctx.outDir(a.out_dir || 'mythos-out/licenses');
+        const { r, policy } = load(a, ctx); const n = notices(r, policy, tool); const out = ctx.outDir(a.out_dir || 'fairbooks-out/licenses');
         const csv = toCsv(n.entries.map((e) => ({ name: e.name, version: e.version || '', license: e.license, decision: e.decision, copyright: e.copyright.join(' | '), license_text: e.missing_text ? 'TO ADD' : e.license_files.join('; '), notice_file: e.notice_file || '', reviewed_by: '' })), ['name', 'version', 'license', 'decision', 'copyright', 'license_text', 'notice_file', 'reviewed_by']);
         const files = [ctx.writeFile(out, 'THIRD-PARTY-NOTICES.md', n.text), ctx.writeFile(out, 'attribution.csv', csv)];
         return { summary: `Notices draft written: ${n.entries.length} package(s), ${n.license_texts} distinct license text(s), ${n.missing_texts} with no local license text ([TO ADD]), ${n.left_out.length} left out, ${n.needs_person.length} item(s) for a person. A draft to review; not legal advice.`, packages: n.entries.map(({ name, version, license, decision, missing_text, copyright }) => ({ name, version, license, decision, missing_text, copyright })), left_out: n.left_out, needs_person: n.needs_person, missing_texts: n.missing_texts, files, output_sha256: filesHash(files) };
@@ -89,7 +89,7 @@ export const manifest = defineManifest({
       description: 'For dependencies that need review or have an unknown license, write exceptions-proposed.json (stubs with [TO CONFIRM] reason and approver, 90-day expiry) and review-list.md into out_dir. Denied packages are listed to replace or remove, never as exceptions. Your policy and lockfile are not changed. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['project', 'policy'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
-        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/licenses');
+        const { r } = load(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/licenses');
         const exp = new Date(Date.parse(r.as_of) + 90 * 864e5).toISOString().slice(0, 10);
         const stubs = r.packages.filter((p) => p.decision === 'review' || p.decision === 'unknown').map((p) => ({ package: p.name, version: p.version, license: p.license, reason: '[TO CONFIRM why this is acceptable]', approved_by: '', expires: exp, found: p.why }));
         const denied = r.packages.filter((p) => p.decision === 'deny');
@@ -110,7 +110,7 @@ export const manifest = defineManifest({
         if (sha256(readFileSync(ctx.path(s.policy), 'utf8')) !== s.policy_sha256) throw new Error('the policy file changed after the check; run the check again');
         if (s.check === 'fail') throw new Error('the license check failed; fix or replace the denied dependencies first');
         if (s.check === 'pass_with_review' && !String(a.review_note || '').trim()) throw new Error('the check passed with review items; add review_note saying who reviewed them');
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/licenses'); const f = join(dir, 'release-requests.csv');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/licenses'); const f = join(dir, 'release-requests.csv');
         const row = toCsv([{ requested_at: new Date().toISOString(), project: `${s.project.name}@${s.project.version}`, check: s.check, check_summary_sha256: a.check_summary_sha256, review_note: a.review_note || '', status: 'approved - a person publishes' }], ['requested_at', 'project', 'check', 'check_summary_sha256', 'review_note', 'status']);
         appendFileSync(f, existsSync(f) ? row.split('\n').slice(1).join('\n') : row);
         return { summary: `Release of ${s.project.name}@${s.project.version} approved and recorded (${s.check}). Nothing was published.`, file: f };

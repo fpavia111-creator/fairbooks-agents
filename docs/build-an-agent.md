@@ -5,7 +5,7 @@ A Fairbooks agent owns one business process, runs on the buyer's machine, reads 
 ## 1. Scaffold
 
 ```bash
-npx -y -p fairbooks-core mythos-new-agent iris-of-tests --dir packages
+npx -y -p fairbooks-core fairbooks-new-agent iris-of-tests --dir packages
 ```
 
 Add `packages/iris-of-tests` to the root `workspaces`, run `npm install`, then `cd packages/iris-of-tests && npm test`. The scaffold passes `npm test`, `eval` and `npm pack --dry-run` as generated.
@@ -27,7 +27,7 @@ Keep domain logic pure in `src/<domain>.js` and do all file access through `ctx`
 
 ## 3. The draft → request → one click pattern
 
-1. A `write` tool drafts files into `mythos-out/<agent>/` and returns their sha256.
+1. A `write` tool drafts files into `fairbooks-out/<agent>/` and returns their sha256.
 2. An `action` tool in a one-click category re-hashes the draft, refuses if it changed or still holds `[TO CONFIRM]` markers, then returns `needs_approval`.
 3. A person approves (CLI, `approvals serve` page, or a signed webhook) and the same call runs once.
 
@@ -93,4 +93,4 @@ Give the host the MCP server only, not a shell in the same folder, so approvals 
 
 ## 6. Release checklist
 
-Run `npm run release:check` (or `release:check:offline`). It is a dry run: name and version on npm, package metadata and changelog section, git state, no `.npmrc`, secret scan of tracked and packed files, banned-claims scan of READMEs and manifests, one-click policy, tests, evals, the hostile-input run, and `npm pack --dry-run` contents. It writes `mythos-out/release-check/release-check.md` and prints the publish commands in order (core first) with a throwaway npm userconfig that reads `NPM_TOKEN` from the environment. It never publishes. Then: tests on Node 20, 22 and 24 and on Windows (the CI matrix), back up the website deploy folder and note the Pages deployment id, and publish yourself.
+Run `npm run release:check` (or `release:check:offline`). It is a dry run: name and version on npm, package metadata and changelog section, git state, no `.npmrc`, secret scan of tracked and packed files, banned-claims scan of READMEs and manifests, one-click policy, tests, evals, the hostile-input run, and `npm pack --dry-run` contents. It writes `fairbooks-out/release-check/release-check.md` and prints the publish commands in order (core first) with a throwaway npm userconfig that reads `NPM_TOKEN` from the environment. It never publishes. Then: tests on Node 20, 22 and 24 and on Windows (the CI matrix), back up the website deploy folder and note the Pages deployment id, and publish yourself.

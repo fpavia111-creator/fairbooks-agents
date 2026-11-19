@@ -113,7 +113,7 @@ test('Fairbooks Access Review: the recertification summary lists the learned fac
   await learnAndAccept(rt, 'privileged_role', { role: 'Controller' });
   const r = await rt.call('access_recert_sheet', { access: 'access.csv', as_of: '2026-11-14' });
   assert.equal(r.status, 'executed');
-  const md = readFileSync(join(dir, 'mythos-out/access/recertification-summary.md'), 'utf8');
+  const md = readFileSync(join(dir, 'fairbooks-out/access/recertification-summary.md'), 'utf8');
   assert.match(md, /## Learned facts used/);
   assert.match(md, /"Controller" is privileged \(accepted by Kim Ortiz \(fictional\)\)/);
 });

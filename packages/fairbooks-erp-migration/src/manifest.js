@@ -99,7 +99,7 @@ export const manifest = defineManifest({
     },
     {
       name: 'migration_readiness_report', kind: 'report', title: 'Write readiness report',
-      description: 'Write readiness-report.md, readiness-report.html, findings.json and exceptions.csv into an output folder (default mythos-out/migration), with a prioritised action list. Records the report hash in the audit log. Does not change any input file.',
+      description: 'Write readiness-report.md, readiness-report.html, findings.json and exceptions.csv into an output folder (default fairbooks-out/migration), with a prioritised action list. Records the report hash in the audit log. Does not change any input file.',
       inputSchema: { type: 'object', required: ['source', 'target'], properties: { source: str, target: str, key: str, amount_column: str, subsidiary_column: str, source_tb: str, target_tb: str, currency_column: str, fx_rates: fxRates, base_currency: base, tolerance, config, previous_findings: { ...str, description: 'findings.json from an earlier run, to show what changed' }, out_dir: str, title: str, language } },
       handler: async (a, ctx) => {
         const s = settings(a, ctx);
@@ -111,7 +111,7 @@ export const manifest = defineManifest({
         const findings = { generatedAt, rules: s.name, compare: cmp, trial_balance: tb, field_rules: fields, actions, ...(s.memory ? { learned_facts: s.memory } : {}) };
         const runs = a.previous_findings ? compareRuns(ctx.readJson(a.previous_findings), findings) : null;
         if (runs) findings.change_since_previous = runs;
-        const dir = ctx.outDir(a.out_dir || 'mythos-out/migration');
+        const dir = ctx.outDir(a.out_dir || 'fairbooks-out/migration');
         const lang = normLang(a.language || ctx.lang);
         const texts = {
           'readiness-report.md': reportMarkdown({ title: a.title, cmp, tb, fields, actions, runs, generatedAt, rulesName: s.name, memory: s.memory, memoryText, lang }),

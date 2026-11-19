@@ -47,10 +47,10 @@ test('pack needs a lock; sign-off and distribution are one-click and bound to th
   assert.match((await rt.call('board_assemble_pack', pack)).reason, /lock the figures first/);
   assert.equal((await rt.call('board_lock_figures', { figures: 'figures.csv' })).status, 'executed');
   const p1 = await rt.call('board_assemble_pack', pack); assert.equal(p1.status, 'executed'); assert.equal(p1.result.claims_issues, 3);
-  const mf = 'mythos-out/board/pack-manifest.json'; const sha = () => JSON.parse(readFileSync(join(root, mf), 'utf8')).pack_sha256;
+  const mf = 'fairbooks-out/board/pack-manifest.json'; const sha = () => JSON.parse(readFileSync(join(root, mf), 'utf8')).pack_sha256;
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['board_record_signoff'] }), /one-click/);
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: ['board_request_distribution'] }), /one-click/);
-  const approve = async (tool, args) => { const a = await rt.call(tool, args); assert.equal(a.status, 'needs_approval'); new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Riley'); return rt.call(tool, args); };
+  const approve = async (tool, args) => { const a = await rt.call(tool, args); assert.equal(a.status, 'needs_approval'); new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Riley'); return rt.call(tool, args); };
   const s1 = await approve('board_record_signoff', { pack_manifest: mf, pack_sha256: sha(), controller: 'Riley' });
   assert.equal(s1.status, 'error'); assert.match(s1.reason, /3 claims issue/);
   const d0 = await approve('board_request_distribution', { pack_manifest: mf, pack_sha256: sha(), recipients: ['b@example.org'] });
@@ -62,9 +62,9 @@ test('pack needs a lock; sign-off and distribution are one-click and bound to th
   writeFileSync(join(root, 'figures.csv'), readFileSync(join(fixtures, 'figures.csv'), 'utf8'));
   const d1 = await approve('board_request_distribution', { pack_manifest: mf, pack_sha256: sha(), recipients: ['board@example.org'] }); // new args: a used approval id is never reusable
   assert.equal(d1.status, 'executed'); assert.equal(parseCsv(readFileSync(d1.result.file, 'utf8'))[0].signed_by, 'Riley');
-  writeFileSync(join(root, 'mythos-out/board/board-pack.md'), 'tampered');
+  writeFileSync(join(root, 'fairbooks-out/board/board-pack.md'), 'tampered');
   const d2 = await approve('board_request_distribution', { pack_manifest: mf, pack_sha256: sha(), recipients: ['c@example.org'] });
   assert.match(d2.reason, /does not match the current pack/);
   for (const t of ['board_portal_upload', 'send_email']) assert.equal((await rt.call(t, {})).status, 'blocked');
-  assert.ok(existsSync(join(root, 'mythos-out/board/citations.csv')));
+  assert.ok(existsSync(join(root, 'fairbooks-out/board/citations.csv')));
 });

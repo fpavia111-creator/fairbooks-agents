@@ -44,12 +44,12 @@ test('staging a reimbursement from a company card export is refused', async () =
   assert.equal(r.status, 'error'); assert.match(r.reason, /company card export .*nothing to reimburse/);
 });
 
-test('Expensify default CSV: non-reimbursable lines skipped; employee and report set per file in mythos-sources.json', async () => {
+test('Expensify default CSV: non-reimbursable lines skipped; employee and report set per file in fairbooks-sources.json', async () => {
   const bare = await review('exports/expensify-default.csv');
   assert.equal(bare.sources[0].profile, 'expensify_default_csv'); assert.equal(bare.sources[0].rows, 2); assert.equal(bare.sources[0].skipped_rows, 1);
   assert.equal(bare.result.items[0].date, '2026-10-12'); assert.equal(line(bare, 'Lakeside Grill').category, 'meals'); assert.equal(bare.result.report_summaries[0].employee, '');
   const root = mkdtempSync(join(tmpdir(), 'prax-src-')); cpSync(fixtures, root, { recursive: true });
-  writeFileSync(join(root, 'mythos-sources.json'), JSON.stringify({ files: { 'exports/expensify-default.csv': { set: { employee: 'Ben Cho', report_id: 'R-300', submitted_on: '2026-10-20' } } } }));
+  writeFileSync(join(root, 'fairbooks-sources.json'), JSON.stringify({ files: { 'exports/expensify-default.csv': { set: { employee: 'Ben Cho', report_id: 'R-300', submitted_on: '2026-10-20' } } } }));
   const r = await review('exports/expensify-default.csv', POLICY, root);
   assert.deepEqual(r.result.report_summaries.map((x) => [x.report_id, x.employee]), [['R-300', 'Ben Cho']]);
 });

@@ -38,7 +38,7 @@ Table inputs can be CSV, TSV, semicolon- or pipe-separated text, Excel `.xlsx`, 
 | Shopify | Orders > Export (CSV) | no |
 | Stripe | Payments > Export (CSV) | no |
 
-Columns named differently? Run `npx fairbooks-refunds-and-chargebacks inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `mythos-sources.json` in the root:
+Columns named differently? Run `npx fairbooks-refunds-and-chargebacks inspect <file>` to see how a file is read (column names and shapes only, never values), then name your columns in `fairbooks-sources.json` in the root:
 
 ```json
 { "files": { "exports/users.csv": { "columns": { "email": "Work E-mail" }, "date_order": "dmy" } } }
@@ -80,14 +80,14 @@ claude mcp add fairbooks-refunds-and-chargebacks -- npx -y fairbooks-refunds-and
 |---|---|---|
 | `refunds_triage` | **allow** | Triage every request against the policy |
 | `refunds_explain` | **allow** | Explain one request's flags |
-| `refunds_write_queue` | **allow** | Write `refund-queue.csv` (now with `dispute_category`) + dispute evidence drafts to `mythos-out/refunds` |
+| `refunds_write_queue` | **allow** | Write `refund-queue.csv` (now with `dispute_category`) + dispute evidence drafts to `fairbooks-out/refunds` |
 | `refunds_reason_code` | **allow** | Look up a reason code or reason text: category, label and evidence checklist |
 | `refunds_evidence_pack` | **allow** | Per-dispute HTML evidence packs with row citations, `evidence-index.json`, `dispute-deadlines.ics` |
 | `refunds_request_refund` | **ask · one-click** | After a named human approves, record a refund for a person to issue |
 | `payments_issue_refund` | **block** | Listed so agents see the refusal. Fairbooks Refunds and Chargebacks never moves money. |
 | `payments_submit_dispute` | **block** | Listed so agents see the refusal. A person submits evidence. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### Policy file
 
@@ -115,7 +115,7 @@ fairbooks-refunds-and-chargebacks call refunds_triage '{"requests":"requests.csv
 fairbooks-refunds-and-chargebacks eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

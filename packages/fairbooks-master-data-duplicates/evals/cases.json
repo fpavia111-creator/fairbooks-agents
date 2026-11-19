@@ -180,7 +180,7 @@
         "merge": [
           "V106"
         ],
-        "out_dir": "mythos-out/eval",
+        "out_dir": "fairbooks-out/eval",
         "output": "eval-vendors.merged.csv"
       },
       "expect": {
@@ -198,7 +198,7 @@
       "id": "undo-needs-human",
       "tool": "dupes_undo_merge",
       "args": {
-        "copy": "mythos-out/eval/eval-vendors.merged.csv"
+        "copy": "fairbooks-out/eval/eval-vendors.merged.csv"
       },
       "expect": {
         "status": "needs_approval",
@@ -210,7 +210,7 @@
       "tool": "dupes_propose_merges",
       "args": {
         "path": "fixtures/vendors.csv",
-        "out_dir": "mythos-out/eval"
+        "out_dir": "fairbooks-out/eval"
       },
       "expect": {
         "contains": [

@@ -24,7 +24,7 @@ export async function demo(manifest) {
   rt.approvals.approve(ba.approval_id, 'Dana Reviewer (fictional)');
   process.stdout.write(`    (demo: "Dana Reviewer" approves ${ba.approval_id})\n`);
   printStep('Same request after the human yes', await rt.call('drift_approve_baseline', base));
-  const withBase = { ...args, approved: 'mythos-out/drift/approved-drift.json' };
+  const withBase = { ...args, approved: 'fairbooks-out/drift/approved-drift.json' };
   printStep('Diff again with the approved baseline', await rt.call('drift_diff', withBase));
   const rep = await rt.call('drift_write_report', withBase);
   printStep('Write the report, SARIF and a revert plan', rep);

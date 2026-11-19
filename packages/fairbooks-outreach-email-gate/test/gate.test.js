@@ -52,7 +52,7 @@ test('send stays blocked and release stays one-click even in Auto', async () => 
   const args = { drafts: 'drafts.csv', config: 'outreach.json', suppression: 'suppression.csv' };
   const a = await rt.call('outreach_release_batch', args);
   assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
   const b = await rt.call('outreach_release_batch', args);
   assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Dana');
   assert.match(JSON.stringify(b.result), /sent nothing|Nothing was sent/i);

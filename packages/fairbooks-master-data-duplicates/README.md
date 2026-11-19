@@ -69,13 +69,13 @@ claude mcp add fairbooks-master-data-duplicates -- npx -y fairbooks-master-data-
 | Tool | Policy | What it does |
 |---|---|---|
 | `dupes_find_duplicates` | **allow** | Cluster duplicates with reasons |
-| `dupes_propose_merges` | **allow** | Write `merge-proposals.csv/json/html` to `mythos-out/dupes` |
+| `dupes_propose_merges` | **allow** | Write `merge-proposals.csv/json/html` to `fairbooks-out/dupes` |
 | `dupes_merge_preview` | **allow** | Field-level winners, rules and conflicts for one merge; writes nothing |
 | `dupes_apply_merge` | **ask (Auto-eligible)** | Apply one merge to the copy and append to the undo log |
 | `dupes_undo_merge` | **ask (Auto-eligible)** | Reverse the last merge on the copy, byte-for-byte |
 | `dupes_pay_vendor` | **block** | Listed so agents see the refusal. Fairbooks Master Data Duplicates never moves money. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ## MCP prompt
 
@@ -99,7 +99,7 @@ fairbooks-master-data-duplicates call dupes_find_duplicates '{"path":"vendors.cs
 fairbooks-master-data-duplicates eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

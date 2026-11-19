@@ -50,17 +50,17 @@ export const manifest = defineManifest({
     },
     {
       name: 'counts_write_report', kind: 'report',
-      description: 'Write variance-review.md, variances.csv (blank reviewer and decision columns) and recount-sheet.csv (a blind sheet, no system quantities, for lines that need a recount or investigation) into out_dir (default mythos-out/counts).',
+      description: 'Write variance-review.md, variances.csv (blank reviewer and decision columns) and recount-sheet.csv (a blind sheet, no system quantities, for lines that need a recount or investigation) into out_dir (default fairbooks-out/counts).',
       inputSchema: { type: 'object', required: ['counts', 'on_hand'], properties: { ...props, out_dir: str } },
-      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/counts'); const rc = recountCsv(r); const n = rc.trim().split('\n').length - 1; return { summary: `Variance review written for ${r.lines} line(s), with a blind recount sheet for ${n} line(s).`, files: [ctx.writeFile(out, 'variance-review.md', reportMarkdown(r)), ctx.writeFile(out, 'variances.csv', varianceCsv(r)), ctx.writeFile(out, 'recount-sheet.csv', rc)] }; },
+      handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/counts'); const rc = recountCsv(r); const n = rc.trim().split('\n').length - 1; return { summary: `Variance review written for ${r.lines} line(s), with a blind recount sheet for ${n} line(s).`, files: [ctx.writeFile(out, 'variance-review.md', reportMarkdown(r)), ctx.writeFile(out, 'variances.csv', varianceCsv(r)), ctx.writeFile(out, 'recount-sheet.csv', rc)] }; },
     },
     {
       name: 'counts_count_plan', kind: 'report', title: 'Plan ABC cycle counts',
-      description: 'Rank items A/B/C by value (annual usage × cost when the export has annual_usage, otherwise on-hand value) and schedule counts over the period so A items are counted most often. Writes abc-classes.csv, count-plan.csv (blind count sheets with blank counter and quantity columns) and count-plan.ics (one all-day event per count day) into out_dir (default mythos-out/counts/plan).',
+      description: 'Rank items A/B/C by value (annual usage × cost when the export has annual_usage, otherwise on-hand value) and schedule counts over the period so A items are counted most often. Writes abc-classes.csv, count-plan.csv (blind count sheets with blank counter and quantity columns) and count-plan.ics (one all-day event per count day) into out_dir (default fairbooks-out/counts/plan).',
       inputSchema: { type: 'object', required: ['on_hand', 'count_policy'], properties: { on_hand: props.on_hand, count_policy: countPolicyProp, out_dir: str } },
       handler: async (a, ctx) => {
         const policy = readCfg(ctx, a.count_policy, 'count_policy'); const onHand = ctx.records(a.on_hand);
-        const p = countPlan(onHand, policy); const out = ctx.outDir(a.out_dir || 'mythos-out/counts/plan');
+        const p = countPlan(onHand, policy); const out = ctx.outDir(a.out_dir || 'fairbooks-out/counts/plan');
         const files = [ctx.writeFile(out, 'abc-classes.csv', abcCsv(p)), ctx.writeFile(out, 'count-plan.csv', planCsv(p, onHand)), ctx.writeFile(out, 'count-plan.ics', planIcs(p))];
         return { summary: `${p.items} item(s): ${p.classes.map((c) => `${c.class} ${c.items} × ${c.counts_per_item}`).join(', ')} counts over ${p.weeks} week(s) = ${p.count_lines} count line(s) on ${p.per_day.length} day(s), at most ${p.max_lines_per_day} a day.`, ...p, files };
       },
@@ -89,7 +89,7 @@ export const manifest = defineManifest({
       description: 'Write adjustments-draft.csv (marked draft, not posted) for lines within tolerance or confirmed by recount, plus adjustment.json with its hash. Lines that need a recount or investigation are left out. Pass reasons ({"SKU@LOCATION": "code"}, or "SKU@LOCATION#LOT" for lot lines) from the person who reviewed them; Fairbooks Cycle Counts does not choose reason codes. Needs a human yes unless opted in to Auto.',
       inputSchema: { type: 'object', required: ['counts', 'on_hand'], properties: { ...props, reasons: { type: 'object', additionalProperties: str, description: 'Reason codes by "SKU@LOCATION" (or "SKU@LOCATION#LOT"), supplied by a person' }, out_dir: str } },
       handler: async (a, ctx) => {
-        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'mythos-out/counts'); const reasons = a.reasons || {};
+        const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/counts'); const reasons = a.reasons || {};
         const rows = adjustmentRows(r).map((x) => ({ ...x, reason_code: String(reasons[lineId(x)] || '').trim() }));
         const csv = toCsv(rows, ADJ_COLUMNS); const cf = ctx.writeFile(out, 'adjustments-draft.csv', csv);
         const value = Math.round(rows.reduce((t, x) => t + (Number(x.value) || 0), 0) * 100) / 100;
@@ -110,7 +110,7 @@ export const manifest = defineManifest({
         if (!b.lines) throw new Error('the draft has no adjustment lines');
         if (b.missing_reason.length) throw new Error(`reason code missing for ${b.missing_reason.join(', ')}; redraft with reasons from the reviewer`);
         const at = new Date().toISOString(); const rows = parseCsv(readFileSync(cf, 'utf8'));
-        const file = appendRows(ctx.outDir(a.out_dir || 'mythos-out/counts'), 'post-requests.csv', rows.map((x) => ({ approved_at: at, batch_sha256: a.batch_sha256, sku: x.sku, location: x.location, lot: x.lot || '', adjust_qty: x.adjust_qty, value: x.value, reason_code: x.reason_code, status: 'approved - a person posts it' })), ['approved_at', 'batch_sha256', 'sku', 'location', 'lot', 'adjust_qty', 'value', 'reason_code', 'status']);
+        const file = appendRows(ctx.outDir(a.out_dir || 'fairbooks-out/counts'), 'post-requests.csv', rows.map((x) => ({ approved_at: at, batch_sha256: a.batch_sha256, sku: x.sku, location: x.location, lot: x.lot || '', adjust_qty: x.adjust_qty, value: x.value, reason_code: x.reason_code, status: 'approved - a person posts it' })), ['approved_at', 'batch_sha256', 'sku', 'location', 'lot', 'adjust_qty', 'value', 'reason_code', 'status']);
         return { summary: `Adjustment of ${b.lines} line(s) (net ${Number(b.net_value).toFixed(2)}) approved and recorded. Nothing was posted.`, file };
       },
     },

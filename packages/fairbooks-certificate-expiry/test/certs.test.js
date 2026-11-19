@@ -12,7 +12,7 @@ async function oneClick(tool, args, root) {
   assert.throws(() => new AgentRuntime(manifest, { audit: false, mode: 'auto', autoActions: [tool] }), /one-click/);
   const rt = new AgentRuntime(manifest, { root, mode: 'auto' });
   const a = await rt.call(tool, args); assert.equal(a.status, 'needs_approval');
-  new ApprovalStore(join(root, '.mythos')).approve(a.approval_id, 'Dana');
+  new ApprovalStore(join(root, '.fairbooks')).approve(a.approval_id, 'Dana');
   const b = await rt.call(tool, args); assert.equal(b.status, 'executed'); assert.equal(b.approved_by, 'Dana');
   assert.equal((await rt.call(tool, args)).status, 'needs_approval', 'approval is single-use');
   return b;
@@ -57,7 +57,7 @@ test('chase drafts on Auto; renewal, production change and send are one-click; b
   const d = await rt.call('certs_draft_chase', f); assert.equal(d.status, 'executed'); assert.equal(d.result.files.length, 2);
   const text = readFileSync(d.result.files.find((x) => x.includes('bright')), 'utf8');
   assert.match(text, /^DRAFT — not sent/); assert.match(text, /below the required 1,000,000/); assert.match(text, /not insurance or legal advice/);
-  const s = await oneClick('certs_request_chase_send', { vendor: 'Bright Electric', draft: 'mythos-out/certs/chase-drafts/bright-electric-fictional.md', to: 'office@bright.example' }, root);
+  const s = await oneClick('certs_request_chase_send', { vendor: 'Bright Electric', draft: 'fairbooks-out/certs/chase-drafts/bright-electric-fictional.md', to: 'office@bright.example' }, root);
   assert.match(readFileSync(s.result.file, 'utf8'), /approved - a person sends it/);
   const r = await oneClick('certs_request_renewal', { id: 'DOM-1', cost: 24.99, reason: 'expiring' }, root);
   assert.equal(parseCsv(readFileSync(r.result.file, 'utf8'))[0].cost, '24.99');

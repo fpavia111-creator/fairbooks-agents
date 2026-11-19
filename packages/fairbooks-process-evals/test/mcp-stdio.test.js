@@ -40,7 +40,7 @@ test('stdio MCP smoke test: initialize, list tools, call one', async () => {
     s.notify('notifications/initialized');
     const list = await s.request('tools/list', {});
     const names = list.result.tools.map((t) => t.name);
-    assert.ok(names.includes('mythos_info'));
+    assert.ok(names.includes('fairbooks_info'));
     assert.ok(names.includes('evals_grade'));
     for (const t of list.result.tools) assert.equal(t.inputSchema.type, 'object');
     const call = await s.request('tools/call', { name: 'evals_grade', arguments: { suite: "suite.json", responses: "candidate.jsonl" } });

@@ -147,9 +147,9 @@ test('tools: notices, diff and report through the runtime, with output hashes in
   const w = await rt.call('licenses_write_report', f); assert.match(w.result.output_sha256, /^[0-9a-f]{64}$/);
   const ics = w.result.files.find((x) => x.endsWith('exceptions.ics')); const v = validateIcs(readFileSync(ics, 'utf8')); assert.ok(v.ok, v.errors.join('; ')); assert.equal(v.events, 2);
   const csv = parseCsv(readFileSync(w.result.files[1], 'utf8')); assert.equal(csv.find((x) => x.name === 'hashy').text_match, 'BSD-3-Clause (high 1)');
-  const lines = readFileSync(join(root, '.mythos/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+  const lines = readFileSync(join(root, '.fairbooks/audit.jsonl'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
   assert.equal(lines[0].output_sha256, n.result.output_sha256); assert.equal(lines[1].output_sha256, w.result.output_sha256);
-  assert.equal((await new AgentRuntime(manifest, { root, audit: false }).call('licenses_write_report', { ...f, out_dir: 'mythos-out/again' })).result.output_sha256, w.result.output_sha256, 'same inputs, same output hash');
+  assert.equal((await new AgentRuntime(manifest, { root, audit: false }).call('licenses_write_report', { ...f, out_dir: 'fairbooks-out/again' })).result.output_sha256, w.result.output_sha256, 'same inputs, same output hash');
   const c = await rt.call('licenses_check', f); assert.ok(!JSON.stringify(c).includes(root), 'no absolute paths in results'); assert.equal(c.result.packages[0]._dir, undefined);
   const d = await rt.call('licenses_diff_sbom', { baseline: 'baseline/sbom.cdx.json', project: 'project', policy: 'license-policy.json', as_of });
   assert.equal(d.status, 'executed'); assert.match(d.result.summary, /5 change\(s\) since the baseline: 1 added, 1 removed, 2 version change\(s\), 1 license change\(s\); 2 need a look/); assert.match(d.result.markdown, /Not legal advice/);
@@ -158,7 +158,7 @@ test('tools: notices, diff and report through the runtime, with output hashes in
 });
 
 test('release request re-hashes a non-npm lockfile', async () => {
-  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root }); const store = new ApprovalStore(join(root, '.mythos'));
+  const root = tmpRoot(); const rt = new AgentRuntime(manifest, { root }); const store = new ApprovalStore(join(root, '.fairbooks'));
   const lockFile = join(root, 'project-go/vendor/modules.txt');
   const mod = readFileSync(lockFile, 'utf8').split('\n').filter((l) => !/gpl-widget|expired-ex/.test(l)).join('\n').replace(/## explicit; go 1\.20\n(?=## explicit)/g, ''); writeFileSync(lockFile, mod);
   const w = await rt.call('licenses_write_report', { project: 'project-go', policy: 'license-policy-go.json', as_of }); assert.equal(w.result.check, 'pass_with_review');

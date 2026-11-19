@@ -75,7 +75,7 @@
    "args": {
     "vendors": "fixtures/vendors.csv",
     "as_of": "2026-11-14",
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",
@@ -157,7 +157,7 @@
     "vendors": "fixtures/vendors-merged.csv",
     "payments": "fixtures/payments-merged.csv",
     "as_of": "2026-11-14",
-    "out_dir": "mythos-out/eval"
+    "out_dir": "fairbooks-out/eval"
    },
    "expect": {
     "status": "executed",

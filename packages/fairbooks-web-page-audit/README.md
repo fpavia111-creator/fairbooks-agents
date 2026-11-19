@@ -47,13 +47,13 @@ claude mcp add fairbooks-web-page-audit -- npx -y fairbooks-web-page-audit@0.2.0
 | Tool | Policy | What it does |
 |---|---|---|
 | `pages_audit` | **allow** | Issues per page with severity, line, selector and WCAG mapping; sitemap/robots; prioritised actions; external links listed |
-| `pages_write_report` | **allow** | Write `page-audit.md`, `page-audit.html` and `fix-list.csv` to `mythos-out/pages` |
-| `pages_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `mythos-out/pages/proposed`, `fixes.diff`, `changes.md` and `proposal.json` (your files untouched) |
+| `pages_write_report` | **allow** | Write `page-audit.md`, `page-audit.html` and `fix-list.csv` to `fairbooks-out/pages` |
+| `pages_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `fairbooks-out/pages/proposed`, `fixes.diff`, `changes.md` and `proposal.json` (your files untouched) |
 | `pages_request_publish` | **ask · one-click** | After a named human approves, record the proposal (bound to its hash) for whoever publishes |
 | `deploy_site` | **block** | Listed so agents see the refusal. Fairbooks Web Page Audit never deploys. |
 | `http_fetch` | **block** | Listed so agents see the refusal. Fairbooks Web Page Audit makes no network calls. |
 
-Any other tool name is blocked. `mythos_info` shows the pinned model, mode, caps and every decision.
+Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
 ### Config file and MCP prompt
 
@@ -79,7 +79,7 @@ fairbooks-web-page-audit call pages_audit '{"site":"site","base_url":"https://ww
 fairbooks-web-page-audit eval          # private evals on the bundled fixtures
 ```
 
-Every call is written to `.mythos/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core mythos-verify-log .mythos/audit.jsonl`.
+Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments stored as a hash). Read it with [`fairbooks-audit-evidence`](https://www.npmjs.com/package/fairbooks-audit-evidence) or `npx -y -p fairbooks-core fairbooks-verify-log .fairbooks/audit.jsonl`.
 
 ## What it is not
 

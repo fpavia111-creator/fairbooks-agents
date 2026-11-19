@@ -89,7 +89,7 @@ test('evidence pack is deterministic and its hash is written to the audit line',
   const json = JSON.parse(readFileSync(out.result.files[0], 'utf8'));
   assert.equal(json.sheet.sha256, rt.context().hashFile('recertification-filled.csv'));
   assert.match(json.note, /does not prove/);
-  const line = readAudit(join(root, '.mythos', 'audit.jsonl')).find((e) => e.tool === 'access_evidence_pack');
+  const line = readAudit(join(root, '.fairbooks', 'audit.jsonl')).find((e) => e.tool === 'access_evidence_pack');
   assert.equal(line.output_sha256, out.result.output_sha256);
 });
 
