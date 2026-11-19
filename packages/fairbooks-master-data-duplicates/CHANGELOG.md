@@ -2,6 +2,11 @@
 
 Renamed from `augeas-of-masters` on 18 Nov 2026 (tool names were `augeas_*`, now `dupes_*`).
 
+
+## Final pass (19 Nov 2026, still 0.2.0, not published)
+
+- `dupes_merge_preview` shows tax ids and bank or account numbers to the model by their last four characters only; the merged copy and the undo log keep the real values.
+
 ## 0.2.0 — 2026-11-15
 
 Fixed (handoff ver 6)

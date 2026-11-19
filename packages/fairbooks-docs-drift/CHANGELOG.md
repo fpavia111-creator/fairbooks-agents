@@ -2,6 +2,11 @@
 
 Renamed from `echo-of-docs` on 18 Nov 2026 (tool names were `echo_*`, now `docsdrift_*`).
 
+
+## Final pass (19 Nov 2026, still 0.2.0, not published)
+
+- A tool list from a 0.2.0 npm pack (with `mythos_info`) and from this version (with `fairbooks_info`) are both read without counting the info tool as undocumented.
+
 ## 0.2.0
 
 - **OpenAPI drift**: pass `openapi` (an OpenAPI 3.x or Swagger 2.0 spec as JSON). Endpoints in the docs (`GET /notes/{id}`, `curl -X DELETE https://…/notes/1`) that the spec does not have, a different HTTP method than the spec, spec operations no doc mentions, and deprecated operations documented without saying so. The server base path is stripped and templated paths match concrete ones.

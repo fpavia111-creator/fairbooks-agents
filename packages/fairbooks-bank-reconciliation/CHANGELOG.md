@@ -2,6 +2,12 @@
 
 Renamed from `penelope-of-recon` on 18 Nov 2026 (tool names were `penelope_*`, now `recon_*`).
 
+
+## Final pass (19 Nov 2026, still 0.2.0, not published)
+
+- BAI2: a file with several days for one account uses the first day's opening balance and the last day's closing balance (it took the last day's opening before). Found on SVB's published layout.
+- camt.053: when opening + lines does not equal the closing balance and the difference is exactly the lines value-dated after the closing balance date, `recon_read_statement` says so. Found on PostFinance's published samples.
+
 ## 0.2.0 (2026-11-15)
 
 Added (handoff ver 6)

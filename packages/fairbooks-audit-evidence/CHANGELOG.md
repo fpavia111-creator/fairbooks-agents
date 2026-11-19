@@ -2,6 +2,11 @@
 
 Renamed from `eirene-of-controls` on 18 Nov 2026 (tool names were `eirene_*`, now `evidence_*`).
 
+
+## Final pass (19 Nov 2026, still 0.2.0, not published)
+
+- Logs written by fairbooks-core are labelled `fairbooks` (was `mythos`); the sample log is `fixtures/fairbooks-audit.jsonl` (was `olympus-audit.jsonl`).
+
 ## 0.2.0 — 2026-11-15
 
 Requires `fairbooks-core` ^0.2.0.

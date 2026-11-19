@@ -93,6 +93,7 @@ Los archivos de sistemas de España y de Latinoamérica se leen tal como salen: 
 - No son integraciones en vivo: leen archivos exportados y nunca inician sesión en sus sistemas.
 - No son asesoramiento legal, fiscal, contable ni de auditoría, ni certifican nada.
 - No son totalmente autónomos: los pasos de arriba esperan a una persona, siempre.
+- No es un filtro de privacidad: lo que devuelve una herramienta va al modelo de IA de su asistente, incluidos nombres y correos de sus archivos. Solo se enmascaran los identificadores fiscales (Vendor Tax Forms y la vista previa de fusión de Master Data Duplicates), los secretos y el titular en Data Erasure Requests. Para datos de personal, clientes y proveedores, use un modelo cubierto por sus propios contratos o un modelo local.
 - No afirman nada sobre las leyes, las normas fiscales ni los formatos de declaración de ningún país.
 
 ## Desarrollo

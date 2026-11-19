@@ -93,6 +93,7 @@ Les fichiers des systèmes français se lisent tels quels : noms de colonnes en 
 - Pas des intégrations en direct : ils lisent des fichiers exportés et ne se connectent jamais à vos systèmes.
 - Pas un conseil juridique, fiscal, comptable ou d'audit, ni une certification de quoi que ce soit.
 - Pas entièrement autonomes : les étapes ci-dessus attendent une personne, à chaque fois.
+- Pas un filtre de confidentialité : ce qu’un outil renvoie va au modèle d’IA de votre assistant, y compris les noms et adresses e-mail de vos fichiers. Seuls les identifiants fiscaux (Vendor Tax Forms, et l’aperçu de fusion de Master Data Duplicates), les secrets et la personne concernée dans Data Erasure Requests sont masqués. Pour les données du personnel, des clients et des fournisseurs, utilisez un modèle couvert par vos propres contrats ou un modèle local.
 - Aucune affirmation sur les lois, règles fiscales ou formats de déclaration d'un pays.
 
 ## Développer

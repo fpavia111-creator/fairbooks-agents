@@ -93,6 +93,7 @@ I file dei sistemi italiani si leggono così come escono: nomi di colonna in ita
 - Non sono integrazioni in tempo reale: leggono file esportati e non accedono mai ai vostri sistemi.
 - Non sono consulenza legale, fiscale, contabile o di revisione, né certificano alcunché.
 - Non sono del tutto autonomi: i passaggi sopra aspettano una persona, ogni volta.
+- Non è un filtro per la privacy: ciò che uno strumento restituisce va al modello di IA del vostro assistente, compresi nomi e indirizzi e-mail dei vostri file. Sono mascherati solo i codici fiscali (Vendor Tax Forms e l’anteprima di unione di Master Data Duplicates), i segreti e l’interessato in Data Erasure Requests. Per dati di personale, clienti e fornitori usate un modello coperto dai vostri contratti o un modello locale.
 - Nessuna affermazione su leggi, norme fiscali o formati di dichiarazione di alcun paese.
 
 ## Sviluppo

@@ -93,6 +93,7 @@ Files from the largest software markets read as they come out of local systems: 
 - Not live integrations: they read exported files and never log in to your systems.
 - Not legal, tax, accounting or audit advice, and not a certification of anything.
 - Not fully autonomous: the steps above wait for a person, every time.
+- Not a privacy filter: what a tool returns goes to whatever AI model your assistant uses, including names and e-mail addresses from your files. Only tax ids (Vendor Tax Forms, and the merge preview in Master Data Duplicates), secrets and the data subject in Data Erasure Requests are masked. For staff, customer and vendor data, use a model covered by your own agreements or a local model.
 - No claim about any country's laws, tax rules or filing formats.
 
 ## Develop
@@ -103,6 +104,11 @@ npm test                # node --test in every package
 npm run hostile         # plant hostile values in every agent's fixtures, run every eval case, inspect the output
 npm run release:check   # pre-publish dry run (never publishes)
 npm run bench           # every read and report tool on generated 1,000- and 10,000-row files
+npm run evals           # every agent's eval cases
+npm run intl            # the eval cases again on German, French, Spanish, Brazilian, Italian, Japanese, Chinese and Korean exports
+npm run accuracy        # planted problems, a clean set and one-edit mutations for the engagement agents
+npm run model-view      # what reaches the AI model, per agent
+npm run realdata -- --download   # public bank files and SEC data (needs the network once)
 node scripts/sources-doc.mjs   # regenerate the "Exports it reads" README sections
 ```
 

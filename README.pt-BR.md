@@ -93,6 +93,7 @@ Os arquivos de sistemas brasileiros são lidos do jeito que saem: nomes de colun
 - Não são integrações ao vivo: leem arquivos exportados e nunca entram nos seus sistemas.
 - Não são aconselhamento jurídico, tributário, contábil ou de auditoria, nem certificam nada.
 - Não são totalmente autônomos: os passos acima esperam uma pessoa, sempre.
+- Não é um filtro de privacidade: o que uma ferramenta devolve vai para o modelo de IA do seu assistente, inclusive nomes e e-mails dos seus arquivos. Só são mascarados identificadores fiscais (Vendor Tax Forms e a prévia de mesclagem do Master Data Duplicates), segredos e o titular em Data Erasure Requests. Para dados de funcionários, clientes e fornecedores, use um modelo coberto pelos seus próprios contratos ou um modelo local.
 - Não afirmam nada sobre leis, regras tributárias ou formatos de declaração de nenhum país.
 
 ## Desenvolvimento

@@ -93,6 +93,7 @@ Dateien aus den größten Softwaremärkten werden so gelesen, wie lokale Systeme
 - Keine Live-Integrationen: Sie lesen exportierte Dateien und melden sich nie bei Ihren Systemen an.
 - Keine Rechts-, Steuer-, Buchhaltungs- oder Prüfungsberatung und keine Zertifizierung.
 - Nicht vollautonom: Die oben genannten Schritte warten immer auf eine Person.
+- Kein Datenschutzfilter: Was ein Werkzeug zurückgibt, geht an das KI-Modell Ihres Assistenten, auch Namen und E-Mail-Adressen aus Ihren Dateien. Maskiert werden nur Steuernummern (Vendor Tax Forms und die Merge-Vorschau in Master Data Duplicates), Geheimnisse und die betroffene Person in Data Erasure Requests. Für Daten von Mitarbeitenden, Kunden und Lieferanten nutzen Sie ein Modell, das Ihre eigenen Verträge abdecken, oder ein lokales Modell.
 - Keine Aussage über Gesetze, Steuerregeln oder Meldeformate eines Landes.
 
 ## Entwickeln

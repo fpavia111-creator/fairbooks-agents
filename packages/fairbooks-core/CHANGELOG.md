@@ -1,5 +1,13 @@
 # Changelog
 
+
+## Final pass (19 Nov 2026, still 0.2.0, not published)
+
+- Names the 18 Nov rename left: the info tools are `fairbooks_info` and `fairbooks_inspect_input` (were `mythos_*`), state is in `.fairbooks/`, output in `fairbooks-out/`, column names in `fairbooks-sources.json`, the commands are `fairbooks-approve`, `fairbooks-verify-log`, `fairbooks-new-agent` and `fairbooks-license`, the environment variables `FAIRBOOKS_*`, the webhook header `x-fairbooks-signature` and licence keys start `FAIRBOOKS1`.
+- A short GBK header that is valid UTF-8 by accident is read as GBK (状态 is the bytes D7 B4 CC AC). Found by the eight-language check, where a Chinese RFI log lost its status column; the same fix the Fairtable core got on 18 Nov.
+- A number column that cannot tell its decimal mark on its own ("1.024", "420") follows the rest of the file, and "1.024" in a decimal-comma column is read as 1024. Found by the eight-language check (a German key size).
+- No "Talos-style" wording; the policy is described as allow/ask/block.
+
 ## 0.2.0 (2026-11-16)
 
 Added (other markets and languages, handoff ver 6)
