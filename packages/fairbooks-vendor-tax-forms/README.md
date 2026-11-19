@@ -15,7 +15,7 @@ Give Fairbooks Vendor Tax Forms a vendor export (`vendor_id, name, legal_name, e
 - a priority (high if over the threshold and not ready) and whether a first request or a reminder is due (`remind_days`, default 7).
 
 It also:
-- writes a **1099 readiness summary** (`auxo_1099_readiness`): US vendors at or over the threshold and what each still lacks, non-US vendors over the threshold with their W-8 state, payees paid only by card or app, and payments with no vendor record. `1099-readiness.md` and `.csv`, TINs masked, output hash in the audit line. It is not a filing;
+- writes a **1099 readiness summary** (`taxforms_1099_readiness`): US vendors at or over the threshold and what each still lacks, non-US vendors over the threshold with their W-8 state, payees paid only by card or app, and payments with no vendor record. `1099-readiness.md` and `.csv`, TINs masked, output hash in the audit line. It is not a filing;
 - **finds duplicate vendor records** (`taxforms_find_duplicates`): same TIN (compared in memory, never shown), near-identical legal names, same address or email, and pairs whose combined payments reach the threshold while each record alone does not (`split_under_threshold`). A person decides whether to merge.
 
 It writes `w9-tracker.csv` (expected form, open checklist items, blank owner and follow-up columns) and `readiness.md`, and drafts W-9 or W-8 request and reminder emails marked DRAFT. The drafts ask vendors to use your secure upload link rather than email a TIN.
@@ -78,7 +78,7 @@ claude mcp add fairbooks-vendor-tax-forms -- npx -y fairbooks-vendor-tax-forms@0
 |---|---|---|
 | `taxforms_check` | **allow** | Status, flags, masked TIN, payment totals and priority per vendor |
 | `taxforms_write_tracker` | **allow** | Write `w9-tracker.csv` and `readiness.md` to `fairbooks-out/taxforms` |
-| `auxo_1099_readiness` | **allow** | Write `1099-readiness.md` and `.csv`: who is over the threshold and what is missing. Not a filing |
+| `taxforms_1099_readiness` | **allow** | Write `1099-readiness.md` and `.csv`: who is over the threshold and what is missing. Not a filing |
 | `taxforms_find_duplicates` | **allow** | Possible duplicate vendor records and payments split under the threshold |
 | `taxforms_draft_requests` | **ask (Auto-eligible)** | Write request and reminder drafts to `fairbooks-out/taxforms/requests` (not sent) |
 | `taxforms_request_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |

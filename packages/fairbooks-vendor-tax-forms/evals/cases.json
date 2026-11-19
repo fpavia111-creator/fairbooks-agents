@@ -152,7 +152,7 @@
   },
   {
    "id": "1099-readiness-missing-data",
-   "tool": "auxo_1099_readiness",
+   "tool": "taxforms_1099_readiness",
    "args": {
     "vendors": "fixtures/vendors-merged.csv",
     "payments": "fixtures/payments-merged.csv",
@@ -181,7 +181,7 @@
   },
   {
    "id": "1099-readiness-needs-payments",
-   "tool": "auxo_1099_readiness",
+   "tool": "taxforms_1099_readiness",
    "args": {
     "vendors": "fixtures/vendors.csv"
    },

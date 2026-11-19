@@ -40,7 +40,7 @@ test('invalid TIN patterns are flagged and never printed in full', async () => {
   assert.equal(by.V1.tin_masked, '•••••0101'); assert.equal(by.V1.tin_kind, 'ein');
   const root = tmpRoot('taxforms-tin-');
   const rt = new AgentRuntime(manifest, { root, mode: 'auto', autoActions: ['taxforms_draft_requests'] });
-  const outs = [await rt.call('taxforms_check', { vendors: 'vendors.csv', payments: 'payments.csv', as_of }), await rt.call('auxo_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_find_duplicates', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_write_tracker', { vendors: 'vendors.csv', as_of }), await rt.call('taxforms_draft_requests', { vendors: 'vendors.csv', as_of })];
+  const outs = [await rt.call('taxforms_check', { vendors: 'vendors.csv', payments: 'payments.csv', as_of }), await rt.call('taxforms_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_find_duplicates', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of }), await rt.call('taxforms_write_tracker', { vendors: 'vendors.csv', as_of }), await rt.call('taxforms_draft_requests', { vendors: 'vendors.csv', as_of })];
   const files = [...outs.flatMap((o) => o.result.files || []), ...readdirSync(join(root, 'fairbooks-out/taxforms/requests')).map((f) => join(root, 'fairbooks-out/taxforms/requests', f)), join(root, '.fairbooks/audit.jsonl')];
   const all = JSON.stringify(outs) + files.map((f) => readFileSync(f, 'utf8')).join('\n');
   for (const t of ['00-0000101', '000000101', '000-00-0104', '000000104', '00-0000106', '000000106']) assert.ok(!all.includes(t), `${t} leaked`);
@@ -88,14 +88,14 @@ test('1099 readiness: vendors over the threshold missing data are listed; still 
   assert.equal(ok.ready, 1); assert.deepEqual(ok.rows[0].missing, []);
   const root = tmpRoot('taxforms-1099-');
   const rt = new AgentRuntime(manifest, { root });
-  const r = await rt.call('auxo_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of });
+  const r = await rt.call('taxforms_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of });
   assert.equal(r.status, 'executed'); assert.match(r.result.summary, /Not a filing; nothing was sent to the IRS/);
   const md = readFileSync(r.result.files[0], 'utf8');
   assert.match(md, /Not tax advice and not a filing: Fairbooks Vendor Tax Forms never e-files/); assert.match(md, /not matched with the IRS/); assert.match(md, /V99: 750.00/);
   assert.equal(parseCsv(readFileSync(r.result.files[1], 'utf8')).length, 4);
   assert.equal(readAudit(join(root, '.fairbooks/audit.jsonl')).at(-1).output_sha256, r.result.output_sha256);
   assert.equal((await rt.call('irs_efile', { year: 2026 })).status, 'blocked');
-  assert.equal((await new AgentRuntime(manifest, { root, audit: false, mode: 'review' }).call('auxo_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of })).status, 'executed', 'a report runs in review mode');
+  assert.equal((await new AgentRuntime(manifest, { root, audit: false, mode: 'review' }).call('taxforms_1099_readiness', { vendors: 'vendors-merged.csv', payments: 'payments-merged.csv', as_of })).status, 'executed', 'a report runs in review mode');
 });
 
 test('duplicate vendor records, including payments split under the threshold', async () => {
@@ -124,6 +124,6 @@ test('MCP prompt walks the workflow, keeps TINs masked and names the human step'
   const h = createMcpHandler(new AgentRuntime(manifest, { audit: false }));
   const g = await h({ jsonrpc: '2.0', id: 1, method: 'prompts/get', params: { name: 'taxforms_year_end_readiness', arguments: { vendors: 'v.csv', payments: 'p.csv' } } });
   const text = g.result.messages[0].content.text;
-  for (const s of ['v.csv', 'p.csv', 'taxforms_check', 'taxforms_find_duplicates', 'auxo_1099_readiness', 'taxforms_request_send', 'never print a full TIN', 'not tax advice', 'never files']) assert.ok(text.includes(s), s);
+  for (const s of ['v.csv', 'p.csv', 'taxforms_check', 'taxforms_find_duplicates', 'taxforms_1099_readiness', 'taxforms_request_send', 'never print a full TIN', 'not tax advice', 'never files']) assert.ok(text.includes(s), s);
   assert.equal((await h({ jsonrpc: '2.0', id: 2, method: 'prompts/get', params: { name: 'taxforms_year_end_readiness', arguments: { vendors: 'v.csv' } } })).error.code, -32602);
 });

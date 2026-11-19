@@ -13,7 +13,7 @@ export async function demo(manifest) {
   const dup = await rt.call('taxforms_find_duplicates', m);
   printStep('Find duplicate vendor records (larger sample with duplicates and a second non-US vendor)', dup);
   for (const p of dup.result.pairs) process.stdout.write(`    ${p.confidence.padEnd(6)} ${p.a}+${p.b}  ${p.reasons.join(', ')}  combined ${p.combined_reportable.toFixed(2)}${p.split_under_threshold ? '  ⚠ split under the threshold' : ''}\n`);
-  const rd = await rt.call('auxo_1099_readiness', m);
+  const rd = await rt.call('taxforms_1099_readiness', m);
   printStep('1099 readiness summary (not a filing)', rd);
   for (const x of rd.result.rows) process.stdout.write(`    ${x.vendor_id.padEnd(4)} ${String(x.name).padEnd(22)} ${x.paid_reportable_methods.toFixed(2).padStart(9)}  missing: ${x.missing.join(', ') || 'nothing'}\n`);
   for (const x of rd.result.foreign_over_threshold) process.stdout.write(`    ${x.vendor_id.padEnd(4)} ${String(x.name).padEnd(22)} ${x.paid_reportable_methods.toFixed(2).padStart(9)}  non-US: ${x.flags.join(', ') || 'W-8 on file'} (usually ${x.form_expected})\n`);

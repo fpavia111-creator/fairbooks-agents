@@ -1,6 +1,6 @@
 # Changelog
 
-Renamed from `auxo-of-vendors` on 18 Nov 2026 (tool names were `auxo_*`, now `taxforms_*`).
+Renamed from `auxo-of-vendors` on 18 Nov 2026 (tool names were `auxo_*`, now `taxforms_*`). The 1099 readiness tool kept its old name, `auxo_1099_readiness`, until the final pass on 19 Nov 2026; it is now `taxforms_1099_readiness`.
 
 ## 0.2.0 (2026-11-15)
 

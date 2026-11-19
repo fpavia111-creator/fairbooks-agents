@@ -40,7 +40,7 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => { const r = run(a, ctx); const out = ctx.outDir(a.out_dir || 'fairbooks-out/taxforms'); const t = trackerCsv(r), m = safeMarkdown(readinessMarkdown(r)); return { summary: `Tracker written for ${r.vendors} vendor(s).`, files: [ctx.writeFile(out, 'w9-tracker.csv', t), ctx.writeFile(out, 'readiness.md', m)], output_sha256: sha256(`w9-tracker.csv:${sha256(t)}\nreadiness.md:${sha256(m)}`) }; },
     },
     {
-      name: 'auxo_1099_readiness', kind: 'report', title: '1099 readiness summary',
+      name: 'taxforms_1099_readiness', kind: 'report', title: '1099 readiness summary',
       description: 'List US vendors at or over the payment threshold (non-card methods) for the year and what each is still missing (W-9, signature, plausible TIN, LLC classification, name, address); non-US vendors over the threshold with their W-8 state; card/app-only payees; payments with no vendor record. Writes 1099-readiness.md and 1099-readiness.csv (TINs masked); the output hash goes into the audit line. Not a filing and not tax advice: Fairbooks Vendor Tax Forms never e-files.',
       inputSchema: { type: 'object', required: ['vendors', 'payments'], properties: { ...props, out_dir: str } },
       handler: async (a, ctx) => {
@@ -100,7 +100,7 @@ export const manifest = defineManifest({
         'Rules: never print a full TIN (the tools only return masked TINs; do not ask the user to paste one). Do not say who is reportable, which form applies or how card payments are treated: that is the preparer\'s call. Fairbooks Vendor Tax Forms never files with the IRS.',
         '1. Call taxforms_check with vendors, payments, year and threshold. If threshold_confirmed is false, tell the person to get the figure from their preparer and pass threshold.',
         '2. Call taxforms_find_duplicates. Raise split_under_threshold pairs first, then same_tin pairs. A person decides whether records are the same payee; do not merge anything.',
-        '3. Call auxo_1099_readiness. Read the rows with missing data, highest payments first; list non-US vendors with their W-8 state (w8_missing, w8_unsigned, w8_expired) and payments with no vendor record.',
+        '3. Call taxforms_1099_readiness. Read the rows with missing data, highest payments first; list non-US vendors with their W-8 state (w8_missing, w8_unsigned, w8_expired) and payments with no vendor record.',
         '4. Call taxforms_write_tracker and give the person the paths of w9-tracker.csv, readiness.md and 1099-readiness.md.',
         '5. Call taxforms_draft_requests (it asks for a human yes unless opted in to Auto). Drafts ask vendors to use a secure upload link; nothing is sent.',
         '6. Human click: after a person reviews a draft, taxforms_request_send records it as approved to send. It is one named human click even in Auto. irs_efile and send_email are blocked; never try them.',
@@ -111,7 +111,7 @@ export const manifest = defineManifest({
   policy: { rules: [
     { tool: 'taxforms_check', decision: 'allow' },
     { tool: 'taxforms_write_tracker', decision: 'allow' },
-    { tool: 'auxo_1099_readiness', decision: 'allow' },
+    { tool: 'taxforms_1099_readiness', decision: 'allow' },
     { tool: 'taxforms_find_duplicates', decision: 'allow' },
     { tool: 'taxforms_draft_requests', decision: 'ask', reason: 'Writing request drafts needs a human yes (or an Auto opt-in).' },
     { tool: 'irs_efile', decision: 'block', reason: 'Fairbooks Vendor Tax Forms never files with the IRS. Your preparer files.' },
