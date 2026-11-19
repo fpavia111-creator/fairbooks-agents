@@ -21,7 +21,7 @@ export { parseCsv, parseCsvRows, rowsToRecords, sniffDelimiter, toCsv, neutralis
 export { readXlsx, writeXlsx, xlsxSheets, excelSerialToIso, isDateFormat } from './xlsx.js';
 export { readTable, TABLE_EXTENSIONS } from './tables.js';
 export { EXPORTS, exportProfile, carryGroup, firstRowPer, fullName, EXPORTS_BASIS_NOTE } from './exports.js';
-export { adaptRecords, readYesNo, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, normHeader, findHeaderRow, encodingWarning, conceptOf, describeSources, loadSourceOverrides, overrideFor, kindsByArg, columnShape, SOURCES_CONFIG_SCHEMA, SOURCES_FILE, FIELD_TYPES } from './sources.js';
+export { adaptRecords, readYesNo, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, decimalEvidence, normHeader, findHeaderRow, encodingWarning, conceptOf, describeSources, loadSourceOverrides, overrideFor, kindsByArg, columnShape, SOURCES_CONFIG_SCHEMA, SOURCES_FILE, FIELD_TYPES } from './sources.js';
 export { sha256, sha256File, canonical, safePath, readRecords, toNumber, round2 } from './util.js';
 export { demoRuntime, printStep } from './demo.js';
 export { foldText, readNumber, numberReader } from './intl.js';

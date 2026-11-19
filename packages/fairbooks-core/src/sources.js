@@ -26,11 +26,11 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { rowsToRecords } from './csv.js';
 import { assertValid } from './schema.js';
-import { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal } from './intl.js';
+import { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, decimalEvidence } from './intl.js';
 import { translatedNames } from './i18n/columns.js';
 import { encodingName, ENCODINGS } from './encoding.js';
 
-export { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal };
+export { normHeader, parseAnyDate, inferDateOrder, cleanAmount, inferDecimal, decimalEvidence };
 
 export const FIELD_TYPES = ['text', 'date', 'datetime', 'money', 'number', 'bool', 'email'];
 export const SOURCES_FILE = 'fairbooks-sources.json';
@@ -212,8 +212,14 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
     const numeric = plan.filter((p) => (p.fd.type === 'date' || p.fd.type === 'datetime') && p.from.length).flatMap(colValues).map((v) => /^\d{1,2}([/.-])\d{1,2}\1(\d{4}|\d{2})(?!\d)/.exec(String(v ?? '').trim())).filter(Boolean);
     if (numeric.length && numeric.every((m) => m[1] === '.')) { softDmy = true; dateOrder = 'dmy'; }
   }
-  const decimals = new Map();
-  for (const p of plan) if ((p.fd.type === 'money' || p.fd.type === 'number') && p.from.length) decimals.set(p.f, ov.decimal || (profile && profile.decimal) || inferDecimal(colValues(p)));
+  // A column that cannot tell its decimal mark on its own ("1.024", "420") follows the rest of the file:
+  // in a German file a key size of 1.024 sits next to a renewal cost of 180,00. (As in the newer Fair cores;
+  // found by the final pass's eight-language check.)
+  const decimals = new Map(); const evidence = new Map();
+  for (const p of plan) if ((p.fd.type === 'money' || p.fd.type === 'number') && p.from.length) evidence.set(p.f, decimalEvidence(colValues(p)));
+  const sum = [...evidence.values()].reduce((x, e) => ({ comma: x.comma + e.comma, dot: x.dot + e.dot }), { comma: 0, dot: 0 });
+  const fileMark = sum.comma > sum.dot ? ',' : '.';
+  for (const [f, e] of evidence) decimals.set(f, ov.decimal || (profile && profile.decimal) || (e.comma > e.dot ? ',' : e.dot > e.comma ? '.' : fileMark));
 
   let ambiguousDates = 0, badDates = 0, badAmounts = 0, convertedDates = 0, numericDates = 0, skipped = 0;
   // A value set by a profile's "values" table or "default" is final: it is the
@@ -235,7 +241,8 @@ export function adaptRecords(table, def, { override = null, kind = '', arg = '',
       return type === 'date' ? d.date : d.iso;
     }
     if (type === 'money' || type === 'number') {
-      if (/^-?\d+(\.\d+)?$/.test(s)) return s;
+      // 1.024 in a decimal-comma column is a thousands group, not one and a bit (as in the newer Fair cores).
+      if (/^-?\d+(\.\d+)?$/.test(s) && !(decimals.get(p.f) === ',' && /^-?\d{1,3}(\.\d{3})+$/.test(s))) return s;
       const a = cleanAmount(s, { decimal: decimals.get(p.f) || '.' });
       if (a === null) { badAmounts++; return s; }
       return a;

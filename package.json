@@ -42,7 +42,9 @@
     "hostile:args": "node scripts/hostile-inputs.mjs --args",
     "release:check": "node scripts/release-check.mjs",
     "release:check:offline": "node scripts/release-check.mjs --offline",
-    "bench": "node scripts/bench.mjs"
+    "bench": "node scripts/bench.mjs",
+    "evals": "npm run eval --workspaces --if-present",
+    "intl": "node scripts/intl-check.mjs"
   },
   "engines": {
     "node": ">=20"
