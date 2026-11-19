@@ -372,6 +372,187 @@
           "agree": true
         }
       ]
+    },
+    {
+      "format": "xbrl",
+      "name": "SEC EDGAR XBRL company concept data (first-filed vs last-filed values per period)",
+      "url": "https://www.sec.gov/edgar/sec-api-documentation",
+      "licence": "U.S. government data, public domain",
+      "series": 5,
+      "agree": 5,
+      "per": [
+        {
+          "company": "Apple",
+          "concept": "NetIncomeLoss",
+          "cik": "0000320193",
+          "periods_compared": 113,
+          "agent_changed": 5,
+          "recount_changed": 5,
+          "agree": true,
+          "totals_diff_recount": 6078000000,
+          "agent_summary": "blocking: 0 missing, 0 extra, 5 field differences, totals differ by -6078000000. Go-live not approved.",
+          "examples": [
+            {
+              "period": "2006-10-01..2007-09-29",
+              "first": 3496000000,
+              "first_form": "10-K",
+              "first_filed": "2009-10-27",
+              "last": 3495000000,
+              "last_form": "10-K/A",
+              "last_filed": "2010-01-25"
+            },
+            {
+              "period": "2007-09-30..2008-09-27",
+              "first": 4834000000,
+              "first_form": "10-K",
+              "first_filed": "2009-10-27",
+              "last": 6119000000,
+              "last_form": "10-K",
+              "last_filed": "2010-10-27"
+            },
+            {
+              "period": "2008-09-28..2009-06-27",
+              "first": 4039000000,
+              "first_form": "10-Q",
+              "first_filed": "2009-07-22",
+              "last": 5703000000,
+              "last_form": "10-Q",
+              "last_filed": "2010-07-21"
+            },
+            {
+              "period": "2008-09-28..2009-09-26",
+              "first": 5704000000,
+              "first_form": "10-K",
+              "first_filed": "2009-10-27",
+              "last": 8235000000,
+              "last_form": "10-K",
+              "last_filed": "2011-10-26"
+            }
+          ]
+        },
+        {
+          "company": "Apple",
+          "concept": "RevenueFromContractWithCustomerExcludingAssessedTax",
+          "cik": "0000320193",
+          "periods_compared": 47,
+          "agent_changed": 0,
+          "recount_changed": 0,
+          "agree": true,
+          "totals_diff_recount": 0,
+          "agent_summary": "clean: 0 missing, 0 extra, 0 field differences, totals differ by 0. Go-live not approved.",
+          "examples": []
+        },
+        {
+          "company": "Microsoft",
+          "concept": "NetIncomeLoss",
+          "cik": "0000789019",
+          "periods_compared": 112,
+          "agent_changed": 11,
+          "recount_changed": 11,
+          "agree": true,
+          "totals_diff_recount": 17688000000,
+          "agent_summary": "blocking: 0 missing, 0 extra, 11 field differences, totals differ by -17688000000. Go-live not approved.",
+          "examples": [
+            {
+              "period": "2015-07-01..2015-09-30",
+              "first": 4620000000,
+              "first_form": "10-Q",
+              "first_filed": "2015-10-22",
+              "last": 4902000000,
+              "last_form": "10-K",
+              "last_filed": "2017-08-02"
+            },
+            {
+              "period": "2015-07-01..2015-12-31",
+              "first": 9618000000,
+              "first_form": "10-Q",
+              "first_filed": "2016-01-28",
+              "last": 9920000000,
+              "last_form": "10-Q",
+              "last_filed": "2017-01-26"
+            },
+            {
+              "period": "2015-07-01..2016-06-30",
+              "first": 16798000000,
+              "first_form": "10-K",
+              "first_filed": "2016-07-28",
+              "last": 20539000000,
+              "last_form": "10-K",
+              "last_filed": "2018-08-03"
+            },
+            {
+              "period": "2015-10-01..2015-12-31",
+              "first": 4998000000,
+              "first_form": "10-Q",
+              "first_filed": "2016-01-28",
+              "last": 5018000000,
+              "last_form": "10-K",
+              "last_filed": "2017-08-02"
+            }
+          ]
+        },
+        {
+          "company": "Walmart",
+          "concept": "NetIncomeLoss",
+          "cik": "0000104169",
+          "periods_compared": 110,
+          "agent_changed": 10,
+          "recount_changed": 10,
+          "agree": true,
+          "totals_diff_recount": -185000000,
+          "agent_summary": "blocking: 0 missing, 0 extra, 10 field differences, totals differ by 185000000. Go-live not approved.",
+          "examples": [
+            {
+              "period": "2008-02-01..2009-01-31",
+              "first": 13400000000,
+              "first_form": "10-K",
+              "first_filed": "2010-03-30",
+              "last": 13381000000,
+              "last_form": "10-K",
+              "last_filed": "2011-03-30"
+            },
+            {
+              "period": "2009-02-01..2009-04-30",
+              "first": 3022000000,
+              "first_form": "10-Q",
+              "first_filed": "2010-06-04",
+              "last": 2996000000,
+              "last_form": "10-K",
+              "last_filed": "2011-03-30"
+            },
+            {
+              "period": "2009-02-01..2009-07-31",
+              "first": 6464000000,
+              "first_form": "10-Q",
+              "first_filed": "2009-09-09",
+              "last": 6468000000,
+              "last_form": "10-Q",
+              "last_filed": "2010-09-01"
+            },
+            {
+              "period": "2009-02-01..2009-10-31",
+              "first": 9703000000,
+              "first_form": "10-Q",
+              "first_filed": "2009-12-08",
+              "last": 9612000000,
+              "last_form": "10-Q",
+              "last_filed": "2010-12-06"
+            }
+          ]
+        },
+        {
+          "company": "Alphabet",
+          "concept": "NetIncomeLoss",
+          "cik": "0001652044",
+          "periods_compared": 66,
+          "agent_changed": 0,
+          "recount_changed": 0,
+          "agree": true,
+          "totals_diff_recount": 0,
+          "agent_summary": "clean: 0 missing, 0 extra, 0 field differences, totals differ by 0. Go-live not approved.",
+          "examples": []
+        }
+      ]
     }
   ]
 }

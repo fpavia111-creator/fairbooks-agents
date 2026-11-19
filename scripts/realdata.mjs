@@ -38,6 +38,18 @@ async function get(url) {
     catch (e) { if (i === 3) throw new Error(`${url}: ${e.message}`); }
   }
 }
+// 4. SEC EDGAR XBRL "company concept" data (public domain): the same reporting period appears in several
+//    filings (the quarter's own 10-Q, next year's 10-Q as a comparative, the 10-K). "As first filed" is the
+//    source export and "as last filed" the target, so fairbooks-erp-migration's compare lists the periods a
+//    company later reported differently, and a re-count lists them from the same rows. SEC asks automated
+//    clients to name themselves; a generic name is sent, no personal contact.
+const SEC_UA = { 'User-Agent': 'fairbooks-agents real-data test admin@example.com' };
+const XBRL = [['0000320193', 'Apple', 'NetIncomeLoss'], ['0000320193', 'Apple', 'RevenueFromContractWithCustomerExcludingAssessedTax'], ['0000789019', 'Microsoft', 'NetIncomeLoss'], ['0000104169', 'Walmart', 'NetIncomeLoss'], ['0001652044', 'Alphabet', 'NetIncomeLoss']];
+const xbrlUrl = ([cik, , tag]) => `https://data.sec.gov/api/xbrl/companyconcept/CIK${cik}/us-gaap/${tag}.json`;
+if (process.argv.includes('--download')) {
+  mkdirSync(join(RAW, 'xbrl'), { recursive: true });
+  for (const x of XBRL) { const r = await fetch(xbrlUrl(x), { headers: SEC_UA, signal: AbortSignal.timeout(60000) }); if (!r.ok) throw new Error(`${xbrlUrl(x)}: HTTP ${r.status}`); writeFileSync(join(RAW, 'xbrl', `${x[1]}-${x[2]}.json`), Buffer.from(await r.arrayBuffer())); await new Promise((res) => setTimeout(res, 300)); }
+}
 if (process.argv.includes('--download')) {
   for (const [fmt, s] of Object.entries(SOURCES)) { mkdirSync(join(RAW, fmt), { recursive: true }); for (const [f, url] of s.files) writeFileSync(join(RAW, fmt, f), await get(url)); }
   writeFileSync(join(RAW, 'downloaded.json'), JSON.stringify({ date: new Date().toISOString(), sources: Object.fromEntries(Object.entries(SOURCES).map(([k, s]) => [k, s.files.map(([, u]) => u)])) }, null, 2));
@@ -93,9 +105,41 @@ for (const [fmt, s] of Object.entries(SOURCES)) {
   for (const p of per) if (p.agent) p.agree = p.agent.lines === p.recount.lines && Math.abs((p.agent.total ?? 0) - p.recount.total) < 0.01 && (p.recount.closing === null || p.agent.closing === null || Math.abs(p.agent.closing - p.recount.closing) < 0.01);
   results.sources.push({ format: fmt, name: s.name, url: s.page, licence: s.licence, files: per.length, read: per.filter((p) => p.status === 'executed').length, agree: per.filter((p) => p.agree).length, ties: per.filter((p) => p.agent && p.agent.ties === true).length, per });
 }
+// ------------------------------------------------- SEC XBRL restatements ----
+const xbrl = [];
+if (existsSync(join(RAW, 'xbrl'))) {
+  const MIG = join(ROOT, 'packages', 'fairbooks-erp-migration');
+  const mig = (await import(pathToFileURL(join(MIG, 'src', 'manifest.js')).href)).manifest;
+  for (const [cik, company, concept] of XBRL) {
+    const f = join(RAW, 'xbrl', `${company}-${concept}.json`); if (!existsSync(f)) continue;
+    const facts = (JSON.parse(readFileSync(f, 'utf8')).units.USD || []).filter((x) => x.start && x.end);
+    const byPeriod = new Map(); for (const x of facts) { const k = `${x.start}..${x.end}`; if (!byPeriod.has(k)) byPeriod.set(k, []); byPeriod.get(k).push(x); }
+    const src = [], tgt = []; const changed = [];
+    for (const [k, list] of [...byPeriod.entries()].sort()) {
+      if (list.length < 2) continue; list.sort((a, b) => (a.filed < b.filed ? -1 : a.filed > b.filed ? 1 : 0));
+      const a = list[0], b = list[list.length - 1];
+      src.push({ period: k, amount: a.val }); tgt.push({ period: k, amount: b.val });
+      if (a.val !== b.val) changed.push({ period: k, first: a.val, first_form: a.form, first_filed: a.filed, last: b.val, last_form: b.form, last_filed: b.filed });
+    }
+    const root = mkdtempSync(join(tmpdir(), 'fb-xbrl-'));
+    try {
+      const csv = (rows) => ['period,amount', ...rows.map((r) => `${r.period},${r.amount}`)].join('\n') + '\n';
+      writeFileSync(join(root, 'first-filed.csv'), csv(src)); writeFileSync(join(root, 'last-filed.csv'), csv(tgt));
+      const r = await new AgentRuntime(mig, { root, audit: false, memory: false }).call('migration_compare_exports', { source: 'first-filed.csv', target: 'last-filed.csv', key: 'period', amount_column: 'amount' });
+      const res = r.result || {};
+      const agentPeriods = (res.mismatches || []).filter((m) => m.column === 'amount').map((m) => m.key).sort();
+      const recount = changed.map((c) => c.period).sort();
+      const sumDiff = r2(tgt.reduce((t, x) => t + x.amount, 0) - src.reduce((t, x) => t + x.amount, 0));
+      xbrl.push({ company, concept, cik, periods_compared: src.length, agent_changed: agentPeriods.length, recount_changed: recount.length, agree: JSON.stringify(agentPeriods) === JSON.stringify(recount), totals_diff_recount: sumDiff, agent_summary: String(res.summary || r.error || '').slice(0, 200), examples: changed.slice(0, 4) });
+    } finally { rmSync(root, { recursive: true, force: true }); }
+  }
+  results.sources.push({ format: 'xbrl', name: 'SEC EDGAR XBRL company concept data (first-filed vs last-filed values per period)', url: 'https://www.sec.gov/edgar/sec-api-documentation', licence: 'U.S. government data, public domain', series: xbrl.length, agree: xbrl.filter((x) => x.agree).length, per: xbrl });
+}
 mkdirSync(join(ROOT, 'docs'), { recursive: true });
 writeFileSync(join(ROOT, 'docs', `realdata-${DATE}.json`), JSON.stringify(results, null, 2) + '\n');
-for (const s of results.sources) { console.log(`\n## ${s.format}: ${s.read}/${s.files} read, ${s.agree} agree with the re-count, ${s.ties} tie opening + lines = closing`); for (const p of s.per) console.log(`  ${p.file}: ${p.status} ${p.agent ? JSON.stringify(p.agent) : p.error} | recount ${JSON.stringify(p.recount)}${p.agree === false ? '  <-- DIFFERS' : ''}`); }
-const md = [`# Real public bank files through Fairbooks Bank Reconciliation (${DATE})`, '', 'Made by `node scripts/realdata.mjs` (downloads with `--download` into the git-ignored `_realdata/`). Each file is read by `recon_read_statement` and, separately, by a small re-count in the script that sums the transaction amounts and reads the balances the file states. Details per file: `realdata-' + DATE + '.json`.', '', '| Source | Licence | Files | Read | Agree with re-count | Opening + lines = closing |', '|---|---|---|---|---|---|', ...results.sources.map((s) => `| [${s.name}](${s.url}) | ${s.licence} | ${s.files} | ${s.read} | ${s.agree} | ${s.ties} |`), ''];
-writeFileSync(join(ROOT, 'docs', `realdata-${DATE}.md`), md.join('\n'));
+for (const x of xbrl) console.log(`  xbrl ${x.company} ${x.concept}: ${x.periods_compared} periods, agent ${x.agent_changed} changed, re-count ${x.recount_changed}${x.agree ? '' : '  <-- DIFFERS'} | ${x.agent_summary.slice(0, 120)}`);
+for (const s of results.sources.filter((x) => x.format !== 'xbrl')) { console.log(`\n## ${s.format}: ${s.read}/${s.files} read, ${s.agree} agree with the re-count, ${s.ties} tie opening + lines = closing`); for (const p of s.per) console.log(`  ${p.file}: ${p.status} ${p.agent ? JSON.stringify(p.agent) : p.error} | recount ${JSON.stringify(p.recount)}${p.agree === false ? '  <-- DIFFERS' : ''}`); }
+const xbrlMd = xbrl.length ? ['', '## SEC XBRL: values a company later reported differently', '', 'fairbooks-erp-migration `migration_compare_exports` with each period\'s value as first filed (source) and as last filed (target), against a re-count from the same SEC rows.', '', '| Company | Concept | Periods in two or more filings | Changed: agent | Changed: re-count | Same periods |', '|---|---|---|---|---|---|', ...xbrl.map((x) => `| ${x.company} | ${x.concept} | ${x.periods_compared} | ${x.agent_changed} | ${x.recount_changed} | ${x.agree ? 'yes' : 'no'} |`), ''] : [];
+const md = [`# Real public files through Fairbooks Bank Reconciliation and ERP Migration (${DATE})`, '', 'Made by `node scripts/realdata.mjs` (downloads with `--download` into the git-ignored `_realdata/`). Each file is read by `recon_read_statement` and, separately, by a small re-count in the script that sums the transaction amounts and reads the balances the file states. Details per file: `realdata-' + DATE + '.json`.', '', '| Source | Licence | Files | Read | Agree with re-count | Opening + lines = closing |', '|---|---|---|---|---|---|', ...results.sources.filter((x) => x.format !== 'xbrl').map((s) => `| [${s.name}](${s.url}) | ${s.licence} | ${s.files} | ${s.read} | ${s.agree} | ${s.ties} |`), ''];
+writeFileSync(join(ROOT, 'docs', `realdata-${DATE}.md`), md.concat(xbrlMd).join('\n'));
 console.log(`\nWrote docs/realdata-${DATE}.json and .md`);
