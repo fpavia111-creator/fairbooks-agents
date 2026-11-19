@@ -16,13 +16,13 @@ const first = (xml, ...path) => { let cur = xml; for (const t of path) { const m
 export function parseCamt053(xml) {
   if (!/BkToCstmrStmt/.test(xml)) throw new Error('not a camt.053 file (no BkToCstmrStmt element)');
   const stmts = blocks(xml, 'Stmt'); if (!stmts.length) throw new Error('camt.053: no Stmt element');
-  const rows = []; let opening = null, closing = null, currency = '', account = '';
+  const rows = []; let opening = null, closing = null, closingDate = '', currency = '', account = '';
   for (const st of stmts) {
     account = account || first(st, 'Acct', 'IBAN') || first(st, 'Acct', 'Othr', 'Id');
     for (const b of blocks(st, 'Bal')) {
       const code = first(b, 'Tp', 'CdOrPrtry', 'Cd'); const amt = Number(first(b, 'Amt')); const sign = first(b, 'CdtDbtInd') === 'DBIT' ? -1 : 1;
       if (code === 'OPBD' && opening === null) opening = round2(sign * amt);
-      if (code === 'CLBD') closing = round2(sign * amt);
+      if (code === 'CLBD') { closing = round2(sign * amt); closingDate = (/\d{4}-\d{2}-\d{2}/.exec(first(b, 'Dt')) || [''])[0]; } // <Dt><Dt>..</Dt></Dt> or <Dt><DtTm>..</DtTm></Dt>
     }
     for (const n of blocks(st, 'Ntry')) {
       const amtM = /<(?:[\w.-]+:)?Amt\b([^>]*)>([^<]*)</.exec(n);
@@ -32,10 +32,13 @@ export function parseCamt053(xml) {
       const date = first(n, 'BookgDt', 'Dt') || first(n, 'BookgDt', 'DtTm').slice(0, 10) || first(n, 'ValDt', 'Dt');
       const reference = first(n, 'NtryRef') || first(n, 'NtryDtls', 'TxDtls', 'Refs', 'EndToEndId').replace(/^NOTPROVIDED$/, '');
       const description = first(n, 'AddtlNtryInf') || first(n, 'NtryDtls', 'TxDtls', 'RmtInf', 'Ustrd');
-      rows.push({ date, description, reference, amount: round2(sign * Number(unxml(amtM[2]))) });
+      // The value date is kept when it differs from the booking date: a bank's closing booked balance can
+      // leave out a line booked today and value-dated tomorrow (seen in PostFinance's published samples).
+      const valueDate = first(n, 'ValDt', 'Dt') || first(n, 'ValDt', 'DtTm').slice(0, 10);
+      rows.push({ date, description, reference, amount: round2(sign * Number(unxml(amtM[2]))), ...(valueDate && valueDate !== date ? { value_date: valueDate } : {}) });
     }
   }
-  return { format: 'camt053', account_hint: mask(account), currency, opening_balance: opening, closing_balance: closing, rows };
+  return { format: 'camt053', account_hint: mask(account), currency, opening_balance: opening, closing_balance: closing, ...(closingDate ? { closing_date: closingDate } : {}), rows };
 }
 
 const yymmdd = (s) => (/^\d{6}$/.test(s) ? `20${s.slice(0, 2)}-${s.slice(2, 4)}-${s.slice(4, 6)}` : '');
@@ -51,11 +54,13 @@ export function parseBai2(text) {
     const code = r.slice(0, 2);
     if (code === '02') { const f = r.replace(/\/$/, '').split(','); asOf = yymmdd(f[4]); currency = currency || f[6] || ''; }
     else if (code === '03') {
-      const f = r.replace(/\/$/, '').split(','); account = account || f[1]; currency = f[2] || currency;
+      // A file can hold several days for one account (one group per day): the opening balance is the first
+      // day's and the closing balance the last day's (found on SVB's published BAI2 layout, 19 Nov 2026).
+      const f = r.replace(/\/$/, '').split(','); account = account || f[1]; currency = f[2] || currency; const same = f[1] === account;
       for (let i = 3; i + 1 < f.length; i += 4) { // type, amount, item count, funds type
         const tc = f[i], amt = f[i + 1];
-        if (tc === '010' && amt !== '') opening = round2(Number(amt) / 100);
-        if (tc === '015' && amt !== '') closing = round2(Number(amt) / 100);
+        if (tc === '010' && amt !== '' && same && opening === null) opening = round2(Number(amt) / 100);
+        if (tc === '015' && amt !== '' && same) closing = round2(Number(amt) / 100);
         if (f[i + 3] === 'S') i += 3; else if (f[i + 3] === 'V') i += 2;
       }
     } else if (code === '16') {

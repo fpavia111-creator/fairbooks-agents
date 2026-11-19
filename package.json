@@ -46,7 +46,8 @@
     "evals": "npm run eval --workspaces --if-present",
     "intl": "node scripts/intl-check.mjs",
     "model-view": "node scripts/model-view.mjs",
-    "accuracy": "node scripts/accuracy.mjs"
+    "accuracy": "node scripts/accuracy.mjs",
+    "realdata": "node scripts/realdata.mjs"
   },
   "engines": {
     "node": ">=20"

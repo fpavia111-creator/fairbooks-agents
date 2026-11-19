@@ -29,7 +29,7 @@ export function readStatement(ctx, path, format = 'auto') {
   // Table files go through the core reader, so bank download layouts are recognised and mapped.
   if (TABLE_FORMATS.includes(fmt)) return { format: fmt, opening_balance: null, closing_balance: null, currency: '', account_hint: '', rows: normBank(ctx.records(path, 'bank')) };
   const p = parseBankText(fmt, text ?? readText());
-  return { ...p, rows: normBank(p.rows) };
+  return { ...p, rows: normBank(p.rows).map((x, i) => (p.rows[i].value_date ? { ...x, value_date: p.rows[i].value_date } : x)) };
 }
 const loadRules = (a, ctx) => (a.rules ? ctx.readJson(a.rules, 'match_rules').rules : []);
 function load(a, ctx) {
@@ -69,7 +69,13 @@ export const manifest = defineManifest({
       handler: async (a, ctx) => {
         const st = readStatement(ctx, a.bank, a.bank_format); const total = Math.round(st.rows.reduce((t, x) => t + (x.amount || 0), 0) * 100) / 100;
         const check = st.opening_balance !== null && st.closing_balance !== null ? { opening: st.opening_balance, lines_total: total, closing: st.closing_balance, ties: Math.abs(st.opening_balance + total - st.closing_balance) < 0.005 } : null;
-        return { summary: `${st.format}: ${st.rows.length} line(s), total ${total}${st.closing_balance !== null ? `, closing balance ${st.closing_balance}` : ''}${check ? ` (${check.ties ? 'opening + lines = closing' : 'opening + lines does NOT equal closing'})` : ''}.`, format: st.format, currency: st.currency, account_hint: st.account_hint, opening_balance: st.opening_balance, closing_balance: st.closing_balance, balance_check: check, lines: st.rows.map(({ id, date, description, reference, amount }) => ({ id, date, description, reference, amount })) };
+        // When it does not tie, say whether the gap is exactly the lines value-dated after the closing balance's
+        // date (the bank's booked closing balance leaves them out). Found on PostFinance's published camt.053 samples.
+        if (check && !check.ties && st.closing_date) {
+          const later = st.rows.filter((x) => x.value_date && x.value_date > st.closing_date); const sumLater = Math.round(later.reduce((t, x) => t + x.amount, 0) * 100) / 100;
+          if (later.length && Math.abs(st.opening_balance + total - sumLater - st.closing_balance) < 0.005) check.explained = `The difference (${sumLater}) is ${later.length} line(s) value-dated after the closing balance date ${st.closing_date}; the bank's closing booked balance leaves them out.`;
+        }
+        return { summary: `${st.format}: ${st.rows.length} line(s), total ${total}${st.closing_balance !== null ? `, closing balance ${st.closing_balance}` : ''}${check ? ` (${check.ties ? 'opening + lines = closing' : check.explained ? `opening + lines does NOT equal closing: ${check.explained}` : 'opening + lines does NOT equal closing'})` : ''}.`, format: st.format, currency: st.currency, account_hint: st.account_hint, opening_balance: st.opening_balance, closing_balance: st.closing_balance, balance_check: check, lines: st.rows.map(({ id, date, description, reference, amount }) => ({ id, date, description, reference, amount })) };
       },
     },
     {

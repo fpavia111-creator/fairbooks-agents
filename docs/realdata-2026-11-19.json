@@ -1,0 +1,377 @@
+{
+  "date": "2026-11-19",
+  "sources": [
+    {
+      "format": "camt053",
+      "name": "PostFinance sample files for business customers (camt.053)",
+      "url": "https://www.postfinance.ch/en/support/documents/sample-files-for-business-customers.html",
+      "licence": "Published by PostFinance as sample files for software tests (no licence stated)",
+      "files": 4,
+      "read": 4,
+      "agree": 4,
+      "ties": 2,
+      "per": [
+        {
+          "file": "camt053_P_CH2909000000250094239_1110092698_0_2020062503071366_v2009.xml",
+          "status": "executed",
+          "agent": {
+            "lines": 5,
+            "total": 4656.02,
+            "opening": 211993.19,
+            "closing": 215112.21,
+            "ties": false,
+            "explained": "The difference (1537) is 1 line(s) value-dated after the closing balance date 2020-11-24; the bank's closing booked balance leaves them out."
+          },
+          "recount": {
+            "lines": 5,
+            "total": 4656.02,
+            "opening": 211993.19,
+            "closing": 215112.21
+          },
+          "summary": "camt053: 5 line(s), total 4656.02, closing balance 215112.21 (opening + lines does NOT equal closing: The difference (1537) is 1 line(s) value-dated after the closing balance date 2020-11-24; the bank's closing booked ba",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "camt053_P_CH2909000000250094239_1110092698_0_2020112503071366_v2019.xml",
+          "status": "executed",
+          "agent": {
+            "lines": 5,
+            "total": 4656.02,
+            "opening": 211993.19,
+            "closing": 215112.21,
+            "ties": false,
+            "explained": "The difference (1537) is 1 line(s) value-dated after the closing balance date 2020-11-24; the bank's closing booked balance leaves them out."
+          },
+          "recount": {
+            "lines": 5,
+            "total": 4656.02,
+            "opening": 211993.19,
+            "closing": 215112.21
+          },
+          "summary": "camt053: 5 line(s), total 4656.02, closing balance 215112.21 (opening + lines does NOT equal closing: The difference (1537) is 1 line(s) value-dated after the closing balance date 2020-11-24; the bank's closing booked ba",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "camt053_P_CH2909000000250094239_1110092698_0_2024012503071366_v2013.xml",
+          "status": "executed",
+          "agent": {
+            "lines": 2,
+            "total": 2192.72,
+            "opening": 11993.19,
+            "closing": 14185.91,
+            "ties": true,
+            "explained": null
+          },
+          "recount": {
+            "lines": 2,
+            "total": 2192.72,
+            "opening": 11993.19,
+            "closing": 14185.91
+          },
+          "summary": "camt053: 2 line(s), total 2192.72, closing balance 14185.91 (opening + lines = closing).",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "camt053_P_CH2909000000250094239_1110092698_0_2024012503071366_v2019.xml",
+          "status": "executed",
+          "agent": {
+            "lines": 2,
+            "total": 2192.72,
+            "opening": 11993.19,
+            "closing": 14185.91,
+            "ties": true,
+            "explained": null
+          },
+          "recount": {
+            "lines": 2,
+            "total": 2192.72,
+            "opening": 11993.19,
+            "closing": 14185.91
+          },
+          "summary": "camt053: 2 line(s), total 2192.72, closing balance 14185.91 (opening + lines = closing).",
+          "warnings": [],
+          "agree": true
+        }
+      ]
+    },
+    {
+      "format": "ofx",
+      "name": "ofxparse test files (OFX bank and card statements)",
+      "url": "https://github.com/jseutter/ofxparse/tree/master/tests/fixtures",
+      "licence": "MIT (ofxparse)",
+      "files": 8,
+      "read": 8,
+      "agree": 8,
+      "ties": 0,
+      "per": [
+        {
+          "file": "checking.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 3,
+            "total": -59.5,
+            "opening": null,
+            "closing": 100.99,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 3,
+            "total": -59.5,
+            "opening": null,
+            "closing": 100.99
+          },
+          "summary": "ofx: 3 line(s), total -59.5, closing balance 100.99.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "bank_medium.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 3,
+            "total": -345.27,
+            "opening": null,
+            "closing": 382.34,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 3,
+            "total": -345.27,
+            "opening": null,
+            "closing": 382.34
+          },
+          "summary": "ofx: 3 line(s), total -345.27, closing balance 382.34.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "bank_small.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "ofx: 0 line(s), total 0.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "anzcc.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 1,
+            "total": -5.5,
+            "opening": null,
+            "closing": -123.45,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 1,
+            "total": -5.5,
+            "opening": null,
+            "closing": -123.45
+          },
+          "summary": "ofx: 1 line(s), total -5.5, closing balance -123.45.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "suncorp.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 1,
+            "total": -16.85,
+            "opening": null,
+            "closing": 1234.12,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 1,
+            "total": -16.85,
+            "opening": null,
+            "closing": 1234.12
+          },
+          "summary": "ofx: 1 line(s), total -16.85, closing balance 1234.12.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "multiple_accounts.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": 111,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": 111
+          },
+          "summary": "ofx: 0 line(s), total 0, closing balance 111.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "account_listing_aggregation.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "ofx: 0 line(s), total 0.",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "ofx-v102-empty-tags.ofx",
+          "status": "executed",
+          "agent": {
+            "lines": 1,
+            "total": 12.34,
+            "opening": null,
+            "closing": null,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 1,
+            "total": 12.34,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "ofx: 1 line(s), total 12.34.",
+          "warnings": [],
+          "agree": true
+        }
+      ]
+    },
+    {
+      "format": "bai2",
+      "name": "bai2 test files (BAI2 layouts of Citi, NatWest, SVB)",
+      "url": "https://github.com/ministryofjustice/bai2/tree/main/tests/data",
+      "licence": "MIT (bai2)",
+      "files": 4,
+      "read": 4,
+      "agree": 4,
+      "ties": 2,
+      "per": [
+        {
+          "file": "citi_example.bai2",
+          "status": "executed",
+          "agent": {
+            "lines": 1,
+            "total": 0.01,
+            "opening": 100,
+            "closing": 100,
+            "ties": false,
+            "explained": null
+          },
+          "recount": {
+            "lines": 1,
+            "total": 0.01,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "bai2: 1 line(s), total 0.01, closing balance 100 (opening + lines does NOT equal closing).",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "nwb_example.bai2",
+          "status": "executed",
+          "agent": {
+            "lines": 5,
+            "total": -26.76,
+            "opening": 365.21,
+            "closing": 338.45,
+            "ties": true,
+            "explained": null
+          },
+          "recount": {
+            "lines": 5,
+            "total": -26.76,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "bai2: 5 line(s), total -26.76, closing balance 338.45 (opening + lines = closing).",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "svb_us_example.bai2",
+          "status": "executed",
+          "agent": {
+            "lines": 2,
+            "total": 13959.96,
+            "opening": 347269.79,
+            "closing": 361229.75,
+            "ties": true,
+            "explained": null
+          },
+          "recount": {
+            "lines": 2,
+            "total": 13959.96,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "bai2: 2 line(s), total 13959.96, closing balance 361229.75 (opening + lines = closing).",
+          "warnings": [],
+          "agree": true
+        },
+        {
+          "file": "account_trailer_amount_blank_example.bai2",
+          "status": "executed",
+          "agent": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null,
+            "ties": null,
+            "explained": null
+          },
+          "recount": {
+            "lines": 0,
+            "total": 0,
+            "opening": null,
+            "closing": null
+          },
+          "summary": "bai2: 0 line(s), total 0.",
+          "warnings": [],
+          "agree": true
+        }
+      ]
+    }
+  ]
+}

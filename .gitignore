@@ -6,3 +6,4 @@ fairbooks-out/
 # state and output folders of the older mythos-agent-core builds
 .mythos/
 mythos-out/
+_realdata/
