@@ -1,0 +1,245 @@
+{
+  "family": {
+    "date": "2026-11-19",
+    "agents": 30,
+    "measured_agents": 7,
+    "planted_total": 44,
+    "planted_found": 44,
+    "unplanned": 0,
+    "clean_rows": 82,
+    "clean_false_positives": 0,
+    "mutation_cases": 18,
+    "mutation_caught": 18,
+    "not_measured": [
+      "fairbooks-audit-evidence",
+      "fairbooks-automation-audit",
+      "fairbooks-board-pack",
+      "fairbooks-certificate-expiry",
+      "fairbooks-config-drift",
+      "fairbooks-contract-clauses",
+      "fairbooks-cookie-consent",
+      "fairbooks-crm-hygiene",
+      "fairbooks-cycle-counts",
+      "fairbooks-data-erasure-requests",
+      "fairbooks-docs-drift",
+      "fairbooks-email-domain-audit",
+      "fairbooks-grant-reporting",
+      "fairbooks-mcp-server-review",
+      "fairbooks-onboarding-checklists",
+      "fairbooks-open-source-licenses",
+      "fairbooks-outreach-email-gate",
+      "fairbooks-process-evals",
+      "fairbooks-rfi-and-submittals",
+      "fairbooks-saas-seats",
+      "fairbooks-suitescript-inventory",
+      "fairbooks-vendor-tax-forms",
+      "fairbooks-web-page-audit"
+    ]
+  },
+  "agents": [
+    {
+      "agent": "fairbooks-access-review",
+      "measured": true,
+      "case": "finds-leaver",
+      "tool": "access_review_access",
+      "planted_total": 9,
+      "planted_found": 9,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 15,
+      "clean_findings": [],
+      "mutation_cases": 3,
+      "mutation_caught": 3,
+      "mutation_missed": [],
+      "note": null
+    },
+    {
+      "agent": "fairbooks-audit-evidence",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-automation-audit",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-bank-reconciliation",
+      "measured": true,
+      "case": "matches-and-ties",
+      "tool": "recon_reconcile",
+      "planted_total": 4,
+      "planted_found": 4,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 19,
+      "clean_findings": [],
+      "mutation_cases": 2,
+      "mutation_caught": 2,
+      "mutation_missed": [],
+      "note": "The planted problems are October's reconciling items (a fee and interest only on the bank side, a check and a deposit only in the ledger). In the clean month both sides carry all four lines and close at 12,822.88."
+    },
+    {
+      "agent": "fairbooks-board-pack",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-certificate-expiry",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-config-drift",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-contract-clauses",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-cookie-consent",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-crm-hygiene",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-cycle-counts",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-data-erasure-requests",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-docs-drift",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-email-domain-audit",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-erp-migration",
+      "measured": true,
+      "case": "untied-books-blocking",
+      "tool": "migration_compare_exports",
+      "planted_total": 3,
+      "planted_found": 3,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 5,
+      "clean_findings": [],
+      "mutation_cases": 2,
+      "mutation_caught": 2,
+      "mutation_missed": [],
+      "note": null
+    },
+    {
+      "agent": "fairbooks-expense-policy",
+      "measured": true,
+      "case": "recommendations",
+      "tool": "expenses_review",
+      "planted_total": 11,
+      "planted_found": 11,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 9,
+      "clean_findings": [],
+      "mutation_cases": 3,
+      "mutation_caught": 3,
+      "mutation_missed": [],
+      "note": null
+    },
+    {
+      "agent": "fairbooks-grant-reporting",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-master-data-duplicates",
+      "measured": true,
+      "case": "finds-acme-by-tax-id",
+      "tool": "dupes_find_duplicates",
+      "planted_total": 3,
+      "planted_found": 3,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 5,
+      "clean_findings": [],
+      "mutation_cases": 2,
+      "mutation_caught": 2,
+      "mutation_missed": [],
+      "note": "A finding here is a proposed merge cluster (and a weak pair below the threshold); the match reasons inside a cluster are its explanation."
+    },
+    {
+      "agent": "fairbooks-mcp-server-review",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-onboarding-checklists",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-open-source-licenses",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-outreach-email-gate",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-process-evals",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-refunds-and-chargebacks",
+      "measured": true,
+      "case": "triage-per-policy",
+      "tool": "refunds_triage",
+      "planted_total": 7,
+      "planted_found": 7,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 21,
+      "clean_findings": [],
+      "mutation_cases": 3,
+      "mutation_caught": 3,
+      "mutation_missed": [],
+      "note": null
+    },
+    {
+      "agent": "fairbooks-rfi-and-submittals",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-saas-seats",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-suitescript-inventory",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-three-way-match",
+      "measured": true,
+      "case": "match-finds-exceptions",
+      "tool": "match_match",
+      "planted_total": 7,
+      "planted_found": 7,
+      "missed": [],
+      "unplanned": [],
+      "clean_rows": 8,
+      "clean_findings": [],
+      "mutation_cases": 3,
+      "mutation_caught": 3,
+      "mutation_missed": [],
+      "note": null
+    },
+    {
+      "agent": "fairbooks-vendor-tax-forms",
+      "measured": false
+    },
+    {
+      "agent": "fairbooks-web-page-audit",
+      "measured": false
+    }
+  ]
+}

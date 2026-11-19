@@ -1,0 +1,10 @@
+report_id,line_id,employee,date,submitted_on,category,merchant,amount,currency,receipt,purpose,attendees,nights,miles,preapproved_by
+R-101,1,Ana Ortiz,2026-10-06,2026-10-20,lodging,Harbor Inn,480.00,USD,r101-hotel.txt,Client workshop in Duluth,,2,,
+R-101,2,Ana Ortiz,2026-10-06,2026-10-20,meals,Lakeside Grill,150.00,USD,r101-dinner.txt,Client dinner,2,,,
+R-101,3,Ana Ortiz,2026-10-05,2026-10-20,mileage,Own car,98.00,USD,,Drive to Duluth,,,140,
+R-102,1,Ben Cho,2026-10-12,2026-10-14,software,Diagram Tool,49.00,USD,r102-app.txt,Team diagram licence,,,,
+R-102,2,Ben Cho,2026-10-12,2026-10-14,ground,City Cab,22.00,USD,,Airport to office,,,,
+R-103,1,Cara Diaz,2026-08-29,2026-09-10,airfare,Northstar Air,624.00,USD,r103-flight.txt,Conference trip,,,,Kim Ortiz
+R-104,1,Dev Patel,2026-11-02,2026-11-09,meals,Noodle House,18.50,USD,,Lunch with new hire,1,,,
+R-104,2,Dev Patel,2026-11-03,2026-11-09,ground,Metro Rideshare,31.20,USD,r104-ride.txt,Client site visit,,,,
+R-104,4,Dev Patel,2026-11-04,2026-11-09,ground,Airport Parking,20.00,USD,,Client site visit parking,,,,
