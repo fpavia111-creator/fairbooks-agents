@@ -5,7 +5,6 @@
     "people_columns_in_clear": [
       "assigned_reviewer",
       "email",
-      "last_login",
       "manager",
       "name",
       "owner",
@@ -16,6 +15,7 @@
     "other_text_in_clear": [
       "account_type",
       "delegated_to",
+      "last_login",
       "mfa",
       "reviewer_decision",
       "risk",
@@ -330,7 +330,6 @@
     "read_cases_run": 5,
     "people_columns_in_clear": [
       "email",
-      "last_active",
       "name",
       "user"
     ],
@@ -339,6 +338,7 @@
     ],
     "other_text_in_clear": [
       "app",
+      "last_active",
       "premium_features_used",
       "status",
       "tier"

@@ -36,7 +36,7 @@ for (const n of readdirSync(PK).filter((x) => x !== 'fairbooks-core' && existsSy
         const cols = new Map(); for (const row of rows) for (const [h, v] of Object.entries(row)) { const s = String(v ?? '').trim(); if (s.length < 3 || /^-?[\d.,]+$/.test(s) || /^\d{4}-\d\d-\d\d/.test(s)) continue; if (!cols.has(h)) cols.set(h, []); cols.get(h).push(s); }
         for (const [h, vals] of cols) {
           const seen = vals.some((s) => json.includes(JSON.stringify(s).slice(1, -1)));
-          const person = PERSON.test(h) && !/(_date|_at|_on|_decision|_status|_days|_count|_type|_domain)$/i.test(h);
+          const person = PERSON.test(h) && !/(_date|_at|_on|_login|_active|_seen|_decision|_status|_days|_count|_type|_domain)$/i.test(h);
           if (person) (seen ? clear : absent).add(h); else if (seen) clearOther.add(h);
         }
       }

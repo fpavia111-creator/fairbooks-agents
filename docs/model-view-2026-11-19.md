@@ -6,7 +6,7 @@ Made by `node scripts/model-view.mjs`: every eval case that calls a read tool on
 
 | Agent | Read calls | People columns sent in clear | People columns not in the result (or masked) |
 |---|---|---|---|
-| fairbooks-access-review | 8 | assigned_reviewer, email, last_login, manager, name, owner, reviewer_name, user | - |
+| fairbooks-access-review | 8 | assigned_reviewer, email, manager, name, owner, reviewer_name, user | - |
 | fairbooks-audit-evidence | 0 | - | - |
 | fairbooks-automation-audit | 1 | - | - |
 | fairbooks-bank-reconciliation | 10 | - | - |
@@ -31,7 +31,7 @@ Made by `node scripts/model-view.mjs`: every eval case that calls a read tool on
 | fairbooks-process-evals | 0 | - | - |
 | fairbooks-refunds-and-chargebacks | 5 | customer | - |
 | fairbooks-rfi-and-submittals | 3 | - | - |
-| fairbooks-saas-seats | 5 | email, last_active, name, user | manager_email |
+| fairbooks-saas-seats | 5 | email, name, user | manager_email |
 | fairbooks-suitescript-inventory | 1 | - | - |
 | fairbooks-three-way-match | 8 | - | - |
 | fairbooks-vendor-tax-forms | 6 | address, email, legal_name, name | tin |
