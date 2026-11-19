@@ -44,7 +44,8 @@
     "release:check:offline": "node scripts/release-check.mjs --offline",
     "bench": "node scripts/bench.mjs",
     "evals": "npm run eval --workspaces --if-present",
-    "intl": "node scripts/intl-check.mjs"
+    "intl": "node scripts/intl-check.mjs",
+    "model-view": "node scripts/model-view.mjs"
   },
   "engines": {
     "node": ">=20"

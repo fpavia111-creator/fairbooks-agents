@@ -4,6 +4,21 @@ import { prepare, pickSurvivor } from './dedupe.js';
 export const FIELD_RULES = ['survivor_fill_blank', 'survivor', 'most_complete', 'longest', 'most_common', 'most_recent', 'never'];
 // Bank and payment fields are never filled or changed by a merge.
 const BANK = /(bank|iban|swift|bic|routing|aba|account ?(no|number)|acct|sort ?code|payment ?method|remit)/i;
+// Columns whose values are shown to the model only by their last four characters (final pass, 19 Nov 2026):
+// tax ids and bank or account numbers. The merged copy and the undo log on disk keep the real values.
+export const SENSITIVE = /(^|[^a-z])(tax ?id|taxid|tin|ein|ssn|vat|rfc|cnpj|cpf|abn|iban|account ?(no|number)|acct|routing|aba|sort ?code|card)([^a-z]|$)/i;
+export const maskTail = (v) => { const s = String(v ?? ''); const t = s.replace(/[^0-9A-Za-z]/g, ''); return !s.trim() ? s : t.length <= 4 ? '•••' : `•••${t.slice(-4)}`; };
+/** The preview as the model sees it: sensitive columns masked; everything else as computed. */
+export function maskPreview(p) {
+  const sens = (f) => SENSITIVE.test(String(f)) || BANK.test(String(f)) && !/method|remit|bank ?name/i.test(String(f));
+  const mv = (f, v) => (sens(f) ? maskTail(v) : v);
+  return { ...p,
+    fields: p.fields.map((x) => (sens(x.field) ? { ...x, survivor_value: mv(x.field, x.survivor_value), winner: mv(x.field, x.winner), values: x.values.map((v) => ({ ...v, value: mv(x.field, v.value) })), masked: true } : x)),
+    changes: p.changes.map((x) => ({ ...x, from: mv(x.field, x.from), to: mv(x.field, x.to) })),
+    conflicts: p.conflicts.map((x) => ({ ...x, values: x.values.map((v) => ({ ...v, value: mv(x.field, v.value) })), kept: mv(x.field, x.kept) })),
+    golden_record: Object.fromEntries(Object.entries(p.golden_record).map(([k, v]) => [k, mv(k, v)])),
+  };
+}
 const SYSTEM = /^(merged_into|internalid|id|externalid|entityid|vendorid|itemid|sku)$/i;
 
 /** Survivorship rules file (dupes-rules). Unknown keys fail, so typos are caught. */

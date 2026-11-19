@@ -2,7 +2,7 @@ import { defineManifest, toCsv, sha256, htmlPage, escapeHtml } from 'fairbooks-c
 import { readFileSync, existsSync, appendFileSync, writeFileSync, unlinkSync } from 'node:fs';
 import { basename, extname } from 'node:path';
 import { findDuplicates, proposalsCsv, proposalsHtml, applyMerge, DEFAULT_THRESHOLD } from './dedupe.js';
-import { mergePreview, RULES_SCHEMA, undoEntry, applyUndo } from './merge.js';
+import { mergePreview, maskPreview, RULES_SCHEMA, undoEntry, applyUndo } from './merge.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -67,8 +67,8 @@ export const manifest = defineManifest({
       inputSchema: { type: 'object', required: ['path', 'survivor', 'merge'], additionalProperties: false, properties: { path: common.path, survivor: str, merge: ids, kind: common.kind, id_column: str, rules: common.rules, out_dir: str, output: str } },
       handler: async (a, ctx) => {
         const c = copyPaths(a); const src = ctx.exists(c.rel) ? c.rel : a.path;
-        const p = mergePreview(ctx.records(src), { ...a, rules: loadRules(a, ctx) });
-        return { summary: `${p.changes.length} field(s) would change on ${a.survivor}; ${p.conflicts.length} conflict(s). Preview only.`, source: src, ...p };
+        const p = maskPreview(mergePreview(ctx.records(src), { ...a, rules: loadRules(a, ctx) }));
+        return { summary: `${p.changes.length} field(s) would change on ${a.survivor}; ${p.conflicts.length} conflict(s). Preview only; tax ids and bank or account numbers show their last four characters.`, source: src, ...p };
       },
     },
     {

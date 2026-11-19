@@ -1,0 +1,395 @@
+[
+  {
+    "agent": "fairbooks-access-review",
+    "read_cases_run": 8,
+    "people_columns_in_clear": [
+      "assigned_reviewer",
+      "email",
+      "last_login",
+      "manager",
+      "name",
+      "owner",
+      "reviewer_name",
+      "user"
+    ],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "account_type",
+      "delegated_to",
+      "mfa",
+      "reviewer_decision",
+      "risk",
+      "role",
+      "status",
+      "system",
+      "���[���A�h���X"
+    ]
+  },
+  {
+    "agent": "fairbooks-audit-evidence",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-automation-audit",
+    "read_cases_run": 1,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "error",
+      "flow",
+      "status"
+    ]
+  },
+  {
+    "agent": "fairbooks-bank-reconciliation",
+    "read_cases_run": 10,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "confidence",
+      "description",
+      "memo",
+      "reference",
+      "suggestion",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-board-pack",
+    "read_cases_run": 5,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "metric",
+      "period",
+      "source"
+    ]
+  },
+  {
+    "agent": "fairbooks-certificate-expiry",
+    "read_cases_run": 6,
+    "people_columns_in_clear": [
+      "holder",
+      "name",
+      "owner"
+    ],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "certificate_id",
+      "coverage",
+      "id",
+      "issuer",
+      "key_type",
+      "type",
+      "vendor"
+    ]
+  },
+  {
+    "agent": "fairbooks-config-drift",
+    "read_cases_run": 1,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "column",
+      "default",
+      "nullable",
+      "table",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-contract-clauses",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-cookie-consent",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-crm-hygiene",
+    "read_cases_run": 5,
+    "people_columns_in_clear": [
+      "email",
+      "name"
+    ],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "bounce",
+      "company",
+      "consent",
+      "consent_source",
+      "id",
+      "status",
+      "unsubscribed"
+    ]
+  },
+  {
+    "agent": "fairbooks-cycle-counts",
+    "read_cases_run": 7,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "counter",
+      "description",
+      "location",
+      "lot",
+      "ref",
+      "serial",
+      "sku",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-data-erasure-requests",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-docs-drift",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-email-domain-audit",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-erp-migration",
+    "read_cases_run": 11,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [
+      "customer",
+      "name"
+    ],
+    "other_text_in_clear": [
+      "amount",
+      "currency",
+      "date",
+      "externalid",
+      "status",
+      "subsidiary"
+    ]
+  },
+  {
+    "agent": "fairbooks-expense-policy",
+    "read_cases_run": 8,
+    "people_columns_in_clear": [
+      "employee"
+    ],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "category",
+      "currency",
+      "location",
+      "merchant",
+      "purpose",
+      "receipt",
+      "report_id"
+    ]
+  },
+  {
+    "agent": "fairbooks-grant-reporting",
+    "read_cases_run": 7,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "evidence",
+      "explanation",
+      "funder",
+      "line",
+      "metric",
+      "program",
+      "report_type",
+      "status"
+    ]
+  },
+  {
+    "agent": "fairbooks-master-data-duplicates",
+    "read_cases_run": 10,
+    "people_columns_in_clear": [
+      "address",
+      "email",
+      "phone"
+    ],
+    "people_columns_not_in_result": [
+      "taxid"
+    ],
+    "other_text_in_clear": [
+      "Código de proveedor",
+      "Proveedor",
+      "RFC",
+      "companyname",
+      "displayname",
+      "internalid",
+      "仕入先コード",
+      "仕入先名"
+    ]
+  },
+  {
+    "agent": "fairbooks-mcp-server-review",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-onboarding-checklists",
+    "read_cases_run": 6,
+    "people_columns_in_clear": [
+      "manager",
+      "name"
+    ],
+    "people_columns_not_in_result": [
+      "email"
+    ],
+    "other_text_in_clear": [
+      "note",
+      "role",
+      "status",
+      "task_id",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-open-source-licenses",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-outreach-email-gate",
+    "read_cases_run": 3,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-process-evals",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  },
+  {
+    "agent": "fairbooks-refunds-and-chargebacks",
+    "read_cases_run": 5,
+    "people_columns_in_clear": [
+      "customer"
+    ],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "network",
+      "order_id",
+      "reason",
+      "reason_code",
+      "request_id",
+      "status",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-rfi-and-submittals",
+    "read_cases_run": 3,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "ball_in_court",
+      "cost_impact",
+      "description",
+      "doc_id",
+      "question",
+      "references",
+      "schedule_impact",
+      "spec_section",
+      "status",
+      "subject",
+      "submittal_no",
+      "title",
+      "type"
+    ]
+  },
+  {
+    "agent": "fairbooks-saas-seats",
+    "read_cases_run": 5,
+    "people_columns_in_clear": [
+      "email",
+      "last_active",
+      "name",
+      "user"
+    ],
+    "people_columns_not_in_result": [
+      "manager_email"
+    ],
+    "other_text_in_clear": [
+      "app",
+      "premium_features_used",
+      "status",
+      "tier"
+    ]
+  },
+  {
+    "agent": "fairbooks-suitescript-inventory",
+    "read_cases_run": 1,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "file"
+    ]
+  },
+  {
+    "agent": "fairbooks-three-way-match",
+    "read_cases_run": 8,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": [
+      "invoice",
+      "item",
+      "po",
+      "receipt",
+      "vendor"
+    ]
+  },
+  {
+    "agent": "fairbooks-vendor-tax-forms",
+    "read_cases_run": 6,
+    "people_columns_in_clear": [
+      "address",
+      "email",
+      "legal_name",
+      "name"
+    ],
+    "people_columns_not_in_result": [
+      "tin"
+    ],
+    "other_text_in_clear": [
+      "entity_type",
+      "method",
+      "vendor_id",
+      "w8_type"
+    ]
+  },
+  {
+    "agent": "fairbooks-web-page-audit",
+    "read_cases_run": 0,
+    "people_columns_in_clear": [],
+    "people_columns_not_in_result": [],
+    "other_text_in_clear": []
+  }
+]
