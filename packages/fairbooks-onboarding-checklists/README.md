@@ -1,12 +1,12 @@
-# Fairbooks Onboarding Checklists (`fairbooks-onboarding-checklists`)
+# Fair-Agents Onboarding Checklists (`fairbooks-onboarding-checklists`)
 
 > Tracks onboarding checklists for new employees, contractors and customers, and drafts access requests once the prerequisites are done. Granting or removing access is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Onboarding Checklists a people export (`person_id, name, type, role, manager, start_date, end_date`), a checklist template as JSON (tasks per type, each with `kind`, `owner`, `due_offset_days` from the start date, and `requires` for tasks that must be done first) and a status export (`person_id, task_id, status, done_on, note`). It:
+Give Fair-Agents Onboarding Checklists a people export (`person_id, name, type, role, manager, start_date, end_date`), a checklist template as JSON (tasks per type, each with `kind`, `owner`, `due_offset_days` from the start date, and `requires` for tasks that must be done first) and a status export (`person_id, task_id, status, done_on, note`). It:
 - gives each task a due date and a state: done, overdue, due soon, waiting on another task, blocked, ready or open;
 - shows percent done and the next tasks per person, and flags people starting within `due_soon_days` (default 3) whose pre-start tasks are not done;
 - flags access marked granted before its prerequisites (for example, before the NDA or SOW), contractors with access but no end date, access still marked granted after an engagement ended, and status rows for tasks not in the template;
@@ -53,13 +53,13 @@ fairbooks-onboarding-checklists demo        # runs on the bundled fictional samp
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-onboarding-checklists -- npx -y fairbooks-onboarding-checklists@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-onboarding-checklists -- npx -y fairbooks-onboarding-checklists@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-onboarding-checklists": { "command": "npx", "args": ["-y", "fairbooks-onboarding-checklists@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-onboarding-checklists": { "command": "npx", "args": ["-y", "fairbooks-onboarding-checklists@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -77,9 +77,9 @@ claude mcp add fairbooks-onboarding-checklists -- npx -y fairbooks-onboarding-ch
 | `onboarding_draft_access_requests` | **ask (Auto-eligible)** | Write grant and removal drafts to `fairbooks-out/onboarding/access-requests` (not submitted) |
 | `onboarding_request_access_grant` | **ask · one-click** | After a named human approves, re-check prerequisites and record the grant for IT |
 | `onboarding_request_access_removal` | **ask · one-click** | After a named human approves, record the removal for IT |
-| `idp_grant_access` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never grants access. |
-| `idp_remove_access` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never removes access. |
-| `send_email` | **block** | Listed so agents see the refusal. Fairbooks Onboarding Checklists never sends. |
+| `idp_grant_access` | **block** | Listed so agents see the refusal. Fair-Agents Onboarding Checklists never grants access. |
+| `idp_remove_access` | **block** | Listed so agents see the refusal. Fair-Agents Onboarding Checklists never removes access. |
+| `send_email` | **block** | Listed so agents see the refusal. Fair-Agents Onboarding Checklists never sends. |
 
 Any other tool name is blocked. MCP hosts also get the prompt `run_onboarding`, which walks a model through onboarding and offboarding and stops for each human click. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -89,9 +89,9 @@ Any other tool name is blocked. MCP hosts also get the prompt `run_onboarding`, 
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `fairbooks-onboarding-checklists approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`fairbooks-onboarding-checklists kill`).
 
-`onboarding_draft_access_requests` and `onboarding_draft_offboarding` can go on Auto. Fairbooks core has no separate "grant access" category, so Fairbooks Onboarding Checklists files granting under `go_live` (an account going live) and removing under `revoke_access`: both stay **one-click even in Auto**, and `--auto` on them is refused. A grant is refused even after approval if a prerequisite is not done. Identity-provider writes and email stay **blocked**.
+`onboarding_draft_access_requests` and `onboarding_draft_offboarding` can go on Auto. Fair-Agents core has no separate "grant access" category, so Fair-Agents Onboarding Checklists files granting under `go_live` (an account going live) and removing under `revoke_access`: both stay **one-click even in Auto**, and `--auto` on them is refused. A grant is refused even after approval if a prerequisite is not done. Identity-provider writes and email stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

@@ -2,6 +2,10 @@
 
 Renamed from `lycurgus-of-licenses` on 18 Nov 2026 (tool names were `lycurgus_*`, now `licenses_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 (2026-11-15)
 
 - **More lockfiles:** `pnpm-lock.yaml` (v6–v9), `yarn.lock` (classic and Berry), Python (`poetry.lock`, `uv.lock`, `requirements.txt` with `*.dist-info/METADATA`) and Go (`go.mod`, `vendor/modules.txt` with license files under `vendor/`). New arguments `ecosystem`, `modules_dir`, `site_packages`; the lockfile is detected by default. SBOM purls and SARIF locations follow the ecosystem. The release request re-hashes whichever lockfile was checked.

@@ -1,12 +1,12 @@
-# Fairbooks MCP Server Review (`fairbooks-mcp-server-review`)
+# Fair-Agents MCP Server Review (`fairbooks-mcp-server-review`)
 
 > Review one MCP or Code Mode server's source, its saved tool definitions, or an MCP client config for risky patterns before you ship or install it. Never runs it.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks MCP Server Review is static and offline. It reads files you give it under `--root`; it never installs, starts or connects to the server.
+Fair-Agents MCP Server Review is static and offline. It reads files you give it under `--root`; it never installs, starts or connects to the server.
 
 **Server source** (JS/TS/Python, `package.json`, lockfile, `requirements.txt`, tool docs), with file and line:
 - shell execution, and exec with no visible allowlist; `eval` / `new Function` and Code Mode style execution without a sandbox; SQL built from templates; `pickle` / `yaml.load`;
@@ -14,7 +14,7 @@ Fairbooks MCP Server Review is static and offline. It reads files you give it un
 - prompt-injection text and invisible Unicode in tool descriptions and docs;
 - outbound requests, plain `http://`, TLS checks turned off, servers bound to `0.0.0.0`, `Access-Control-Allow-Origin: *`, file writes without a root check or approval step;
 - **data flows (taint-style, one file at a time):** a secret (key-like environment variable, the whole environment, or a credential file) → body or URL of a network call; incoming `Authorization` header → upstream call (token passthrough); tool input → exec/eval; tool input → file path; tool input → the URL of a network call (SSRF). Each finding shows the path, e.g. `line 5 apiKey = secret from the environment -> line 6 payload = ... -> line 9 sink: fetch`. Ordinary API-client code is left alone: a secret sent as an auth header, config such as `BASE_URL` or `PORT` from the environment, tool input placed after a fixed host or in a request body. Calls to guards such as `safePath(...)`/`inside(...)` and allowlist checks (`ALLOWLIST.includes(cmd)`) are respected;
-- **supply chain:** install scripts, unpinned (`*`, `latest`) and git/URL dependencies, dependencies with no lockfile, lockfile entries resolved outside the npm registry or without an integrity hash, unpinned Python requirements, and versions that match an **offline advisory list** (a small bundled snapshot plus any list you supply).
+- **supply chain:** install scripts, unpinned (`*`, `latest`) and git/URL dependencies, dependencies with no lockfile, lockfile entries resolved outside the npm registry or without an integrity hash, unpinned Python requirements, and versions that match an **offline advisory list you supply** (none is bundled).
 
 **Saved tool definitions** (the JSON of a `tools/list` result, which you capture yourself, for example with the MCP Inspector CLI): hidden instructions (`<IMPORTANT>`, "do not tell the user"), coercive wording, invisible Unicode and whitespace padding, credential-file lures, requests for chat history or file contents, **tool shadowing** (one server's text changing how another server's tool behaves, e.g. adding a BCC), name collisions across servers, look-alike (non-ASCII) names, free-form `command`/`code`/`sql` parameters, and `readOnlyHint: true` on tools named delete/send/run.
 
@@ -24,7 +24,7 @@ Fairbooks MCP Server Review is static and offline. It reads files you give it un
 
 **Reports:** `mcpreview-report.md` with a prioritised **Fix first** list (grouped by rule, with what to do), the data-flow paths, the tool diff and an OWASP MCP Top 10 view; `findings.json`; and `mcpreview.sarif` (SARIF 2.1.0 for GitHub code scanning and other SARIF viewers) with rule help, CWE and OWASP MCP tags, `security-severity`, content-based fingerprints, `codeFlows` for data flows and policy suppressions with their justification. The SARIF is deterministic (no timestamps). An optional `fail_on` gives a pass/fail result for CI. The report's hash is written to the audit log (`output_sha256`), so a signed audit log (`--signing-key`) also signs which report was produced.
 
-Its sibling **Argus** audits the setup already installed on a machine. Fairbooks MCP Server Review reviews one server before you ship or install it.
+Its sibling **Argus** audits the setup already installed on a machine. Fair-Agents MCP Server Review reviews one server before you ship or install it.
 
 ## Install
 
@@ -38,13 +38,13 @@ fairbooks-mcp-server-review demo        # runs on the bundled fictional sample d
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-mcp-server-review -- npx -y fairbooks-mcp-server-review@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-mcp-server-review -- npx -y fairbooks-mcp-server-review@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-mcp-server-review": { "command": "npx", "args": ["-y", "fairbooks-mcp-server-review@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-mcp-server-review": { "command": "npx", "args": ["-y", "fairbooks-mcp-server-review@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -59,7 +59,7 @@ claude mcp add fairbooks-mcp-server-review -- npx -y fairbooks-mcp-server-review
 | `mcpreview_pin_tools` | **allow** | Write `tool-pins.json` for reviewed tool definitions |
 | `mcpreview_check_pins` | **allow** | Compare a new `tools/list` with the pins (rug-pull check) |
 | `mcpreview_write_report` | **allow** | Write `mcpreview-report.md`, `findings.json`, `mcpreview.sarif` to `fairbooks-out/mcpreview` |
-| `mcpreview_run_server` | **block** | Listed so agents see the refusal. Fairbooks MCP Server Review never installs, starts or deploys code. |
+| `mcpreview_run_server` | **block** | Listed so agents see the refusal. Fair-Agents MCP Server Review never installs, starts or deploys code. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -90,7 +90,7 @@ fairbooks-mcp-server-review validate-config mcpreview-advisories my-advisories.j
 fairbooks-mcp-server-review validate-config mcpreview-tool-pins tool-pins.json
 ```
 
-The bundled snapshot (`src/data/advisories.json`, dated) lists a few public advisories for MCP-related npm packages (for example `mcp-remote` CVE-2025-6514). It is a short hand-picked list, not a vulnerability database; keep running your usual dependency audit.
+No advisory list ships with the package (since 0.2.1): a dated snapshot goes stale. Pass your own list with `advisories` (schema `mcpreview-advisories`, for example built from the GitHub Advisory Database or OSV for the packages you use). It is matched offline; it is not a vulnerability database, so keep running your usual dependency audit.
 
 ## Modes
 
@@ -100,7 +100,7 @@ The bundled snapshot (`src/data/advisories.json`, dated) lists a few public advi
 
 All tools are read or report, so Auto changes nothing here. Running or deploying the server stays **blocked** in every mode.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -190,8 +190,8 @@ Every rule maps to the [OWASP MCP Top 10](https://owasp.org/www-project-mcp-top-
 
 - Not a security certification or a guarantee a server is safe. It is static and pattern-based: obfuscated, minified or dynamic code can hide behaviour, and some findings will be false positives.
 - The data-flow check follows named variables within one file. It does not follow calls across functions or files, so it can miss flows and can flag inputs that are checked elsewhere.
-- It does not run the server, connect to it, call any model, or query vulnerability databases. The advisory list is a small offline snapshot plus what you supply.
-- Tool annotations are hints from the server; Fairbooks MCP Server Review checks them for contradictions but cannot verify behaviour.
+- It does not run the server, connect to it, call any model, or query vulnerability databases. The advisory list is only what you supply.
+- Tool annotations are hints from the server; Fair-Agents MCP Server Review checks them for contradictions but cannot verify behaviour.
 - `no_pattern_findings` means none of its patterns matched, not that the server was proven safe.
 - Not fully autonomous: anything risky waits for a named person.
 
