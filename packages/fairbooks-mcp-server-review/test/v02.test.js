@@ -98,11 +98,15 @@ test('supply chain: lockfile, registry, integrity, requirements and advisory lis
   const pinned = scanSource(server({ 'package.json': '{"dependencies":{"acme-mcp-helper":"1.3.0"}}', 'package-lock.json': '{"lockfileVersion":3,"packages":{"":{},"node_modules/acme-mcp-helper":{"version":"1.3.0","resolved":"https://registry.npmjs.org/acme-mcp-helper/-/acme-mcp-helper-1.3.0.tgz","integrity":"sha512-x"}}}' }), { advisories: fixAdv });
   assert.equal(pinned.findings, 0, JSON.stringify(pinned.items));
 });
-test('advisory ranges and the bundled snapshot (config check, offline)', () => {
+test('advisory ranges and a supplied public list (config check, offline); nothing is bundled', () => {
   assert.ok(inRange('0.1.10', '>=0.0.5 <0.1.16')); assert.ok(!inRange('0.1.16', '>=0.0.5 <0.1.16'));
   assert.ok(inRange('2025.3.28', '<2025.7.1')); assert.ok(inRange('1.2.4', '1.2.3 || 1.2.4')); assert.ok(!inRange('not-a-version', '*'));
   assert.equal(cmpVersion('1.0.0-beta', '1.0.0'), -1);
-  const b = bundledAdvisories();
+  assert.deepEqual(bundledAdvisories().advisories, [], 'no advisory snapshot ships since 0.2.1');
+  const b = { snapshot: '2026-11-15', advisories: [
+    { id: 'CVE-2025-6514', ecosystem: 'npm', package: 'mcp-remote', affected: '>=0.0.5 <0.1.16', fixed: '0.1.16', severity: 'high', summary: 'OS command injection.' },
+    { id: 'CVE-2025-53109', ecosystem: 'npm', package: '@modelcontextprotocol/server-filesystem', affected: '<0.6.4 || >=2025.0.0 <2025.7.1', fixed: '0.6.4 or 2025.7.1', severity: 'high', summary: 'Path checks.' },
+  ] };
   assert.deepEqual(validate(manifest.configSchemas['mcpreview-advisories'], b).errors, []);
   const bad = scanConfig({ mcpServers: { r: { command: 'npx', args: ['-y', 'mcp-remote@0.1.10', 'https://mcp.example.com/sse'] } } }, { advisories: b.advisories });
   assert.ok(bad.items.some((i) => i.id === 'NEM-CFG-ADVISORY' && /CVE-2025-6514/.test(i.title)));

@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-onboarding-checklists",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-onboarding-checklists",
   "description": "Fairbooks Onboarding Checklists: an MCP agent that tracks onboarding and offboarding checklists for employees, contractors or customers (documents, NDA, W-9, equipment, access, training) from CSV and a JSON template with per-role templates, gives each owner a prioritised action list, checks day-one readiness, and drafts access requests and removals. Granting or revoking access is always one human click.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-onboarding-checklists.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
