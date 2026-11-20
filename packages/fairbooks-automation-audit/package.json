@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-automation-audit",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-automation-audit",
   "description": "Fairbooks Automation Audit: an MCP agent that audits workflow automation exports (n8n, Zapier, Make, Power Automate, Workato) for broken and risky flows: no trigger, disconnected or disabled steps, failing runs, hardcoded secrets (known formats and entropy, never shown), open webhooks, destructive or money-moving steps, and credentials shared across flows. Enabling or changing a production flow is always one human click.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-automation-audit.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
