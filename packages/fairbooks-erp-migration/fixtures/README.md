@@ -9,4 +9,4 @@ Fictional sample books. Company names are made up and marked "(fictional)". No c
 | `bad-invoices.csv` | Export with deliberate field-rule problems (duplicate key, bad date, negative amount, unknown currency) |
 | `runs/trial-load-1-findings.json`, `runs/trial-load-2-findings.json` | `findings.json` from two earlier fictional trial loads, for `migration_compare_runs` |
 
-The FX rate in `migration-rules.json` is made up for the sample. Fairbooks ERP Migration never looks rates up.
+The FX rate in `migration-rules.json` is made up for the sample. Fair-Agents ERP Migration never looks rates up.

@@ -3,6 +3,10 @@
 Renamed from `polyhymnia-of-grants` on 18 Nov 2026 (tool names were `polyhymnia_*`, now `grants_*`).
 
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - Each evidence path is checked once per run; `grants_review` and `grants_template_check` on 10,000 rows went from about 9 to 12 s on Windows to about 1.1 s (final-pass bench).

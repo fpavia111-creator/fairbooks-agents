@@ -3,6 +3,10 @@
 Renamed from `praxidike-of-expenses` on 18 Nov 2026 (tool names were `praxidike_*`, now `expenses_*`).
 
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - Each receipt file is checked and read once per run instead of once per expense line; a 10,000-line file took about 40 s on Windows and now takes about 1.4 s (final-pass bench).

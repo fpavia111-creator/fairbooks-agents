@@ -1,12 +1,12 @@
-# Fairbooks Expense Policy (`fairbooks-expense-policy`)
+# Fair-Agents Expense Policy (`fairbooks-expense-policy`)
 
 > Compares expense reports and receipts to your written policy, cites the policy section for every finding and recommends approve or reject. Reimbursing is one human click; paying is blocked.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Expense Policy an expense export (`report_id, line_id, employee, date, submitted_on, category, merchant, amount, currency, receipt, purpose, attendees, nights, miles, preapproved_by`), your policy written as JSON rules with a `source` naming the policy document and its sections, and optionally a folder of receipts. For each line it checks:
+Give Fair-Agents Expense Policy an expense export (`report_id, line_id, employee, date, submitted_on, category, merchant, amount, currency, receipt, purpose, attendees, nights, miles, preapproved_by`), your policy written as JSON rules with a `source` naming the policy document and its sections, and optionally a folder of receipts. For each line it checks:
 - receipts required over your threshold, receipt files that are missing, and text receipts whose total or date does not match the line;
 - limits per item, per person (meals, with attendees required), per night (lodging) or per day, per-diem rates by location and date (exact location first, then a `"*"` row), and mileage against your rate or a dated rate table (`mileage_rates`);
 - disallowed and unknown categories, missing business purpose, pre-approval over your amount, late submission, other currencies;
@@ -43,7 +43,7 @@ Where a layout says "checked", its column names were compared with the vendor's 
 
 ### Receipts from other markets
 
-Receipt text in yen and won (no decimals), yuan, reais and euros is read: totals under `合計`, `合计`, `합계`, `Total TTC`, `Zu zahlen`, `Total a pagar` or `Totale`; subtotal, tax and tip labels in nine languages; dates such as `2026年11月14日`, `令和8年11月14日`, `2026년 11월 14일` and `14 novembre 2026`; `03/11/2026` read day first when the receipt is not in US or Canadian dollars. Cash handed over (`お預り`) and item counts (`3点`) are never taken as the total. Fairbooks Expense Policy still does no OCR and says nothing about any country's tax rules.
+Receipt text in yen and won (no decimals), yuan, reais and euros is read: totals under `合計`, `合计`, `합계`, `Total TTC`, `Zu zahlen`, `Total a pagar` or `Totale`; subtotal, tax and tip labels in nine languages; dates such as `2026年11月14日`, `令和8年11月14日`, `2026년 11월 14일` and `14 novembre 2026`; `03/11/2026` read day first when the receipt is not in US or Canadian dollars. Cash handed over (`お預り`) and item counts (`3点`) are never taken as the total. Fair-Agents Expense Policy still does no OCR and says nothing about any country's tax rules.
 
 ## Install
 
@@ -57,13 +57,13 @@ fairbooks-expense-policy demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-expense-policy -- npx -y fairbooks-expense-policy@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-expense-policy -- npx -y fairbooks-expense-policy@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-expense-policy": { "command": "npx", "args": ["-y", "fairbooks-expense-policy@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-expense-policy": { "command": "npx", "args": ["-y", "fairbooks-expense-policy@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -80,8 +80,8 @@ claude mcp add fairbooks-expense-policy -- npx -y fairbooks-expense-policy@0.2.0
 | `expenses_write_evidence_pack` | **allow** | Write `evidence-pack.html`, `audit-queue.csv` and `evidence-manifest.json` (hashed) |
 | `expenses_stage_reimbursement` | **ask (Auto-eligible)** | Pre-stage `staged-reimbursements.csv` + `batch.json` (nothing paid) |
 | `expenses_request_reimbursement` | **ask · one-click** | After a named human approves, record the batch (bound to its hash) for whoever pays |
-| `pay_reimbursement` | **block** | Listed so agents see the refusal. Fairbooks Expense Policy never pays. |
-| `ledger_post_expense` | **block** | Listed so agents see the refusal. Fairbooks Expense Policy never posts to a ledger. |
+| `pay_reimbursement` | **block** | Listed so agents see the refusal. Fair-Agents Expense Policy never pays. |
+| `ledger_post_expense` | **block** | Listed so agents see the refusal. Fair-Agents Expense Policy never posts to a ledger. |
 
 Any other tool name is blocked. MCP hosts also get the prompt `review_expense_reports`, which walks a model through the whole review and stops for the human click. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -93,7 +93,7 @@ Any other tool name is blocked. MCP hosts also get the prompt `review_expense_re
 
 `expenses_stage_reimbursement` can go on Auto, so Auto only pre-stages. Reimbursing is `move_money`: it stays **one-click even in Auto**, and `--auto expenses_request_reimbursement` is refused. The approval is tied to the batch hash and the staged CSV is re-hashed first. Paying and posting stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -112,7 +112,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 
 - Not fraud detection. A possible duplicate or a high review score is a question for a person, not a finding of wrongdoing.
 - Not OCR. Receipt reading works on text and recognises common layouts; an unusual receipt may give no total or the wrong one, so a person checks.
-- Per-diem and mileage rates are the ones you write into the policy. Fairbooks Expense Policy ships no official rate tables.
+- Per-diem and mileage rates are the ones you write into the policy. Fair-Agents Expense Policy ships no official rate tables.
 - It applies the rules you write down. It does not read your policy document for you, and it is not tax or legal advice.
 - Not an expense platform or card program. It reads exports and receipts you give it and pays no one.
 - Not fully autonomous: anything risky waits for a named person.
