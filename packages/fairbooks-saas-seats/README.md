@@ -1,12 +1,12 @@
-# Fairbooks SaaS Seats (`fairbooks-saas-seats`)
+# Fair-Agents SaaS Seats (`fairbooks-saas-seats`)
 
 > Find unused, idle, duplicate and over-tiered SaaS seats (AI tools included) and estimate the saving. Revoking is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks SaaS Seats a seat export (`app, user, email, tier, monthly_cost, last_active, premium_features_used, status`; column names matched loosely) and, optionally, an HR roster (`email, status`). It flags:
+Give Fair-Agents SaaS Seats a seat export (`app, user, email, tier, monthly_cost, last_active, premium_features_used, status`; column names matched loosely) and, optionally, an HR roster (`email, status`). It flags:
 - seats never used, or idle longer than `idle_days` (default 60);
 - duplicate seats for the same person in the same app;
 - leavers (terminated in HR) and people missing from the roster;
@@ -14,7 +14,7 @@ Give Fairbooks SaaS Seats a seat export (`app, user, email, tier, monthly_cost, 
 
 Each seat gets a suggested action and an estimated monthly saving (a downgrade saves `downgrade_ratio` of the cost, default 0.5); seats with no cost are counted separately, never guessed. It writes a review sheet with blank reviewer columns.
 
-**Renewal-aware savings.** Savings on an annual contract only land at renewal. Give Fairbooks SaaS Seats contract terms per app (in a `seats-policy.json`, or a contracts CSV with `app, billing, renewal_date, notice_days, min_seats, owner`) and it adds:
+**Renewal-aware savings.** Savings on an annual contract only land at renewal. Give Fair-Agents SaaS Seats contract terms per app (in a `seats-policy.json`, or a contracts CSV with `app, billing, renewal_date, notice_days, min_seats, owner`) and it adds:
 - an **act-by date** (renewal date minus notice days) and a prioritised **Act first** list, soonest deadline first;
 - `est_saving_next_12m`: the saving over the next 12 months, pro-rated by day from the renewal date (monthly billing counts from `as_of`; a passed notice window moves the saving to the following renewal and flags `notice_window_passed`);
 - contract minimums (`min_seats`): removals below the minimum are flagged `contract_minimum_N` and not counted as savings; and a recommended seat count to true-down to at renewal;
@@ -64,13 +64,13 @@ fairbooks-saas-seats demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-saas-seats -- npx -y fairbooks-saas-seats@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-saas-seats -- npx -y fairbooks-saas-seats@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-saas-seats": { "command": "npx", "args": ["-y", "fairbooks-saas-seats@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-saas-seats": { "command": "npx", "args": ["-y", "fairbooks-saas-seats@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -116,7 +116,7 @@ The file is checked against a JSON Schema before use; a typo fails with a JSON-p
 
 `seats_request_downgrade` can go on Auto (`--mode auto --auto seats_request_downgrade`). Revoking a seat is `revoke_access`: it stays **one-click even in Auto**, and `--auto seats_request_revoke` is refused.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -134,7 +134,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 
 - Not a SaaS management platform. It connects to no app and changes no seat; an admin does that.
 - Savings are estimates from your cost column. Renewal timing uses only the terms you give it; true-up clauses, tiered pricing, partial-term credits and price changes at renewal are not modelled. Without terms, savings are counted from `as_of`.
-- Confirmation drafts are files for a person to review and send. Fairbooks SaaS Seats has no email or chat connection and sends nothing.
+- Confirmation drafts are files for a person to review and send. Fair-Agents SaaS Seats has no email or chat connection and sends nothing.
 - No live SaaS admin connectors yet (planned once the shared connector layer exists); it reads exports only.
 - `last_active` is only as good as the export it came from.
 - Not fully autonomous: anything risky waits for a named person.

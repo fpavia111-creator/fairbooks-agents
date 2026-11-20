@@ -1,12 +1,12 @@
-# Fairbooks RFI and Submittals (`fairbooks-rfi-and-submittals`)
+# Fair-Agents RFI and Submittals (`fairbooks-rfi-and-submittals`)
 
 > Reviews a construction RFI and submittal log against your drawing and spec index, and drafts RFIs that cite only the documents you provide. Sending to the architect or GC is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks RFI and Submittals your document index (`doc_id, type, title, revision, issued, status, file`, where `file` is an optional text extract of the sheet notes or spec section), your RFI log and, optionally, your submittal log. It flags:
+Give Fair-Agents RFI and Submittals your document index (`doc_id, type, title, revision, issued, status, file`, where `file` is an optional text extract of the sheet notes or spec section), your RFI log and, optionally, your submittal log. It flags:
 - **RFIs**: overdue responses (with days overdue and ball in court), no due date, no references, references not in the index, references to a superseded revision, unknown revisions, cost or schedule impact not stated, and possible duplicate questions;
 - **submittals**: not submitted by the required date, with the reviewer past `review_days` (default 14), returned for revise-and-resubmit, and spec sections not in the index.
 
@@ -58,13 +58,13 @@ fairbooks-rfi-and-submittals demo        # runs on the bundled fictional sample 
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-rfi-and-submittals -- npx -y fairbooks-rfi-and-submittals@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-rfi-and-submittals -- npx -y fairbooks-rfi-and-submittals@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-rfi-and-submittals": { "command": "npx", "args": ["-y", "fairbooks-rfi-and-submittals@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-rfi-and-submittals": { "command": "npx", "args": ["-y", "fairbooks-rfi-and-submittals@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -81,8 +81,8 @@ claude mcp add fairbooks-rfi-and-submittals -- npx -y fairbooks-rfi-and-submitta
 | `rfis_draft_rfi` | **ask (Auto-eligible)** | Write `drafts/RFI-<no>.md` with file:line citations and open markers (not sent) |
 | `rfis_draft_transmittal` | **ask (Auto-eligible)** | Write `drafts/TR-<no>.md` listing only indexed documents on their current revisions (not sent) |
 | `rfis_request_send` | **ask · one-click** | After a named human approves, record the RFI or transmittal draft (bound to its hash and recipient) for whoever sends |
-| `send_email` | **block** | Listed so agents see the refusal. Fairbooks RFI and Submittals never sends. |
-| `project_portal_submit` | **block** | Listed so agents see the refusal. Fairbooks RFI and Submittals never submits to a project portal. |
+| `send_email` | **block** | Listed so agents see the refusal. Fair-Agents RFI and Submittals never sends. |
+| `project_portal_submit` | **block** | Listed so agents see the refusal. Fair-Agents RFI and Submittals never submits to a project portal. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -98,7 +98,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `rfis_draft_rfi` and `rfis_draft_transmittal` can go on Auto, so Auto only pre-stages. Sending an RFI is a `binding_send`: it stays **one-click even in Auto**, and `--auto rfis_request_send` is refused. Email and project-portal submission stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

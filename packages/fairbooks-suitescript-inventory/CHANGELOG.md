@@ -2,6 +2,10 @@
 
 Renamed from `epimetheus-of-scripts` on 18 Nov 2026 (tool names were `epimetheus_*`, now `scripts_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 — 2026-11-15
 
 Requires `fairbooks-core` ^0.2.0.
