@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-mcp-server-review",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-mcp-server-review",
   "description": "Fairbooks MCP Server Review: an MCP agent that reviews one MCP or Code Mode server folder, its saved tool definitions, or an MCP client config for risky patterns: shell exec, eval, source-to-sink data flows, token passthrough, tool poisoning and shadowing, rug pulls against pinned definitions, inline secrets, auto-approved tools, missing lockfiles and offline advisory matches. Writes Markdown, JSON and SARIF. Static, offline and pattern-based.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-mcp-server-review.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",

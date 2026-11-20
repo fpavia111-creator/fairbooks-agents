@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-master-data-duplicates",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-master-data-duplicates",
   "description": "Fairbooks Master Data Duplicates: a domain-specific MCP agent that finds likely duplicate vendors or items in master-data exports (CSV/JSON) with explainable match signals, previews field-level merge winners, and applies one approved merge at a time to a copy of the file with an undo log. Never edits your ERP.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-master-data-duplicates.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
