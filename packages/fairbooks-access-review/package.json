@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-access-review",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-access-review",
   "description": "Fairbooks Access Review: a domain-specific MCP agent that reads access-list exports for people, AI agents and service accounts, flags leavers, stale, privileged, ownerless and unrotated accounts and segregation-of-duties conflicts, writes a recertification sheet with reviewers and due dates, tracks the campaign and writes an evidence pack. Never revokes access by itself.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-access-review.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",

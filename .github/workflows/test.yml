@@ -1,6 +1,6 @@
 name: test
 on:
-  push: { branches: [main] }
+  push: { branches: [main, master] }
   pull_request:
 permissions:
   contents: read
@@ -27,8 +27,12 @@ jobs:
         run: npm run hostile
       - name: Pack contents stay clean
         shell: bash
+        # The file list is piped to node on stdin: no /tmp path, which Git Bash and node read
+        # differently on Windows (/tmp vs C:\tmp), the cause of the 0.2.0 Windows failure.
         run: |
-          for p in packages/*/; do (cd "$p" && npm pack --dry-run --json > /tmp/pack.json && node -e "
-            const f=require('/tmp/pack.json')[0].files.map(x=>x.path);
+          for p in packages/*/; do (cd "$p" && npm pack --dry-run --json --ignore-scripts | PKG="$p" node -e "
+            let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{
+            const f=JSON.parse(s)[0].files.map(x=>x.path.split('\\\\').join('/'));
             const bad=f.filter(x=>/(^|\/)(node_modules|\.fairbooks|fairbooks-out)\/|\.npmrc$|\.tgz$/.test(x));
-            if(bad.length){console.error('$p', bad);process.exit(1)}") || exit 1; done
+            if(bad.length){console.error(process.env.PKG, bad);process.exit(1)}
+            console.log(process.env.PKG, f.length, 'files ok')})") || exit 1; done

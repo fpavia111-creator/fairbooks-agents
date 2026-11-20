@@ -1,7 +1,7 @@
 {
   "name": "fairbooks-agents",
   "private": true,
-  "description": "Fairbooks Machine domain agents monorepo.",
+  "description": "Fair-Agents domain agents monorepo.",
   "license": "MIT",
   "workspaces": [
     "packages/fairbooks-core",
