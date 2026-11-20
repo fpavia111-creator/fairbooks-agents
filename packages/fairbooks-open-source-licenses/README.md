@@ -1,12 +1,12 @@
-# Fairbooks Open Source Licenses (`fairbooks-open-source-licenses`)
+# Fair-Agents Open Source Licenses (`fairbooks-open-source-licenses`)
 
 > Applies your written license policy to an npm, pnpm, yarn, Python or Go project's dependencies, writes a report, SBOM, SARIF and a third-party notices draft, and fails the check without changing files. Publishing a release is one human click. Helps you apply your policy; not legal advice.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Point Fairbooks Open Source Licenses at a project and your license policy (a small JSON file: allow, review and deny lists with `*` patterns, what to do with unknown and proprietary licenses, whether dev dependencies count, and exceptions with an approver and an expiry date). It reads:
+Point Fair-Agents Open Source Licenses at a project and your license policy (a small JSON file: allow, review and deny lists with `*` patterns, what to do with unknown and proprietary licenses, whether dev dependencies count, and exceptions with an approver and an expiry date). It reads:
 
 | Project | Lockfile | Licenses come from |
 |---|---|---|
@@ -16,12 +16,12 @@ Point Fairbooks Open Source Licenses at a project and your license policy (a sma
 | Python | `poetry.lock`, `uv.lock` or `requirements.txt` | `*.dist-info/METADATA` in site-packages (`License-Expression`, `License`, then trove classifiers) |
 | Go | `go.mod`, or `vendor/modules.txt` | license files under `vendor/` (Go modules carry no license metadata) |
 
-pnpm, yarn, Python and Go lockfiles do not record licenses, so the packages have to be installed (or vendored) for Fairbooks Open Source Licenses to read them; a package it cannot read is `unknown`, never allowed. For every dependency it reports:
+pnpm, yarn, Python and Go lockfiles do not record licenses, so the packages have to be installed (or vendored) for Fair-Agents Open Source Licenses to read them; a package it cannot read is `unknown`, never allowed. For every dependency it reports:
 - the declared license, read as an **SPDX expression** (`OR` takes the best option, `AND` the strictest, `WITH` exceptions only match entries that name them), with common spellings like "Apache 2.0" normalised and flagged;
 - a decision, **allow**, **review**, **unknown** or **deny**, with the policy section it comes from;
 - exceptions applied, expired, missing an approver, expiring within 30 days or left over for a package that is gone; packages with no license, `UNLICENSED` or `SEE LICENSE IN` a custom file; lockfile and installed package disagreeing; your own project missing a license field or LICENSE file. Workspace links, editable installs and locally replaced Go modules are skipped.
 
-**License texts.** When a package declares no license (or points at a custom file), Fairbooks Open Source Licenses reads its license file and compares it with standard texts: MIT, ISC, 0BSD, BSD-2-Clause, BSD-3-Clause and the Unlicense word by word; Apache-2.0 and MPL-2.0 against a fingerprint of the official text; the GPL family and CC-BY-4.0 by title only.
+**License texts.** When a package declares no license (or points at a custom file), Fair-Agents Open Source Licenses reads its license file and compares it with standard texts: MIT, ISC, 0BSD, BSD-2-Clause, BSD-3-Clause and the Unlicense word by word; Apache-2.0 and MPL-2.0 against a fingerprint of the official text; the GPL family and CC-BY-4.0 by title only.
 - A **close match** (nearly all of the standard text, and almost nothing else) is used as the license and flagged `license_from_text`.
 - A **low-confidence match** (changed or extra wording such as an added restriction, a truncated file, or a title-only match) is **never allowed**: it goes to review, or stays denied if your policy denies that license (`license_text_low_confidence`).
 - No match stays `unknown`.
@@ -45,13 +45,13 @@ fairbooks-open-source-licenses demo        # runs on the bundled fictional sampl
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-open-source-licenses -- npx -y fairbooks-open-source-licenses@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-open-source-licenses -- npx -y fairbooks-open-source-licenses@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-open-source-licenses": { "command": "npx", "args": ["-y", "fairbooks-open-source-licenses@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-open-source-licenses": { "command": "npx", "args": ["-y", "fairbooks-open-source-licenses@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -66,8 +66,8 @@ claude mcp add fairbooks-open-source-licenses -- npx -y fairbooks-open-source-li
 | `licenses_diff_sbom` | **allow** | Compare an earlier CycloneDX SBOM with the project now |
 | `licenses_draft_exceptions` | **ask (Auto-eligible)** | Write `exceptions-proposed.json` (unsigned stubs) and `review-list.md`; policy and project untouched |
 | `licenses_request_release` | **ask · one-click** | After a named human approves, record the release (bound to the check summary hash; lockfile and policy re-hashed). Refused when the check failed |
-| `write_lockfile` | **block** | Listed so agents see the refusal. Fairbooks Open Source Licenses never changes project files. |
-| `npm_publish` | **block** | Listed so agents see the refusal. Fairbooks Open Source Licenses never publishes. |
+| `write_lockfile` | **block** | Listed so agents see the refusal. Fair-Agents Open Source Licenses never changes project files. |
+| `npm_publish` | **block** | Listed so agents see the refusal. Fair-Agents Open Source Licenses never publishes. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -90,13 +90,13 @@ The check and report can run on every push, and `licenses_draft_exceptions` can 
 ### In CI
 
 ```bash
-npx -y fairbooks-open-source-licenses@0.2.0 check --project . --policy license-policy.json
+npx -y fairbooks-open-source-licenses@0.2.1 check --project . --policy license-policy.json
 # other lockfiles are detected; flags: --ecosystem pnpm|yarn|python|go, --modules-dir, --site-packages, --include-dev
 ```
 
 Prints the summary and exits `1` when the check fails (`0` otherwise). It changes no files. Upload `fairbooks-out/licenses/results.sarif` from `licenses_write_report` to show findings in code scanning.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -116,7 +116,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 - Text matching knows a small set of standard texts (listed above). Anything else is `unknown`. The GPL family is recognised by title only, and a license text cannot say "only" or "or later", so those matches are always low confidence. A close match says the file reads like the standard text; it does not say what the license allows.
 - The notices file is a draft. It does not decide what any license requires, and `[TO ADD]` entries are not filled in for you.
 - npm, pnpm, yarn, Python (Poetry, uv, requirements.txt) and Go. No Maven, Gradle, Cargo, NuGet or Composer. `requirements.txt` has no dev groups and only lists what you pinned; Go has no dev dependencies in `go.mod`. The pnpm and yarn readers cover the usual lockfile shapes, not every setting.
-- For pnpm, yarn, Python and Go the packages must be installed or vendored locally; Fairbooks Open Source Licenses never downloads anything.
+- For pnpm, yarn, Python and Go the packages must be installed or vendored locally; Fair-Agents Open Source Licenses never downloads anything.
 - Not a replacement for a full software-composition-analysis product, and not fully autonomous: anything risky waits for a named person.
 
 ## Data

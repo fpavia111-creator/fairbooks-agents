@@ -2,6 +2,10 @@
 
 Renamed from `agon-of-evals` on 18 Nov 2026 (tool names were `agon_*`, now `evals_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 (2026-11-15)
 
 ### Added

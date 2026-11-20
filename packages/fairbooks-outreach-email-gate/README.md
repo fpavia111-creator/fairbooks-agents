@@ -1,12 +1,12 @@
-# Fairbooks Outreach Email Gate (`fairbooks-outreach-email-gate`)
+# Fair-Agents Outreach Email Gate (`fairbooks-outreach-email-gate`)
 
 > A draft-only gate in front of outreach email. Checks every draft; never sends. Releasing a batch is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks Outreach Email Gate checks outreach drafts (CSV/JSON: `to, subject, body, send_at`, optional `time_zone`) before a person sends them from their own mail tool. A draft is **held** if any check fails:
+Fair-Agents Outreach Email Gate checks outreach drafts (CSV/JSON: `to, subject, body, send_at`, optional `time_zone`) before a person sends them from their own mail tool. A draft is **held** if any check fails:
 - the address or its domain is on your suppression list, or it is a duplicate in the batch;
 - the subject is empty or 30 characters or more, or starts with a fake `RE:`/`FWD:` on a first email;
 - the body is empty or 100 words or more;
@@ -75,7 +75,7 @@ claude mcp add fairbooks-outreach-email-gate -- npx -y fairbooks-outreach-email-
 | `outreach_add_suppression` | **ask (Auto-eligible)** | Add an opt-out to the suppression list (adds only, never removes) |
 | `outreach_import_suppression` | **ask (Auto-eligible)** | Import opt-outs and bounces from a Mailchimp, HubSpot or Resend export (adds only) |
 | `outreach_release_batch` | **ask · one-click** | Re-check and write `release.json` for a person to send; sends nothing |
-| `outreach_send_email` | **block** | Listed so agents see the refusal. Fairbooks Outreach Email Gate never sends email. |
+| `outreach_send_email` | **block** | Listed so agents see the refusal. Fair-Agents Outreach Email Gate never sends email. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -91,7 +91,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 Only `outreach_add_suppression` and `outreach_import_suppression` can go on Auto (`--mode auto --auto outreach_add_suppression,outreach_import_suppression`), so opt-outs are honoured without waiting. Releasing a batch is `binding_send`: it stays **one-click even in Auto**, and sending stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -108,7 +108,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 - Not an email sender, ESP or CRM. It has no mail credentials and sends nothing.
 - Not legal advice, and passing the checks does not make a campaign compliant with CAN-SPAM, GDPR, CASL or any other law. It checks the fields and rules listed above.
 - It does not verify that addresses exist or that you have consent to contact them.
-- The spam-phrase list is a short built-in list of common triggers, not a spam filter score; it does not predict inbox placement. Link checks look only at the URLs in the text; Fairbooks Outreach Email Gate does not fetch them.
+- The spam-phrase list is a short built-in list of common triggers, not a spam filter score; it does not predict inbox placement. Link checks look only at the URLs in the text; Fair-Agents Outreach Email Gate does not fetch them.
 - No live ESP connection: suppression import works on export files you download.
 - Not fully autonomous: anything risky waits for a named person.
 
