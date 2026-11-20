@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.fpavia111-creator/fairbooks-email-domain-audit",
-  "title": "Fairbooks Email Domain Audit",
+  "title": "Fair-Agents Email Domain Audit",
   "description": "An MCP agent that audits a sending domain's SPF, DKIM, DMARC, BIMI, MX, MTA-STS and TLS-RPT…",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/fpavia111-creator/fairbooks-agents",
     "source": "github",
     "subfolder": "packages/fairbooks-email-domain-audit"
   },
-  "websiteUrl": "https://mythosmachines.com/",
+  "websiteUrl": "https://fair-agents.com/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fairbooks-email-domain-audit",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },

@@ -96,7 +96,7 @@ test('ci command: exit 1 on drift, 0 on this package, 2 on bad usage', () => {
   for (const f of ['README.md', 'CHANGELOG.md', 'package.json']) cpSync(join(pkgDir, f), join(self, 'fairbooks-docs-drift', f));
   writeFileSync(join(self, 'tools.json'), JSON.stringify(ownTools()));
   const ok = spawnSync(process.execPath, [bin, 'ci', '--root', self, '--state-dir', state, '--pack', 'fairbooks-docs-drift', '--tools', 'tools.json', '--fail-on', 'any', '--require-changelog'], { encoding: 'utf8' });
-  assert.equal(ok.status, 0, ok.stdout + ok.stderr); assert.match(ok.stdout, /^PASS: fairbooks-docs-drift@0\.2\.0: 0 drift/);
+  assert.equal(ok.status, 0, ok.stdout + ok.stderr); assert.match(ok.stdout, /^PASS: fairbooks-docs-drift@0\.2\.1: 0 drift/);
 });
 
 test('GitHub Action: the composite step fails on drift, passes on this package, and produces SARIF', { skip: process.platform === 'win32' && 'needs bash' }, () => {
