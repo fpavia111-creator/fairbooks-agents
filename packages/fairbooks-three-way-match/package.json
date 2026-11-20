@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-three-way-match",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-three-way-match",
   "description": "Fairbooks Three-Way Match: an MCP agent that investigates accounts-payable three-way-match exceptions (PO, receipt, invoice) from CSV/JSON exports, including partial receipts, per-vendor tolerances and near-duplicate invoices, and writes a worklist, PO status (GRNI estimate) and an HTML report. Clearing an invoice for posting is always one human click and only records a request; it never posts to an ERP or pays.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-three-way-match.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
