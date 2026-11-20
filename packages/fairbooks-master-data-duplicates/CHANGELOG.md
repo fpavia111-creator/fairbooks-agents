@@ -3,6 +3,10 @@
 Renamed from `augeas-of-masters` on 18 Nov 2026 (tool names were `augeas_*`, now `dupes_*`).
 
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - `dupes_merge_preview` shows tax ids and bank or account numbers to the model by their last four characters only; the merged copy and the undo log keep the real values.

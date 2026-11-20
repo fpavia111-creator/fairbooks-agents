@@ -2,6 +2,10 @@
 
 Renamed from `nemesis-of-servers` on 18 Nov 2026 (tool names were `nemesis_*`, now `mcpreview_*`).
 
+## 0.2.1
+
+- **No advisory snapshot is bundled any more (changed behaviour).** `src/data/advisories.json` (dated 2026-11-15) is removed: a dated list goes stale. `NEM-ADVISORY` / `NEM-CFG-ADVISORY` findings come only from the list you pass with `advisories` (or a policy's `advisories`). `advisory_snapshot` in the JSON report is the date in your list, or null.
+
 ## 0.2.0 (2026-11-15)
 
 ### Added

@@ -1,22 +1,22 @@
-# Fairbooks Grant Reporting (`fairbooks-grant-reporting`)
+# Fair-Agents Grant Reporting (`fairbooks-grant-reporting`)
 
 > Grant report prep from CSV exports: deadlines, budget pace, outcomes and evidence mapped into a draft packet with every gap marked. Submitting is a binding send: one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Grant Reporting your grants (`grant_id, funder, program, award_amount, period_start, period_end, report_due, report_type, status`), budget lines (`grant_id, line, budgeted, spent`) and outcomes (`grant_id, metric, target, actual, evidence`; evidence paths are relative to the outcomes file). It:
+Give Fair-Agents Grant Reporting your grants (`grant_id, funder, program, award_amount, period_start, period_end, report_due, report_type, status`), budget lines (`grant_id, line, budgeted, spent`) and outcomes (`grant_id, metric, target, actual, evidence`; evidence paths are relative to the outcomes file). It:
 - lists report deadlines: overdue, due soon (≤ 30 days), upcoming, later and submitted;
 - checks each budget line for overspend, and for spending ahead of or behind the share of the grant period that has passed (`pace_tolerance`, default 0.25); flags budget totals that differ from the award;
 - checks each outcome for a missing actual, a result below target, and evidence that is missing or not found;
 - computes **budget-vs-actual variance by line** (`grants_variance`): against the full budget for final reports or once the period has ended, otherwise against the share expected by now. A line whose variance is more than `variance_pct` (default 10%) and at least `variance_amount` (default 0) gets an `[EXPLAIN VARIANCE — …]` marker; an `explanation` column in your budget file is carried through but still marked for a person to check. It also projects spend at the current pace to the end of the period (`projected_underspend` / `projected_overspend`, `underspend_pct`, default 10%);
-- maps a **funder template** (`grants_template_check`, and `template` on `grants_build_packet`): a JSON file listing the funder's sections in order (each filled from `summary`, `budget`, `variance`, `outcomes`, `evidence`, `deadlines`, or left `[TO WRITE]` for `narrative`/`custom`), word limits, the funder's own guidance text, required attachments (paths relative to the outcomes file) and an optional variance threshold. Missing required sections and attachments, and a template meant for another funder, are flagged. The template is schema-checked, so a typo fails with the exact JSON path (`fairbooks-grant-reporting validate-config funder_template template.json`). You write the template from the funder's instructions; Fairbooks Grant Reporting does not know any funder's rules;
+- maps a **funder template** (`grants_template_check`, and `template` on `grants_build_packet`): a JSON file listing the funder's sections in order (each filled from `summary`, `budget`, `variance`, `outcomes`, `evidence`, `deadlines`, or left `[TO WRITE]` for `narrative`/`custom`), word limits, the funder's own guidance text, required attachments (paths relative to the outcomes file) and an optional variance threshold. Missing required sections and attachments, and a template meant for another funder, are flagged. The template is schema-checked, so a typo fails with the exact JSON path (`fairbooks-grant-reporting validate-config funder_template template.json`). You write the template from the funder's instructions; Fair-Agents Grant Reporting does not know any funder's rules;
 - builds a draft packet per grant: `report-draft.md` (budget, variance and outcome tables, evidence references, `[EXPLAIN]` and `[MISSING]` markers; in template order when a template is given), `checklist.md` and `evidence-index.csv` (with file hashes);
 - writes a **deadline calendar** (`grants_calendar`): `grant-deadlines.ics` with each open report deadline and grant period end and reminders (default 30, 14, 7 and 1 days before), validated before it is written;
 - assembles an **evidence pack** (`grants_evidence_pack`): a zip of one grant's draft packet, the evidence files it cites, `variance.csv` and a `manifest.json` with SHA-256 hashes; the zip hash is written into the audit line.
 
-The narrative section is left as `[TO WRITE]` for a person. Fairbooks Grant Reporting does not write claims about your program.
+The narrative section is left as `[TO WRITE]` for a person. Fair-Agents Grant Reporting does not write claims about your program.
 
 ## Install
 
@@ -30,13 +30,13 @@ fairbooks-grant-reporting demo        # runs on the bundled fictional sample dat
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-grant-reporting -- npx -y fairbooks-grant-reporting@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-grant-reporting -- npx -y fairbooks-grant-reporting@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-grant-reporting": { "command": "npx", "args": ["-y", "fairbooks-grant-reporting@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-grant-reporting": { "command": "npx", "args": ["-y", "fairbooks-grant-reporting@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -53,7 +53,7 @@ claude mcp add fairbooks-grant-reporting -- npx -y fairbooks-grant-reporting@0.2
 | `grants_build_packet` | **ask (Auto-eligible)** | Write draft packets to `fairbooks-out/grants/packets/<grant_id>` (optionally in template order) |
 | `grants_evidence_pack` | **ask (Auto-eligible)** | Zip a packet, its evidence and a hash manifest |
 | `grants_request_submission` | **ask · one-click** | After a named human approves, record a packet as approved to submit (warns about open markers) |
-| `funder_portal_submit` | **block** | Listed so agents see the refusal. Fairbooks Grant Reporting never submits. |
+| `funder_portal_submit` | **block** | Listed so agents see the refusal. Fair-Agents Grant Reporting never submits. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -69,7 +69,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `grants_build_packet` and `grants_evidence_pack` can go on Auto if you opt in. Submitting a report to a funder is a `binding_send`: it stays **one-click even in Auto**, and `--auto grants_request_submission` is refused. Submitting in a funder portal stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

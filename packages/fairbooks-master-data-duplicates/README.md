@@ -1,19 +1,19 @@
-# Fairbooks Master Data Duplicates (`fairbooks-master-data-duplicates`)
+# Fair-Agents Master Data Duplicates (`fairbooks-master-data-duplicates`)
 
 > Find duplicate vendors and items in master-data exports, and apply one approved merge at a time to a copy. Never edits your ERP.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks Master Data Duplicates reads a vendor or item export (CSV/JSON) and clusters likely duplicates using:
+Fair-Agents Master Data Duplicates reads a vendor or item export (CSV/JSON) and clusters likely duplicates using:
 - names normalized (case, accents, punctuation and suffixes like Inc, LLC, Ltd, GmbH removed), compared word by word with Jaro-Winkler, with each word weighted by how rare it is in your file, so a shared common word such as "Supply" or "Logistics" does not make two vendors look alike while a typo in the distinctive word still matches;
 - tax id (vendors) or UPC / part number (items), normalized (`12-3456789` = `123456789`);
 - supporting signals: normalized postal address (Street → St…, same house number), phone (last 10 digits), business email domain.
 
 Every linked pair carries its signals (`name`, `tax`, `address`, `phone`, `email_domain`), so a reviewer can see why. Two records with **different tax ids** are never put in one cluster, not even through a third record that has no tax id (those links are listed in `kept_apart`). A similar name with a different address *and* a different phone is not merged on its own. Each cluster gets a suggested survivor (active and most complete, or your own order), reasons and a confidence score.
 
-Files over 400 rows use blocking (only records that share a name-word prefix, tax id, phone, house number + street or email domain are compared). On the seeded 1,000-row test file (fictional, generated in the test with a fixed seed, with typos, swapped words, suffix changes, missing tax ids and 40 near-name decoys), Fairbooks Master Data Duplicates reaches precision 0.986 and recall 1.0 at the default threshold, and blocking finds the same clusters as comparing every pair. That is a synthetic benchmark; your data will differ.
+Files over 400 rows use blocking (only records that share a name-word prefix, tax id, phone, house number + street or email domain are compared). On the seeded 1,000-row test file (fictional, generated in the test with a fixed seed, with typos, swapped words, suffix changes, missing tax ids and 40 near-name decoys), Fair-Agents Master Data Duplicates reaches precision 0.986 and recall 1.0 at the default threshold, and blocking finds the same clusters as comparing every pair. That is a synthetic benchmark; your data will differ.
 
 Before a merge, **`dupes_merge_preview`** shows every column: each record's value, the winner, which record it came from, the survivorship rule and any conflict. Merges are applied **one at a time to a copy** (`<name>.merged.csv`, with a `merged_into` column; with `fill_survivor: true` the previewed winners are written into the survivor row). Every merge appends to `<name>.merged.csv.undo.jsonl`, and **`dupes_undo_merge`** restores the copy byte-for-byte to its state before the last merge (it checks hashes and refuses if the copy was edited since). The input file is never modified. Bank and payment columns are never changed by a merge.
 
@@ -53,13 +53,13 @@ fairbooks-master-data-duplicates demo        # runs on the bundled fictional sam
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-master-data-duplicates -- npx -y fairbooks-master-data-duplicates@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-master-data-duplicates -- npx -y fairbooks-master-data-duplicates@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-master-data-duplicates": { "command": "npx", "args": ["-y", "fairbooks-master-data-duplicates@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-master-data-duplicates": { "command": "npx", "args": ["-y", "fairbooks-master-data-duplicates@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -73,7 +73,7 @@ claude mcp add fairbooks-master-data-duplicates -- npx -y fairbooks-master-data-
 | `dupes_merge_preview` | **allow** | Field-level winners, rules and conflicts for one merge; writes nothing |
 | `dupes_apply_merge` | **ask (Auto-eligible)** | Apply one merge to the copy and append to the undo log |
 | `dupes_undo_merge` | **ask (Auto-eligible)** | Reverse the last merge on the copy, byte-for-byte |
-| `dupes_pay_vendor` | **block** | Listed so agents see the refusal. Fairbooks Master Data Duplicates never moves money. |
+| `dupes_pay_vendor` | **block** | Listed so agents see the refusal. Fair-Agents Master Data Duplicates never moves money. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -89,7 +89,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `dupes_apply_merge` is the one action you can put on Auto: `--mode auto --auto dupes_apply_merge --max-steps 25`. Each merge is still logged, the cap stops a runaway, and `kill` stops everything. Moving money stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
