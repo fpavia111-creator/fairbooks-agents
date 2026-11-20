@@ -2,6 +2,10 @@
 
 Renamed from `auxo-of-vendors` on 18 Nov 2026 (tool names were `auxo_*`, now `taxforms_*`). The 1099 readiness tool kept its old name, `auxo_1099_readiness`, until the final pass on 19 Nov 2026; it is now `taxforms_1099_readiness`.
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 (2026-11-15)
 
 Fixed (handoff ver 6)

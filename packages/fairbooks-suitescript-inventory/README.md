@@ -1,12 +1,12 @@
-# Fairbooks SuiteScript Inventory (`fairbooks-suitescript-inventory`)
+# Fair-Agents SuiteScript Inventory (`fairbooks-suitescript-inventory`)
 
 > Inventory SuiteScript files and risk-rank what must move to SuiteScript 2.1. Never deploys code.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Point Fairbooks SuiteScript Inventory at a folder of scripts (an SDF project, a FileCabinet download, or any folder of `.js` files). It reads each file and reports:
+Point Fair-Agents SuiteScript Inventory at a folder of scripts (an SDF project, a FileCabinet download, or any folder of `.js` files). It reads each file and reports:
 - the SuiteScript version: `1.0` (nlapi/nlobj calls, no `@NApiVersion`), `2.0`, `2.x` or `2.1`, and `unknown` when it cannot tell;
 - the script type (`@NScriptType`);
 - every 1.0 API call with its line number and a SuiteScript 2.1 module hint (for example `nlapiRequestURL` → `N/https request()`);
@@ -34,13 +34,13 @@ fairbooks-suitescript-inventory demo        # runs on the bundled fictional samp
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-suitescript-inventory -- npx -y fairbooks-suitescript-inventory@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-suitescript-inventory -- npx -y fairbooks-suitescript-inventory@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-suitescript-inventory": { "command": "npx", "args": ["-y", "fairbooks-suitescript-inventory@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-suitescript-inventory": { "command": "npx", "args": ["-y", "fairbooks-suitescript-inventory@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -77,7 +77,7 @@ Keys you leave out keep the defaults (`1.0` 3 h, `2.0` 1 h, `2.x` 0.5 h, `unknow
 
 All tools are read or report. Deploying is `production_deploy`, which is one-click by rule and **blocked** in this pack.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

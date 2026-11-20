@@ -1,12 +1,12 @@
-# Fairbooks Three-Way Match (`fairbooks-three-way-match`)
+# Fair-Agents Three-Way Match (`fairbooks-three-way-match`)
 
 > Investigate AP three-way-match exceptions from PO, receipt and invoice exports. Clearing an invoice for posting is one human click; it never posts or pays.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Three-Way Match three exports (CSV/JSON; column names matched loosely): PO lines (`po, line, item, vendor, qty, unit_price`), receipts (`po, line, qty, date`) and invoice lines (`invoice, vendor, po, line, qty, unit_price, date`). For each invoice line it reports:
+Give Fair-Agents Three-Way Match three exports (CSV/JSON; column names matched loosely): PO lines (`po, line, item, vendor, qty, unit_price`), receipts (`po, line, qty, date`) and invoice lines (`invoice, vendor, po, line, qty, unit_price, date`). For each invoice line it reports:
 - no PO, or a PO line that does not exist;
 - vendor name different from the PO;
 - nothing received; billed more than received (counting earlier invoices on the same line); billed more than ordered;
@@ -80,13 +80,13 @@ fairbooks-three-way-match demo        # runs on the bundled fictional sample dat
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-three-way-match -- npx -y fairbooks-three-way-match@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-three-way-match -- npx -y fairbooks-three-way-match@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-three-way-match": { "command": "npx", "args": ["-y", "fairbooks-three-way-match@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-three-way-match": { "command": "npx", "args": ["-y", "fairbooks-three-way-match@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -101,7 +101,7 @@ claude mcp add fairbooks-three-way-match -- npx -y fairbooks-three-way-match@0.2
 | `match_po_status` | **allow** | PO line status: received, billed, GRNI estimate, billed-not-received |
 | `match_write_report` | **allow** | Write `ap-report.html` + `ap-po-status.csv`; logs the report hash |
 | `match_request_posting` | **ask · one-click** | After a named human approves, record that an invoice is cleared for posting |
-| `erp_post_invoice` | **block** | Listed so agents see the refusal. Fairbooks Three-Way Match never writes to an ERP. |
+| `erp_post_invoice` | **block** | Listed so agents see the refusal. Fair-Agents Three-Way Match never writes to an ERP. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -117,7 +117,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 Clearing an invoice for payment is `move_money`: it stays **one-click even in Auto**, and `--auto match_request_posting` is refused. Auto still runs matching and worklists without stopping. Posting to an ERP stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
