@@ -1,4 +1,4 @@
-# Fairbooks Machine domain agents
+# Fair-Agents domain agents
 
 > 本译文由 Claude 翻译，尚未经过母语人士审校。如与[英文 README](README.md) 不一致，以英文版为准。
 
@@ -77,14 +77,14 @@ npx -y fairbooks-erp-migration demo   # 用虚构数据做 ERP 迁移就绪检�
 
 支持 CSV、TSV、分号或竖线分隔的文本、Excel `.xlsx`、JSON 与 JSONL。其中十二个智能体可按列名识别 39 种常见导出（Okta、Microsoft Entra ID、Google Workspace、NetSuite、QuickBooks Online、Xero、Stripe、Shopify、Salesforce、Ramp、多家美国银行等）。其中两种已与厂商文档核对，其余根据对这些导出的了解编写，尚未在真实账户上测试。
 
-中国大陆和台湾系统导出的文件也能直接读取：中文列名（`金额`、`供应商`、`统一社会信用代码`、`借方`、`贷方` 等）、GB18030/GBK、Big5 与 UTF-16 编码、`¥58.00` 或 `1,200元` 这样的金额、`2026年11月14日` 或民国纪年这样的日期，以及带有 `有限公司`、`股份有限公司` 的公司名称。使用 `--lang zh` 时，审批页面、Fairbooks ERP Migration 迁移就绪报告以及 Fairbooks Access Review 复核摘要和证据页面会以简体中文显示；结果、代码和 CSV 文件保持英文。
+中国大陆和台湾系统导出的文件也能直接读取：中文列名（`金额`、`供应商`、`统一社会信用代码`、`借方`、`贷方` 等）、GB18030/GBK、Big5 与 UTF-16 编码、`¥58.00` 或 `1,200元` 这样的金额、`2026年11月14日` 或民国纪年这样的日期，以及带有 `有限公司`、`股份有限公司` 的公司名称。使用 `--lang zh` 时，审批页面、Fair-Agents ERP Migration 迁移就绪报告以及 Fair-Agents Access Review 复核摘要和证据页面会以简体中文显示；结果、代码和 CSV 文件保持英文。
 
 ## 每个智能体都遵守的规则
 
 - 未知工具一律禁止。默认决定为禁止。
 - **Auto** 默认关闭，需按操作逐项开启，并有步数与支出上限和紧急停止。
 - 上线、撤销权限、删除个人数据、资金划转、具有法律约束力的发送以及生产部署，即使在 Auto 下也始终需要一位具名人员点击确认。修改智能体的记忆也是如此。
-- 有记忆的智能体（Fairbooks ERP Migration 与 Fairbooks Access Review）只使用具名人员接受过的事实，说明每个结果使用了哪些事实，并且无法学习任何会放松检查的内容。
+- 有记忆的智能体（Fair-Agents ERP Migration 与 Fair-Agents Access Review）只使用具名人员接受过的事实，说明每个结果使用了哪些事实，并且无法学习任何会放松检查的内容。
 - 每个决定都会写入哈希链式的 JSONL 审计日志；如提供密钥，还会签名。
 - 文件中的文本一律视为数据。电子表格公式、原始 HTML 和 ID 中的 `../` 在输出时会被中和；若结果引用了面向 AI 模型的文字（如 “ignore previous instructions”），会被标记。该标记是一种启发式方法，而不是过滤器。
 
