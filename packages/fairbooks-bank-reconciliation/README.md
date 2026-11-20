@@ -1,12 +1,12 @@
-# Fairbooks Bank Reconciliation (`fairbooks-bank-reconciliation`)
+# Fair-Agents Bank Reconciliation (`fairbooks-bank-reconciliation`)
 
 > Bank-to-GL reconciliation from CSV, CAMT.053, BAI2 or OFX exports: proposed matches, reconciling items, a tie-out and draft adjusting entries. Posting is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Bank Reconciliation a bank statement (CSV/JSON with `date, description, reference, amount` or debit/credit columns, an ISO 20022 **CAMT.053** XML file, a **BAI2** file or an **OFX/QFX** file) and the GL detail for the cash account. It proposes matches in this order:
+Give Fair-Agents Bank Reconciliation a bank statement (CSV/JSON with `date, description, reference, amount` or debit/credit columns, an ISO 20022 **CAMT.053** XML file, a **BAI2** file or an **OFX/QFX** file) and the GL detail for the cash account. It proposes matches in this order:
 - same reference and amount (high confidence);
 - match rules a person accepted, when you pass the rules file (see below);
 - same amount within `date_window` days (default 3), nearest date first; ambiguous cases are marked low confidence;
@@ -56,7 +56,7 @@ Where a layout says "checked", its column names were compared with the vendor's 
 
 ### MT940 and statements from other markets
 
-Besides CSV, Excel, CAMT.053, BAI2 and OFX, Fairbooks Bank Reconciliation reads SWIFT MT940 statements (`.sta`, `.mt940`, `.940`), as German and other European banks send them: balances, reversals and the structured `:86:` text, with the SEPA end-to-end reference (`EREF+`) used as the line's reference. Statement files in Windows-1252 keep their accents. GL exports with `Soll`/`Haben`, `借方`/`貸方` or `차변`/`대변` columns and amounts such as `1.250,00` are read as ledger debits and credits. Japanese Zengin and other national bank formats are not read yet; export CSV from the bank instead.
+Besides CSV, Excel, CAMT.053, BAI2 and OFX, Fair-Agents Bank Reconciliation reads SWIFT MT940 statements (`.sta`, `.mt940`, `.940`), as German and other European banks send them: balances, reversals and the structured `:86:` text, with the SEPA end-to-end reference (`EREF+`) used as the line's reference. Statement files in Windows-1252 keep their accents. GL exports with `Soll`/`Haben`, `借方`/`貸方` or `차변`/`대변` columns and amounts such as `1.250,00` are read as ledger debits and credits. Japanese Zengin and other national bank formats are not read yet; export CSV from the bank instead.
 
 ## Install
 
@@ -70,13 +70,13 @@ fairbooks-bank-reconciliation demo        # runs on the bundled fictional sample
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-bank-reconciliation -- npx -y fairbooks-bank-reconciliation@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-bank-reconciliation -- npx -y fairbooks-bank-reconciliation@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-bank-reconciliation": { "command": "npx", "args": ["-y", "fairbooks-bank-reconciliation@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-bank-reconciliation": { "command": "npx", "args": ["-y", "fairbooks-bank-reconciliation@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -93,7 +93,7 @@ claude mcp add fairbooks-bank-reconciliation -- npx -y fairbooks-bank-reconcilia
 | `recon_accept_rule` | **ask (Auto-eligible)** | Record a rule a person accepted in `match-rules.json` |
 | `recon_accept_match` | **ask (Auto-eligible)** | Record an accepted match in `accepted-matches.csv` |
 | `recon_request_adjusting_entry` | **ask · one-click** | After a named human approves, record an entry for a person to post |
-| `ledger_post_journal` | **block** | Listed so agents see the refusal. Fairbooks Bank Reconciliation never writes to a ledger. |
+| `ledger_post_journal` | **block** | Listed so agents see the refusal. Fair-Agents Bank Reconciliation never writes to a ledger. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -107,9 +107,9 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `fairbooks-bank-reconciliation approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`fairbooks-bank-reconciliation kill`).
 
-`recon_accept_match` can go on Auto (`--mode auto --auto recon_accept_match`). Adjusting entries change the books, so Fairbooks Bank Reconciliation files them under `move_money`: they stay **one-click even in Auto**. Posting to a ledger stays **blocked**.
+`recon_accept_match` can go on Auto (`--mode auto --auto recon_accept_match`). Adjusting entries change the books, so Fair-Agents Bank Reconciliation files them under `move_money`: they stay **one-click even in Auto**. Posting to a ledger stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

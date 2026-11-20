@@ -3,6 +3,10 @@
 Renamed from `penelope-of-recon` on 18 Nov 2026 (tool names were `penelope_*`, now `recon_*`).
 
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - BAI2: a file with several days for one account uses the first day's opening balance and the last day's closing balance (it took the last day's opening before). Found on SVB's published layout.

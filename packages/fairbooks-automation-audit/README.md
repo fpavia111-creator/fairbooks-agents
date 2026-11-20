@@ -1,12 +1,12 @@
-# Fairbooks Automation Audit (`fairbooks-automation-audit`)
+# Fair-Agents Automation Audit (`fairbooks-automation-audit`)
 
 > Audits workflow automation exports (n8n, Zapier, Make, Power Automate, Workato) and run history for broken and risky flows. Enabling or changing a production flow is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Automation Audit exported flow definitions (n8n workflow JSON, a Zapier-style export with `zaps[].steps[]`, a Make blueprint, a Power Automate / Logic Apps flow definition with `triggers` and `actions`, or a Workato recipe JSON — one recipe or an array) and, optionally, run history (`flow, run_at, status, error`). For each flow it reports, by severity:
+Give Fair-Agents Automation Audit exported flow definitions (n8n workflow JSON, a Zapier-style export with `zaps[].steps[]`, a Make blueprint, a Power Automate / Logic Apps flow definition with `triggers` and `actions`, or a Workato recipe JSON — one recipe or an array) and, optionally, run history (`flow, run_at, status, error`). For each flow it reports, by severity:
 - **broken**: no trigger, steps not connected to any trigger (n8n and Power Automate, from connections and `runAfter`), disabled steps, failing runs (≥ 20% of at least 3 runs) or a failed last run, active flows that have not run in `stale_days` (default 30), no error workflow or error route;
 - **risky**: secrets typed into step settings (values are **never shown**; expressions and stored credentials are fine), webhooks with no authentication (a Power Automate HTTP trigger restricted to the tenant or specific users is not flagged), plain `http://` calls, deletes with no filter or condition before them, steps that can move money (Stripe, PayPal, refunds, payouts…), steps that send email, chat or SMS, shell commands or custom code.
 
@@ -35,13 +35,13 @@ fairbooks-automation-audit demo        # runs on the bundled fictional sample da
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-automation-audit -- npx -y fairbooks-automation-audit@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-automation-audit -- npx -y fairbooks-automation-audit@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-automation-audit": { "command": "npx", "args": ["-y", "fairbooks-automation-audit@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-automation-audit": { "command": "npx", "args": ["-y", "fairbooks-automation-audit@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -55,8 +55,8 @@ claude mcp add fairbooks-automation-audit -- npx -y fairbooks-automation-audit@0
 | `flows_dependency_map` | **allow** | Shared credentials, secrets, webhooks and hosts; flow-to-flow calls; secret rotation plan; writes `dependency-map.md` (with a Mermaid graph) and `dependency-map.csv` |
 | `flows_draft_changes` | **ask (Auto-eligible)** | Write proposals and `<export>.redacted.json` copies (nothing applied) |
 | `flows_request_flow_change` | **ask · one-click** | After a named human approves, record an enable, disable or modify request for the flow owner |
-| `automation_update_flow` | **block** | Listed so agents see the refusal. Fairbooks Automation Audit never edits a platform. |
-| `automation_run_flow` | **block** | Listed so agents see the refusal. Fairbooks Automation Audit never runs a flow, so it never orders, sends or pays. |
+| `automation_update_flow` | **block** | Listed so agents see the refusal. Fair-Agents Automation Audit never edits a platform. |
+| `automation_run_flow` | **block** | Listed so agents see the refusal. Fair-Agents Automation Audit never runs a flow, so it never orders, sends or pays. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -72,7 +72,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `flows_draft_changes` can go on Auto. Enabling, disabling or changing a production flow is a `production_deploy`: it stays **one-click even in Auto**, and `--auto flows_request_flow_change` is refused. Editing or running flows stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
