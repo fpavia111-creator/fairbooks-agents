@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-core",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Shared core for Fairbooks domain agents: pinned-model pack manifests, allow/ask/block policy, Review/Assist/Auto modes with caps and a kill switch, hash-chained JSONL audit logs, a zero-dependency stdio MCP server and fixture-based evals.",
   "type": "module",
   "license": "MIT",

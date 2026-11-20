@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-cookie-consent",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-cookie-consent",
   "description": "Fairbooks Cookie Consent: an MCP agent that inventories the cookies and third-party scripts a site actually sets and loads (from exported HTML and browser HAR captures), compares them with your stated cookie policy and banner, and reports the gaps: undeclared cookies, trackers before consent, after a reject or despite a Global Privacy Control signal, contradicted 'no cookies' claims. Purpose guesses cite a versioned vendor list; scans can be compared over time. Publishing a policy or banner change is a production deploy: always one human click. Not a consent-management platform and never claims GDPR, CCPA or ePrivacy compliance.",
   "type": "module",
@@ -33,7 +33,7 @@
     "eval": "node bin/fairbooks-cookie-consent.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",

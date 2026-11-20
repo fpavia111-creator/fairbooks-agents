@@ -1,8 +1,9 @@
 // Optional, opt-in headless capture helper. It is NOT used by any MCP tool and is not
 // a dependency: Playwright is imported only when you run `consent-capture`, and
 // only if you installed it yourself. It opens the URL you give in a headless browser,
-// so it makes real network requests unless you pass offline mode (stubs or a 204 for
-// every third-party request). Cookie values are redacted in the HAR files by default.
+// and since 0.2.1 it is offline by default: every request that is not mapped to a local
+// server (originMap) or stubbed gets an empty 204. It reaches the real network only when
+// you opt in with allowNetwork: true (--allow-network). Cookie values are redacted by default.
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -46,10 +47,12 @@ function harEntry(req, resStatus, reqHeaders, resHeaders, started, redact) {
  * selector is given, gpc_visit when gpc is true. Returns { files, entries }.
  * originMap: { 'https://www.example.com': 'http://127.0.0.1:8080' } serves an origin from elsewhere.
  * stubs: { 'https://host/path-prefix': { status, contentType, headers: { 'Set-Cookie': [..] }, body } }.
- * offline: any request not mapped or stubbed gets an empty 204 instead of going to the network.
+ * Offline by default: any request not mapped or stubbed gets an empty 204 instead of going to the network.
+ * allowNetwork: true (opt-in) lets unmapped requests go to the real network. offline is kept for older callers.
  */
 export async function captureHars(o) {
-  const { url, outDir, pages = [], afterChoicePages = null, rejectSelector = null, acceptSelector = null, gpc = true, originMap = {}, stubs = null, offline = false, waitMs = 300, redact = true, headless = true } = o;
+  const { url, outDir, pages = [], afterChoicePages = null, rejectSelector = null, acceptSelector = null, gpc = true, originMap = {}, stubs = null, offline: offlineOpt, allowNetwork = false, waitMs = 300, redact = true, headless = true } = o;
+  const offline = !(allowNetwork === true && offlineOpt !== true);
   if (!/^https?:\/\//.test(String(url || ''))) throw new Error('url must be a full URL like https://www.example.com/');
   if (!outDir) throw new Error('outDir is required');
   const pw = o.playwright || await loadPlaywright();
