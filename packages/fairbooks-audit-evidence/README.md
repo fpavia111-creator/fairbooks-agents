@@ -1,12 +1,12 @@
-# Fairbooks Audit Evidence (`fairbooks-audit-evidence`)
+# Fair-Agents Audit Evidence (`fairbooks-audit-evidence`)
 
 > Turn agent guardrail logs into an evidence folder a reviewer can read. Evidence, not certification.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks Audit Evidence reads JSONL audit logs from **Talos** (`.agent-guard/audit.jsonl`) and from any **fairbooks-core** pack (`.fairbooks/audit.jsonl`), plus optional **Alethea** decision records (`.decisions/*.md`). It:
+Fair-Agents Audit Evidence reads JSONL audit logs from **Talos** (`.agent-guard/audit.jsonl`) and from any **fairbooks-core** pack (`.fairbooks/audit.jsonl`), plus optional **Alethea** decision records (`.decisions/*.md`). It:
 - verifies each log's hash chain and names edited, removed or reordered lines;
 - verifies **Ed25519 signatures** on signed fairbooks-core logs when you give it the public key (`public_keys`), following signed key rotations recorded in the log. A log that was edited and re-chained passes a chain-only check but fails here, with the line number;
 - summarizes what was allowed, what waited for a person, who approved it, what ran on Auto and what was blocked;
@@ -32,7 +32,7 @@ Two starter lists ship in `templates/` (`agent-guardrails`, `itgc-starter`); use
 
 ### Signed logs
 
-Start your agents with `--signing-key /outside/root/private.pem` (make one with `<agent> keygen --out DIR`, outside `--root`). Give Fairbooks Audit Evidence only the **public** key (`public_keys: ["keys/audit-public.pem"]`). With a key given, every fairbooks-format log in that call must be signed: an unsigned or signature-stripped log fails rather than passing as "chained". Talos logs are chain-checked only. Logs without signatures still verify as "chained, unsigned".
+Start your agents with `--signing-key /outside/root/private.pem` (make one with `<agent> keygen --out DIR`, outside `--root`). Give Fair-Agents Audit Evidence only the **public** key (`public_keys: ["keys/audit-public.pem"]`). With a key given, every fairbooks-format log in that call must be signed: an unsigned or signature-stripped log fails rather than passing as "chained". Talos logs are chain-checked only. Logs without signatures still verify as "chained, unsigned".
 
 ## Install
 
@@ -46,13 +46,13 @@ fairbooks-audit-evidence demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-audit-evidence -- npx -y fairbooks-audit-evidence@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-audit-evidence -- npx -y fairbooks-audit-evidence@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-audit-evidence": { "command": "npx", "args": ["-y", "fairbooks-audit-evidence@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-audit-evidence": { "command": "npx", "args": ["-y", "fairbooks-audit-evidence@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -81,7 +81,7 @@ The MCP prompt `evidence_evidence_review` walks a host model through verify → 
 
 All tools are read or report. Sending evidence is `binding_send`, which is one-click by rule and **blocked** in this pack.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

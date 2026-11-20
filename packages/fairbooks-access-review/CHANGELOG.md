@@ -2,6 +2,10 @@
 
 Renamed from `ladon-of-access` on 18 Nov 2026 (tool names were `ladon_*`, now `access_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 — 2026-11-16
 
 Added (handoff ver 6)

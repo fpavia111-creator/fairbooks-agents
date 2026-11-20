@@ -1,12 +1,12 @@
-# Fairbooks Access Review (`fairbooks-access-review`)
+# Fair-Agents Access Review (`fairbooks-access-review`)
 
 > Access recertification for people, AI agents and service accounts. A named human decides. Never revokes by itself.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Access Review an access export (one row per account per system: `system, user, email, account_type, role, owner, last_login, status, mfa`, optionally `last_rotated` for agent and service credentials) and, optionally, an HR roster (`email, status, termination_date, manager`). Column names are matched loosely. It flags:
+Give Fair-Agents Access Review an access export (one row per account per system: `system, user, email, account_type, role, owner, last_login, status, mfa`, optionally `last_rotated` for agent and service credentials) and, optionally, an HR roster (`email, status, termination_date, manager`). Column names are matched loosely. It flags:
 - people marked terminated in HR, or missing from the roster;
 - stale (default 90 days) and never-used logins;
 - privileged roles (Administrator, Full Access, Super Admin, Payments Admin… or your own list), and privileged accounts without MFA;
@@ -16,7 +16,7 @@ Give Fairbooks Access Review an access export (one row per account per system: `
 
 Every flag comes with a plain-language reason. Then it writes a recertification sheet: each line gets an `assigned_reviewer` (the account owner, else the person's manager from the roster), a `delegated_to` reviewer if you set up a delegation, a `due_date` (14 days by default, half that for high risk), and blank `reviewer_decision`, `reviewer_name` and `review_date` columns for the reviewer to fill in.
 
-When the sheet comes back, Fairbooks Access Review reports campaign progress (overdue lines, missing sign-offs, self-reviews, lines signed by someone other than the assigned reviewer, a chase list per reviewer) and writes an evidence pack (JSON + self-contained HTML, with the sheet's sha256; the pack's hash is written into the audit log). It can also compare two exports to show what changed since the last review: privilege gained, new agents, reactivated and removed accounts, owner changes.
+When the sheet comes back, Fair-Agents Access Review reports campaign progress (overdue lines, missing sign-offs, self-reviews, lines signed by someone other than the assigned reviewer, a chase list per reviewer) and writes an evidence pack (JSON + self-contained HTML, with the sheet's sha256; the pack's hash is written into the audit log). It can also compare two exports to show what changed since the last review: privilege gained, new agents, reactivated and removed accounts, owner changes.
 
 ### Review policy file
 
@@ -68,7 +68,7 @@ Where a layout says "checked", its column names were compared with the vendor's 
 
 ### Exports and summaries in other languages
 
-Fairbooks Access Review reads access exports and HR rosters with column names in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`ユーザー`, `権限`, `最終ログイン`, `Benutzer`, `Rolle`...), in legacy encodings such as Shift_JIS. Admin and owner roles (`管理者`, `관리자`, `Administrateur`...), disabled and deleted statuses (`無効`, `gesperrt`, `desativado`...), leavers (`退職`, `ausgeschieden`...) and "no" in an MFA column (`いいえ`, `아니요`, `nein`...) are recognised. Role names in policy files and learned roles can be written in any script.
+Fair-Agents Access Review reads access exports and HR rosters with column names in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`ユーザー`, `権限`, `最終ログイン`, `Benutzer`, `Rolle`...), in legacy encodings such as Shift_JIS. Admin and owner roles (`管理者`, `관리자`, `Administrateur`...), disabled and deleted statuses (`無効`, `gesperrt`, `desativado`...), leavers (`退職`, `ausgeschieden`...) and "no" in an MFA column (`いいえ`, `아니요`, `nein`...) are recognised. Role names in policy files and learned roles can be written in any script.
 
 `recertification-summary.md` and the evidence page can be written in those languages: pass `"language": "de"` (or `--lang de`). `recertification.csv`, the flag codes, the decision words (keep / modify / revoke) and the evidence JSON stay in English, and the evidence hash is the same in every language. A translated page says it is a Claude translation that a native speaker has not reviewed yet.
 
@@ -84,13 +84,13 @@ fairbooks-access-review demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-access-review -- npx -y fairbooks-access-review@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-access-review -- npx -y fairbooks-access-review@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-access-review": { "command": "npx", "args": ["-y", "fairbooks-access-review@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-access-review": { "command": "npx", "args": ["-y", "fairbooks-access-review@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -105,16 +105,16 @@ claude mcp add fairbooks-access-review -- npx -y fairbooks-access-review@0.2.0 m
 | `access_campaign_status` | **allow** | Progress of a filled sheet: overdue, incomplete, self-review, chase list, revoke decisions |
 | `access_evidence_pack` | **allow** | Write `recertification-evidence.json/.html` to `fairbooks-out/access/evidence`; hash logged as `output_sha256` |
 | `access_request_revocation` | **ask · one-click** | After a named human approves, append a request to `revocation-requests.csv` for the system admin |
-| `access_recall` | **allow** | Search what Fairbooks Access Review has learned about this customer: accepted facts and facts waiting for a person |
+| `access_recall` | **allow** | Search what Fair-Agents Access Review has learned about this customer: accepted facts and facts waiting for a person |
 | `access_learn` | **allow** | Propose a fact to remember (extra privileged role, SoD rule, standing delegation, note). Stored as waiting; changes nothing |
 | `access_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
 | `access_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
-## Memory: what Fairbooks Access Review remembers about your setup
+## Memory: what Fair-Agents Access Review remembers about your setup
 
-Fairbooks Access Review can remember facts about one customer's access setup, so the next quarterly review does not have to be told again. It only remembers what a named person accepts, and every kind it can learn **adds** to a check:
+Fair-Agents Access Review can remember facts about one customer's access setup, so the next quarterly review does not have to be told again. It only remembers what a named person accepts, and every kind it can learn **adds** to a check:
 
 | Kind | Example | What an accepted fact changes |
 |---|---|---|
@@ -123,7 +123,7 @@ Fairbooks Access Review can remember facts about one customer's access setup, so
 | `delegation` | `{"from": "Ana Ruiz", "to": "Ben Ode", "reason": "on leave"}` | Fills `delegated_to` for lines assigned to "from", unless the policy file delegates for that person. A delegation to oneself is ignored. |
 | `note` | `{"text": "Okta export is pulled on the 1st"}` | Nothing. Shown by recall only. |
 
-Fairbooks Access Review cannot learn a longer stale period, a shorter list of roles, a removed rule, or anything about policy, caps or Auto.
+Fair-Agents Access Review cannot learn a longer stale period, a shorter list of roles, a removed rule, or anything about policy, caps or Auto.
 
 ```bash
 fairbooks-access-review call access_learn '{"kind":"privileged_role","value":{"role":"Vault Keeper"},"note":"Can release payments"}'
@@ -132,11 +132,11 @@ fairbooks-access-review memory accept MEM-1a2b3c4d5e6f --as "Your Name" --reason
 fairbooks-access-review memory verify
 ```
 
-Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`), lines privileged only by a learned role say so in `reasons` and `privileged_by`, and the recertification summary has a "Learned facts used" section. Memory lives in `.fairbooks/memory/fairbooks-access-review.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it. Fairbooks Access Review refuses to store passwords, keys, personal identifiers and text that reads like instructions to an AI.
+Accepted facts are applied from the next call. Each result lists them under `memory` (and `memory_applied`), lines privileged only by a learned role say so in `reasons` and `privileged_by`, and the recertification summary has a "Learned facts used" section. Memory lives in `.fairbooks/memory/fairbooks-access-review.jsonl`, hash-chained (and signed with `--signing-key`); if it does not verify, no learned fact is used. `--no-memory` runs without it. Fair-Agents Access Review refuses to store passwords, keys, personal identifiers and text that reads like instructions to an AI.
 
 ## MCP prompt
 
-`access_recertification_campaign` (arguments: `access`, `as_of`, optional `roster`, `policy`, `previous`) walks a host model through the whole campaign: recall what Fairbooks Access Review has learned, review, diff, sheet, status, evidence pack, and revocation requests that wait for a person's click.
+`access_recertification_campaign` (arguments: `access`, `as_of`, optional `roster`, `policy`, `previous`) walks a host model through the whole campaign: recall what Fair-Agents Access Review has learned, review, diff, sheet, status, evidence pack, and revocation requests that wait for a person's click.
 
 ## Modes
 
@@ -146,7 +146,7 @@ Accepted facts are applied from the next call. Each result lists them under `mem
 
 Revoking access is `revoke_access`: it stays **one-click even in Auto**, and `--auto access_request_revocation` is refused. Accepting or retiring a learned fact is `accept_learning`, also one-click: `--auto access_accept_learning` is refused. Auto still runs the reviews and sheets without stopping.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
