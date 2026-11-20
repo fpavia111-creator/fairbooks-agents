@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-docs-drift",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-docs-drift",
   "description": "Fairbooks Docs Drift: an MCP agent that finds where a package's README, docs and SKILL.md no longer match its tool list, input schemas, OpenAPI spec, CHANGELOG and package.json, runs as a CI gate with SARIF output, and drafts low-risk fixes as copies. Publishing docs is one human click. Never overwrites docs.",
   "type": "module",
@@ -34,7 +34,7 @@
     "eval": "node bin/fairbooks-docs-drift.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",

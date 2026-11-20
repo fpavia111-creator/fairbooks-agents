@@ -44,7 +44,7 @@ inputs:
   version:
     description: fairbooks-docs-drift version to run with npx.
     required: false
-    default: 0.2.0
+    default: 0.2.1
 outputs:
   sarif:
     description: Path of the SARIF file, relative to the repository root.
@@ -74,7 +74,7 @@ runs:
         if [ -n "$ECHO_BASELINE" ]; then args+=(--baseline "$ECHO_BASELINE"); fi
         if [ "$ECHO_NEW_ONLY" = "true" ]; then args+=(--new-only); fi
         if [ "$ECHO_REQUIRE_CHANGELOG" = "true" ]; then args+=(--require-changelog); fi
-        docs "sarif=$ECHO_OUT_DIR/fairbooks-docs-drift.sarif" >> "$GITHUB_OUTPUT"
+        echo "sarif=$ECHO_OUT_DIR/fairbooks-docs-drift.sarif" >> "$GITHUB_OUTPUT"
         if [ -n "${ECHO_CMD:-}" ]; then
           # Test hook: run a local fairbooks-docs-drift instead of the npm package.
           node "$ECHO_CMD" "${args[@]}"
