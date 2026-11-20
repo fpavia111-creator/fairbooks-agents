@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.fpavia111-creator/fairbooks-refunds-and-chargebacks",
-  "title": "Fairbooks Refunds and Chargebacks",
+  "title": "Fair-Agents Refunds and Chargebacks",
   "description": "An MCP agent that triages refund requests and chargebacks from CSV/JSON exports against your…",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/fpavia111-creator/fairbooks-agents",
     "source": "github",
     "subfolder": "packages/fairbooks-refunds-and-chargebacks"
   },
-  "websiteUrl": "https://mythosmachines.com/",
+  "websiteUrl": "https://fair-agents.com/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fairbooks-refunds-and-chargebacks",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
