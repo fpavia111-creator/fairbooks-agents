@@ -1,6 +1,10 @@
 # Changelog
 
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - Names the 18 Nov rename left: the info tools are `fairbooks_info` and `fairbooks_inspect_input` (were `mythos_*`), state is in `.fairbooks/`, output in `fairbooks-out/`, column names in `fairbooks-sources.json`, the commands are `fairbooks-approve`, `fairbooks-verify-log`, `fairbooks-new-agent` and `fairbooks-license`, the environment variables `FAIRBOOKS_*`, the webhook header `x-fairbooks-signature` and licence keys start `FAIRBOOKS1`.

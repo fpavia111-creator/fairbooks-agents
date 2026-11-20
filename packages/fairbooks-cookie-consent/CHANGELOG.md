@@ -2,6 +2,10 @@
 
 Renamed from `britomartis-of-consent` on 18 Nov 2026 (tool names were `britomartis_*`, now `consent_*`).
 
+## 0.2.1
+
+- **`consent-capture` is offline by default (changed behaviour).** Every request that is not mapped with `--map` or stubbed with `--stubs` gets an empty 204. Pass `--allow-network` to visit the real site; `--offline` is still accepted and is now the default.
+
 ## 0.2.0 (2026-11-15)
 
 - Versioned vendor list in `src/vendors.json` (`britomartis-vendor-list` v2026.11.0: about 135 hosts and 90 cookie patterns, up from 31 and 26). Every purpose guess carries `vendor_list` with the list name and version, and finding text cites it. Purposes stay labelled `known_list (guess)`.

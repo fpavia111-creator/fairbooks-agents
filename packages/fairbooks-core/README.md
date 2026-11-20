@@ -1,6 +1,6 @@
 # fairbooks-core
 
-The shared core for **Fairbooks Machine domain agents**: small MCP agents that each own one business process and cannot act outside it.
+The shared core for **Fair-Agents domain agents**: small MCP agents that each own one business process and cannot act outside it.
 
 - **Pack manifest** — name, version, a declared model pin, the tool allowlist and the policy. `defineManifest()` fails closed: an unpinned model (`latest`), a tool without a rule, a write marked `allow`, or a one-click action marked `allow` are rejected at load time.
 - **Allow/ask/block policy** — every tool call gets `allow`, `ask` or `block`. Unknown tools are blocked. The default is block.
@@ -271,7 +271,7 @@ The manifest declares which host model a pack's prompts and evals target. An MCP
 
 ## Packs built on this core
 
-All 30 Fairbooks domain agents in the monorepo, from `fairbooks-erp-migration` to `fairbooks-contract-clauses`. Source: <https://github.com/fpavia111-creator/fairbooks-agents>.
+All 30 Fair-Agents domain agents in the monorepo, from `fairbooks-erp-migration` to `fairbooks-contract-clauses`. Source: <https://github.com/fpavia111-creator/fairbooks-agents>.
 
 ## License
 
