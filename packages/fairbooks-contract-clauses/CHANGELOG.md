@@ -4,6 +4,10 @@ Renamed from `solon-of-clauses` on 18 Nov 2026 (tool names were `solon_*`, now `
 
 Not legal advice. Solon checks text against your own playbook and does not replace a lawyer.
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0
 
 - **DOCX input**: `.docx` contracts are read directly with zero dependencies (unzip through `node:zlib`). One paragraph is one line. Tracked changes are read as accepted and flagged (`docx_tracked_changes`), comments are counted (`docx_comments`), and automatic numbering is flagged (`docx_auto_numbering`).

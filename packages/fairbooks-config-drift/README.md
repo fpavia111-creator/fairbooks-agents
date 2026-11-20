@@ -1,12 +1,12 @@
-# Fairbooks Config Drift (`fairbooks-config-drift`)
+# Fair-Agents Config Drift (`fairbooks-config-drift`)
 
 > Compare config, schema, Terraform state and Kubernetes manifest snapshots over time and explain each drift with a risk level. Applying a fix to production is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks Config Drift reads snapshots you already export: JSON or YAML config, `.env` / `.properties` files (`KEY=value`), schema CSVs (`table, column, type, nullable, default`), **Terraform state** (`.tfstate`, or `terraform state pull` output saved as JSON) and **Kubernetes manifests** (YAML or JSON, multi-document files and `kubectl get -o yaml` lists). It:
+Fair-Agents Config Drift reads snapshots you already export: JSON or YAML config, `.env` / `.properties` files (`KEY=value`), schema CSVs (`table, column, type, nullable, default`), **Terraform state** (`.tfstate`, or `terraform state pull` output saved as JSON) and **Kubernetes manifests** (YAML or JSON, multi-document files and `kubectl get -o yaml` lists). It:
 - lists every added, removed and changed key, highest risk first, with a plain reason (TLS or verification switched off, CORS or a CIDR opened to everyone, debug turned on, a secret changed, a column dropped, a type narrowed, nullability tightened…);
 - **never shows secret values** (keys like password, token, api_key, secret are masked);
 - walks a folder of dated snapshots and says when each key first drifted, plus net drift from first to latest;
@@ -35,13 +35,13 @@ fairbooks-config-drift demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-config-drift -- npx -y fairbooks-config-drift@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-config-drift -- npx -y fairbooks-config-drift@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-config-drift": { "command": "npx", "args": ["-y", "fairbooks-config-drift@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-config-drift": { "command": "npx", "args": ["-y", "fairbooks-config-drift@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -56,7 +56,7 @@ claude mcp add fairbooks-config-drift -- npx -y fairbooks-config-drift@0.2.0 mcp
 | `drift_write_revert_patch` | **allow** | Write `revert.patch` + `revert-patch.json` (JSON and `.env` snapshots). Applies nothing. |
 | `drift_approve_baseline` | **ask (Auto-eligible)** | Record drift a person accepted in `approved-drift.json` |
 | `drift_apply_fix` | **ask · one-click** | After a named human approves, record the fix in `apply-request-*.json` for your change process |
-| `production_push_config` | **block** | Listed so agents see the refusal. Fairbooks Config Drift never writes to a live system. |
+| `production_push_config` | **block** | Listed so agents see the refusal. Fair-Agents Config Drift never writes to a live system. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -72,7 +72,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 All analysis tools are read or report. `drift_approve_baseline` needs a person's yes (it can be opted in to Auto, which we do not recommend for high-risk keys). Applying a fix is `production_deploy`: it stays **one-click even in Auto**, and `--auto drift_apply_fix` is refused. Pushing config stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -90,7 +90,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 - Risk levels come from key names and values, not from knowledge of your system. A low-risk label is not a promise the change is safe.
 - It does not fetch snapshots; export them on your own schedule. It does not call cloud APIs, `terraform` or `kubectl`, so it compares state to state, not state to live infrastructure.
 - Terraform and Kubernetes checks are a short list of well-known risky settings, not a policy engine or a security scanner.
-- Terraform state can hold secrets in plain text. Fairbooks Config Drift masks them in its output, but the state file itself is yours to protect.
+- Terraform state can hold secrets in plain text. Fair-Agents Config Drift masks them in its output, but the state file itself is yours to protect.
 - Not fully autonomous: anything risky waits for a named person.
 
 ## Data
