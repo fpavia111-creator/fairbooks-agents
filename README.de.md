@@ -1,4 +1,4 @@
-# Fairbooks Machine domain agents
+# Fair-Agents domain agents
 
 > Diese Übersetzung wurde von Claude erstellt und noch nicht von Muttersprachlern geprüft. Bei Abweichungen gilt die [englische README](README.md).
 
@@ -84,7 +84,7 @@ Dateien aus den größten Softwaremärkten werden so gelesen, wie lokale Systeme
 - Unbekannte Werkzeuge sind gesperrt. Die Standardentscheidung ist Sperren.
 - **Auto** ist standardmäßig aus und wird pro Aktion eingeschaltet, mit Schritt- und Ausgabenlimits und einem Not-Aus.
 - Produktivstart, Entzug von Zugriffen, Löschen personenbezogener Daten, Geldbewegungen, rechtsverbindliche Sendungen und Produktions-Deployments brauchen immer den Klick einer namentlich genannten Person, auch in Auto. Das gilt auch für Änderungen am Gedächtnis eines Agenten.
-- Agenten mit Gedächtnis (Fairbooks ERP Migration und Fairbooks Access Review) nutzen nur Fakten, die eine namentlich genannte Person akzeptiert hat, sagen bei jedem Ergebnis, welche, und können nichts lernen, was eine Prüfung lockert.
+- Agenten mit Gedächtnis (Fair-Agents ERP Migration und Fair-Agents Access Review) nutzen nur Fakten, die eine namentlich genannte Person akzeptiert hat, sagen bei jedem Ergebnis, welche, und können nichts lernen, was eine Prüfung lockert.
 - Jede Entscheidung landet in einem hash-verketteten JSONL-Audit-Log, signiert, wenn Sie einen Schlüssel angeben.
 - Text aus Ihren Dateien gilt als Daten. Tabellenformeln, rohes HTML und `../` in IDs werden bei der Ausgabe entschärft, und Text, der sich an ein KI-Modell richtet („ignore previous instructions“), wird markiert. Die Markierung ist eine Heuristik, kein Filter.
 

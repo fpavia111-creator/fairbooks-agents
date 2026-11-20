@@ -1,10 +1,50 @@
-# Fairbooks Machine domain agents
+# Fair-Agents domain agents
 
 Thirty small MCP agents. Each one owns **one business process** (an access review, a bank reconciliation, an ERP migration check, a refund dispute) and cannot act outside it. They read the files you already export, write reports on your machine, and wait for a named person before anything that matters happens.
 
 MIT licence · Node 20 or newer · local files only · no credentials · no dependencies
 
 Also in: [Deutsch](README.de.md) · [Français](README.fr.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-BR.md) · [Italiano](README.it.md) · [日本語](README.ja.md) · [简体中文](README.zh-Hans.md) · [한국어](README.ko.md) (translated by Claude; native review pending)
+
+## npm package names (read this first)
+
+The packages on npm today are **0.2.0 under their earlier names** (published 16 Nov 2026). The `fairbooks-*` names used in this repository are **not on npm yet**; the final package names are still being decided, so `npx -y fairbooks-…` will not work until then. To try an agent now, use the published name, for example `npx -y ladon-of-access@0.2.0 demo`.
+
+| This repository | On npm now (0.2.0) |
+|---|---|
+| `fairbooks-access-review` | [`ladon-of-access`](https://www.npmjs.com/package/ladon-of-access) |
+| `fairbooks-audit-evidence` | [`eirene-of-controls`](https://www.npmjs.com/package/eirene-of-controls) |
+| `fairbooks-automation-audit` | [`arethusa-of-flows`](https://www.npmjs.com/package/arethusa-of-flows) |
+| `fairbooks-bank-reconciliation` | [`penelope-of-recon`](https://www.npmjs.com/package/penelope-of-recon) |
+| `fairbooks-board-pack` | [`urania-of-flux`](https://www.npmjs.com/package/urania-of-flux) |
+| `fairbooks-certificate-expiry` | [`aegle-of-certificates`](https://www.npmjs.com/package/aegle-of-certificates) |
+| `fairbooks-config-drift` | [`tiresias-of-drift`](https://www.npmjs.com/package/tiresias-of-drift) |
+| `fairbooks-contract-clauses` | [`solon-of-clauses`](https://www.npmjs.com/package/solon-of-clauses) |
+| `fairbooks-cookie-consent` | [`britomartis-of-consent`](https://www.npmjs.com/package/britomartis-of-consent) |
+| `fairbooks-core` | [`mythos-agent-core`](https://www.npmjs.com/package/mythos-agent-core) |
+| `fairbooks-crm-hygiene` | [`nausicaa-of-hygiene`](https://www.npmjs.com/package/nausicaa-of-hygiene) |
+| `fairbooks-cycle-counts` | [`hesperides-of-inventory`](https://www.npmjs.com/package/hesperides-of-inventory) |
+| `fairbooks-data-erasure-requests` | [`macaria-of-erasure`](https://www.npmjs.com/package/macaria-of-erasure) |
+| `fairbooks-docs-drift` | [`echo-of-docs`](https://www.npmjs.com/package/echo-of-docs) |
+| `fairbooks-email-domain-audit` | [`aeolus-of-mail`](https://www.npmjs.com/package/aeolus-of-mail) |
+| `fairbooks-erp-migration` | [`olympus-of-migration`](https://www.npmjs.com/package/olympus-of-migration) |
+| `fairbooks-expense-policy` | [`praxidike-of-expenses`](https://www.npmjs.com/package/praxidike-of-expenses) |
+| `fairbooks-grant-reporting` | [`polyhymnia-of-grants`](https://www.npmjs.com/package/polyhymnia-of-grants) |
+| `fairbooks-master-data-duplicates` | [`augeas-of-masters`](https://www.npmjs.com/package/augeas-of-masters) |
+| `fairbooks-mcp-server-review` | [`nemesis-of-servers`](https://www.npmjs.com/package/nemesis-of-servers) |
+| `fairbooks-onboarding-checklists` | [`eos-of-onboarding`](https://www.npmjs.com/package/eos-of-onboarding) |
+| `fairbooks-open-source-licenses` | [`lycurgus-of-licenses`](https://www.npmjs.com/package/lycurgus-of-licenses) |
+| `fairbooks-outreach-email-gate` | [`eucleia-of-outreach`](https://www.npmjs.com/package/eucleia-of-outreach) |
+| `fairbooks-process-evals` | [`agon-of-evals`](https://www.npmjs.com/package/agon-of-evals) |
+| `fairbooks-refunds-and-chargebacks` | [`soteria-of-refunds`](https://www.npmjs.com/package/soteria-of-refunds) |
+| `fairbooks-rfi-and-submittals` | [`epeius-of-rfis`](https://www.npmjs.com/package/epeius-of-rfis) |
+| `fairbooks-saas-seats` | [`helios-of-seats`](https://www.npmjs.com/package/helios-of-seats) |
+| `fairbooks-suitescript-inventory` | [`epimetheus-of-scripts`](https://www.npmjs.com/package/epimetheus-of-scripts) |
+| `fairbooks-three-way-match` | [`ananke-of-match`](https://www.npmjs.com/package/ananke-of-match) |
+| `fairbooks-vendor-tax-forms` | [`auxo-of-vendors`](https://www.npmjs.com/package/auxo-of-vendors) |
+| `fairbooks-web-page-audit` | [`daphne-of-pages`](https://www.npmjs.com/package/daphne-of-pages) |
+
+Note: the 0.2.0 packages on npm still use the earlier tool names (for example `aeolus_audit` rather than `maildomain_audit`) and do not include the 0.2.1 changes (offline-by-default DNS and capture, no bundled advisory snapshot).
 
 ## Try one
 
@@ -77,14 +117,14 @@ Every agent has a `demo` that runs on fictional files and an MCP server (`npx -y
 
 The agents read CSV, TSV, semicolon- and pipe-separated text, Excel `.xlsx`, JSON and JSONL. Twelve of them recognise 39 named exports by their columns: Okta, Microsoft Entra ID, Google Workspace, Slack, GitHub, AWS, NetSuite, QuickBooks Online, Xero, Stripe, Shopify, HubSpot, Salesforce, Mailchimp, Procore, Ramp, Expensify, BambooHR, five US banks and more. Two of those layouts were checked against vendor documentation; the others were written from knowledge of the exports, and none has been tested against a live account. `<agent> inspect <file>` shows how a file would be read without printing any cell value.
 
-Files from the largest software markets read as they come out of local systems: German, French, Spanish, Brazilian Portuguese, Italian, Japanese, Chinese and Korean column names; Shift_JIS, GB18030, Big5, EUC-KR, Windows-1252 and UTF-16 files; amounts such as `1.234,56`, `R$ 1.234,56`, `1,200円` and `△300`; dates such as `14. November 2026`, `2026年11月14日`, `令和8年` and `2026년 11월 14일`; names with legal forms such as GmbH, SARL, S.L., S.A. de C.V., Ltda., S.r.l., 株式会社, 有限公司 and 주식회사. `--lang de|fr|es|pt|it|ja|zh|ko` writes the approvals page, the Fairbooks ERP Migration readiness report and the Fairbooks Access Review recertification summary and evidence page in that language; results, codes and CSV files stay in English. These translations were written by Claude and have not been reviewed by native speakers yet.
+Files from the largest software markets read as they come out of local systems: German, French, Spanish, Brazilian Portuguese, Italian, Japanese, Chinese and Korean column names; Shift_JIS, GB18030, Big5, EUC-KR, Windows-1252 and UTF-16 files; amounts such as `1.234,56`, `R$ 1.234,56`, `1,200円` and `△300`; dates such as `14. November 2026`, `2026年11月14日`, `令和8年` and `2026년 11월 14일`; names with legal forms such as GmbH, SARL, S.L., S.A. de C.V., Ltda., S.r.l., 株式会社, 有限公司 and 주식회사. `--lang de|fr|es|pt|it|ja|zh|ko` writes the approvals page, the Fair-Agents ERP Migration readiness report and the Fair-Agents Access Review recertification summary and evidence page in that language; results, codes and CSV files stay in English. These translations were written by Claude and have not been reviewed by native speakers yet.
 
 ## The rules every agent follows
 
 - Unknown tools are blocked. The default decision is block.
 - **Auto** is off by default and opt-in per action, with step and spend caps and a kill switch.
 - Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a named person's click, even in Auto. So does changing what an agent remembers.
-- Agents with memory (Fairbooks ERP Migration and Fairbooks Access Review) use only facts a named person accepted, say which facts each result used, and cannot learn anything that loosens a check.
+- Agents with memory (Fair-Agents ERP Migration and Fair-Agents Access Review) use only facts a named person accepted, say which facts each result used, and cannot learn anything that loosens a check.
 - Every decision goes to a hash-chained JSONL audit log, signed if you give it a key.
 - Text from your files is treated as data. Spreadsheet formulas, raw HTML and `../` in ids are neutralised on the way out, and a result that quotes text aimed at an AI model ("ignore previous instructions") is flagged. The flag is a heuristic, not a filter.
 
