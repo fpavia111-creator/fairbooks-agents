@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-cycle-counts",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-cycle-counts",
   "description": "Fairbooks Cycle Counts: an MCP agent that compares cycle counts with on-hand exports per item, location and lot, ranks variances by value, separates timing differences, explains unit-of-measure errors with your conversion factors, plans ABC-ranked count schedules, reports record accuracy and drafts adjustment entries. Posting an adjustment is always one human click; it never writes to your ERP.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-cycle-counts.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
