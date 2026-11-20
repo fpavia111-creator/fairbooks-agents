@@ -13,7 +13,8 @@ const props = {
   selectors: { type: 'array', items: str, description: 'DKIM selectors to check (the s= tag in a sent message). Default: a list of common ones' },
   records: { ...str, description: 'Optional saved records JSON (relative to --root) to audit offline instead of asking a resolver' },
   return_path: { ...str, description: 'Optional bounce (Return-Path) domain your mail provider uses, e.g. send.example.com; SPF is checked there' },
-  resolver: { type: 'string', enum: ['cloudflare', 'google'], description: 'Public DNS-over-HTTPS resolver for live lookups (default cloudflare). Only domain names are sent.' },
+  resolver: { type: 'string', enum: ['cloudflare', 'google'], description: 'Public DNS-over-HTTPS resolver for live lookups (default cloudflare). Only used with allow_network: true. Only domain names are sent.' },
+  allow_network: { type: 'boolean', description: 'Opt-in: set to true to look the records up live through a public DNS-over-HTTPS resolver. Off by default; without it, pass "records" (a saved records file) and nothing leaves your machine.' },
   ignore: { type: 'array', items: str, description: 'Check ids to leave out, e.g. ["mta_sts_missing"]' },
   bimi_selector: { type: 'string', pattern: '^[A-Za-z0-9_-]{1,63}$', description: 'BIMI selector to check (default "default")' },
 };
@@ -42,21 +43,22 @@ function auditHtml(r, s) {
 }
 export const resolverFor = (a, ctx) => {
   if (a.records) { const f = ctx.path(a.records); if (!existsSync(f)) throw new Error(`records file not found: ${a.records}`); return recordsResolver(JSON.parse(readFileSync(f, 'utf8'))); }
-  return dohResolver(a.resolver || 'cloudflare');
+  if (a.allow_network === true) return dohResolver(a.resolver || 'cloudflare');
+  throw new Error('Live DNS lookups are off by default. Pass "records" (a saved records file under --root, offline) or allow_network: true to query a public DNS-over-HTTPS resolver; only domain names are sent.');
 };
 const run = (a, ctx) => { if (!String(a.domain ?? '').trim()) throw new Error('domain is required'); return audit(a.domain, resolverFor(a, ctx), a); };
-const source = (a) => (a.records ? `records file ${a.records}` : `DNS-over-HTTPS (${a.resolver || 'cloudflare'})`);
+const source = (a) => (a.records ? `records file ${a.records}` : `DNS-over-HTTPS (${a.resolver || 'cloudflare'}), opted in with allow_network`);
 
 export const manifest = defineManifest({
   name: 'fairbooks-email-domain-audit',
   version: pkg.version,
-  description: 'Audits a sending domain\'s SPF (with the 10-lookup count through every include), DMARC (policy, reports, external report authorisation), DKIM keys for the selectors you name, BIMI, MX, MTA-STS and TLS-RPT with read-only DNS-over-HTTPS lookups or a saved records file. Reads saved DMARC aggregate reports and message headers (alignment, ARC chain) offline. Explains each gap, pre-stages record changes and plans a staged DMARC rollout for a person. Changing DNS is one human click; Fairbooks Email Domain Audit never edits DNS and never sends mail.',
+  description: 'Audits a sending domain\'s SPF (with the 10-lookup count through every include), DMARC (policy, reports, external report authorisation), DKIM keys for the selectors you name, BIMI, MX, MTA-STS and TLS-RPT from a saved records file or, when you opt in with allow_network: true, read-only DNS-over-HTTPS lookups. Reads saved DMARC aggregate reports and message headers (alignment, ARC chain) offline. Explains each gap, pre-stages record changes and plans a staged DMARC rollout for a person. Changing DNS is one human click; Fairbooks Email Domain Audit never edits DNS and never sends mail.',
   model: { provider: 'anthropic', id: 'claude-sonnet-4-5-20250929', note: 'Declared host-model pin. The tools are deterministic and call no model.' },
   caps: { maxSteps: 60, maxSpendUsd: 0 },
   tools: [
     {
       name: 'maildomain_audit', kind: 'read', openWorld: true,
-      description: 'Look up and check the domain\'s mail-authentication records. Each finding has a severity, the record it is about, what it means and the RFC. Read-only; with live lookups only domain names go to the public resolver.',
+      description: 'Look up and check the domain\'s mail-authentication records. Each finding has a severity, the record it is about, what it means and the RFC. Read-only. Offline from a saved records file by default; live lookups only with allow_network: true, and then only domain names go to the public resolver.',
       inputSchema: { type: 'object', required: ['domain'], properties: props },
       handler: async (a, ctx) => { const r = await run(a, ctx); return { summary: `${r.domain}: ${r.issues} issue(s) (${r.by_severity.error || 0} error, ${r.by_severity.warning || 0} warning, ${r.by_severity.advisory || 0} advisory); SPF lookups ${r.spf_lookups ?? 'n/a'} of 10; ${r.queries} DNS queries via ${source(a)}. A DNS check, not a deliverability guarantee.`, ...r }; },
     },
@@ -164,7 +166,7 @@ export const manifest = defineManifest({
     text: `Review mail authentication for {{domain}} with the Fairbooks Email Domain Audit tools. Fairbooks Email Domain Audit never edits DNS and never sends mail.
 
 1. If a saved message is available ({{message}}), call maildomain_check_headers on it first. Note the DKIM selectors in use, whether SPF and DKIM align with the From domain, and any ARC problems.
-2. Call maildomain_audit for {{domain}} with those selectors (and return_path if the provider uses its own bounce domain). List errors first. Do not claim deliverability; this is a DNS check.
+2. Call maildomain_audit for {{domain}} with those selectors (and return_path if the provider uses its own bounce domain). Use a saved records file if there is one; only pass allow_network: true if the person has said live DNS lookups are fine. List errors first. Do not claim deliverability; this is a DNS check.
 3. If DMARC reports are available ({{reports}}), call maildomain_dmarc_reports with domain {{domain}}. For each failing source, say whether it looks like a real sender to fix (and the fix given) or unknown traffic. Do not guess who owns an IP address.
 4. Call maildomain_write_report (with reports if you have them) so the person has the Markdown, HTML and CSV files.
 5. Ask the person before calling maildomain_draft_records (it needs their yes). Fill in [TO CONFIRM] values only with facts the person gives you.

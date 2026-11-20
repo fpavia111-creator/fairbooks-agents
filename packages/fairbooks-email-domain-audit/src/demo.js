@@ -3,7 +3,7 @@ import { demoRuntime, printStep } from 'fairbooks-core';
 
 export async function demo(manifest) {
   const rt = demoRuntime(manifest, fileURLToPath(new URL('../fixtures', import.meta.url)), { mode: 'auto', autoActions: ['maildomain_draft_records', 'maildomain_plan_dmarc_rollout'] });
-  process.stdout.write(`Fairbooks Email Domain Audit demo (fictional DNS for example.com and friends) in ${rt.root} — Auto on for maildomain_draft_records and maildomain_plan_dmarc_rollout only\nOffline: the demo reads fixtures/records.json. Live audits use DNS-over-HTTPS and only read.\n`);
+  process.stdout.write(`Fairbooks Email Domain Audit demo (fictional DNS for example.com and friends) in ${rt.root} — Auto on for maildomain_draft_records and maildomain_plan_dmarc_rollout only\nOffline: the demo reads fixtures/records.json. Live DNS-over-HTTPS lookups are opt-in (allow_network: true) and only read.\n`);
   const h = await rt.call('maildomain_check_headers', { message: 'messages/forwarded.eml' });
   printStep('Read a saved message: receiver results, alignment, DKIM selector in use, ARC chain', h);
   const f = { domain: 'example.com', records: 'records.json', selectors: ['s1', 'k1', 'old', 'mh'] };

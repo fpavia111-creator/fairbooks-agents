@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-erp-migration",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-erp-migration",
   "description": "Fairbooks ERP Migration: a domain-specific MCP agent that checks NetSuite/ERP migration export files (CSV/JSON) before go-live and writes a readiness report. Read-only on your data; never approves go-live.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-erp-migration.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
