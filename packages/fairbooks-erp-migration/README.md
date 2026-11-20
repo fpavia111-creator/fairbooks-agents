@@ -1,12 +1,12 @@
-# Fairbooks ERP Migration (`fairbooks-erp-migration`)
+# Fair-Agents ERP Migration (`fairbooks-erp-migration`)
 
 > Check NetSuite / ERP migration exports before go-live. Read-only on your data. Never approves go-live.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Fairbooks ERP Migration compares what you exported from the old system with what landed in the new one (for example a NetSuite sandbox trial load) and writes a readiness report. It works on export files you already have (CSV, JSON or JSONL). It needs no NetSuite login and no credentials.
+Fair-Agents ERP Migration compares what you exported from the old system with what landed in the new one (for example a NetSuite sandbox trial load) and writes a readiness report. It works on export files you already have (CSV, JSON or JSONL). It needs no NetSuite login and no credentials.
 
 It finds:
 - source records missing from the target, and extra target records;
@@ -39,7 +39,7 @@ Put your settings in one JSON file and pass it as `config` to any tool. Argument
 
 ### Exports and reports in other languages
 
-Fairbooks ERP Migration reads exports from systems set up in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean: files in Shift_JIS, GBK, Big5, EUC-KR or Windows-1252 (a guessed encoding is named in the warnings), key, amount, account and balance columns by their local names (`伝票番号`, `金額`, `Konto`, `Saldo`, `Valor`...), amounts such as `1.234,56`, `R$ 1.234,56`, `1,200円` and `△300`, with one decimal mark per column.
+Fair-Agents ERP Migration reads exports from systems set up in German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean: files in Shift_JIS, GBK, Big5, EUC-KR or Windows-1252 (a guessed encoding is named in the warnings), key, amount, account and balance columns by their local names (`伝票番号`, `金額`, `Konto`, `Saldo`, `Valor`...), amounts such as `1.234,56`, `R$ 1.234,56`, `1,200円` and `△300`, with one decimal mark per column.
 
 The readiness report can be written in any of those languages plus English: pass `"language": "ja"` (or start the server with `--lang ja`). Codes, `findings.json` and `exceptions.csv` stay in English so later runs and scripts read them the same; a translated report says it is a Claude translation that a native speaker has not reviewed yet.
 
@@ -55,13 +55,13 @@ fairbooks-erp-migration demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-erp-migration -- npx -y fairbooks-erp-migration@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-erp-migration -- npx -y fairbooks-erp-migration@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-erp-migration": { "command": "npx", "args": ["-y", "fairbooks-erp-migration@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-erp-migration": { "command": "npx", "args": ["-y", "fairbooks-erp-migration@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -76,18 +76,18 @@ claude mcp add fairbooks-erp-migration -- npx -y fairbooks-erp-migration@0.2.0 m
 | `migration_compare_runs` | **allow** | Compare two `findings.json` files (trial load N vs N+1) |
 | `migration_readiness_report` | **allow** | Write `readiness-report.md`, `readiness-report.html`, `findings.json` and `exceptions.csv` to `fairbooks-out/migration`; records the report hash in the audit log |
 | `migration_approve_go_live` | **block** | Listed so agents see the refusal. Go-live is a human decision. |
-| `migration_recall` | **allow** | Search what Fairbooks ERP Migration has learned about this customer's exports: accepted facts and facts waiting for a person |
+| `migration_recall` | **allow** | Search what Fair-Agents ERP Migration has learned about this customer's exports: accepted facts and facts waiting for a person |
 | `migration_learn` | **allow** | Propose a fact to remember (a column name, an extra field rule, a note). Stored as waiting; changes nothing |
 | `migration_accept_learning` | **ask · one-click** | A named person accepts or rejects a waiting fact (`accept_learning`, never on Auto) |
 | `migration_retire_memory` | **ask · one-click** | A named person stops an accepted fact; the history stays |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
-The MCP prompt `migration_go_live_readiness` walks a host model through the whole check (recall what Fairbooks ERP Migration has learned, compare, tie-out, field rules, run comparison, report) and stops at the human go-live sign-off.
+The MCP prompt `migration_go_live_readiness` walks a host model through the whole check (recall what Fair-Agents ERP Migration has learned, compare, tie-out, field rules, run comparison, report) and stops at the human go-live sign-off.
 
-## Memory: what Fairbooks ERP Migration remembers about your exports
+## Memory: what Fair-Agents ERP Migration remembers about your exports
 
-Trial loads repeat. Fairbooks ERP Migration can remember facts about one customer's export files so the next load does not have to be told again. It only remembers what a named person accepts:
+Trial loads repeat. Fair-Agents ERP Migration can remember facts about one customer's export files so the next load does not have to be told again. It only remembers what a named person accepts:
 
 | Kind | Example | What an accepted fact changes |
 |---|---|---|
@@ -112,9 +112,9 @@ Accepted facts are applied from the next call. Each result lists them under `mem
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `fairbooks-erp-migration approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`fairbooks-erp-migration kill`).
 
-Every Fairbooks ERP Migration check is read or report, so Auto changes nothing there. Accepting or retiring a learned fact is `accept_learning`: it stays **one-click even in Auto**, and `--auto migration_accept_learning` is refused. Go-live stays **blocked** in every mode.
+Every Fair-Agents ERP Migration check is read or report, so Auto changes nothing there. Accepting or retiring a learned fact is `accept_learning`: it stays **one-click even in Auto**, and `--auto migration_accept_learning` is refused. Go-live stays **blocked** in every mode.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

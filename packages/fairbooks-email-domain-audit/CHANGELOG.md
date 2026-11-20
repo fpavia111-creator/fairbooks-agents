@@ -2,6 +2,10 @@
 
 Renamed from `aeolus-of-mail` on 18 Nov 2026 (tool names were `aeolus_*`, now `maildomain_*`).
 
+## 0.2.1
+
+- **Live DNS is now opt-in (changed behaviour).** `maildomain_audit`, `maildomain_write_report`, `maildomain_plan_dmarc_rollout` and `maildomain_draft_records` read a saved `records` file by default. Live DNS-over-HTTPS lookups happen only with `allow_network: true`; without `records` or that flag the call is refused with a plain message and nothing is sent.
+
 ## 0.2.0
 
 - **BIMI check** in `maildomain_audit`: record syntax, an `https://` SVG logo URL, a `.pem` certificate URL, and DMARC enforcement at `pct=100`. New option `bimi_selector`. No BIMI record is not a finding.

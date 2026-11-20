@@ -1,12 +1,12 @@
-# Fairbooks Email Domain Audit (`fairbooks-email-domain-audit`)
+# Fair-Agents Email Domain Audit (`fairbooks-email-domain-audit`)
 
-> Audits a sending domain's SPF, DKIM, DMARC, BIMI and MX records with read-only DNS-over-HTTPS lookups, reads saved DMARC reports and message headers offline, explains the gaps, pre-stages record changes and plans a staged DMARC rollout. Changing DNS is one human click; Fairbooks Email Domain Audit never edits DNS.
+> Audits a sending domain's SPF, DKIM, DMARC, BIMI and MX records from a saved records file or, when you opt in, read-only DNS-over-HTTPS lookups, reads saved DMARC reports and message headers offline, explains the gaps, pre-stages record changes and plans a staged DMARC rollout. Changing DNS is one human click; Fair-Agents Email Domain Audit never edits DNS.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Email Domain Audit a domain. It looks up the mail-authentication records through a public DNS-over-HTTPS resolver (Cloudflare by default, or Google), or reads a saved records file offline, and reports each gap with a severity, the record it is about, what it means and the RFC:
+Give Fair-Agents Email Domain Audit a domain. By default it is offline: it reads a saved records file (`records`). When you opt in with `allow_network: true`, it looks the records up through a public DNS-over-HTTPS resolver (Cloudflare by default, or Google). Without either it refuses rather than going online. It reports each gap with a severity, the record it is about, what it means and the RFC:
 - **SPF**: missing or duplicate records, syntax, `+all` / `?all` / no `all`, `ptr`, and the **10-lookup limit counted through every include**, includes that point at nothing, void lookups and include loops. Pass `return_path` when your provider uses its own bounce subdomain, because SPF is checked there;
 - **DMARC**: missing or duplicate records, syntax, `p=none` (monitoring only), partial `pct`, `sp=none`, no report address, and report addresses on another domain that has not authorised them. A subdomain with no record is shown inheriting the organisational domain's policy;
 - **DKIM**: for the selectors you name (or a list of common ones), revoked keys, unreadable keys, keys under 1024 bits, 1024-bit keys, `t=y` testing. CNAME-delegated selectors are followed;
@@ -33,13 +33,13 @@ fairbooks-email-domain-audit demo        # runs on the bundled fictional sample 
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-email-domain-audit -- npx -y fairbooks-email-domain-audit@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-email-domain-audit -- npx -y fairbooks-email-domain-audit@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-email-domain-audit": { "command": "npx", "args": ["-y", "fairbooks-email-domain-audit@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-email-domain-audit": { "command": "npx", "args": ["-y", "fairbooks-email-domain-audit@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -55,8 +55,8 @@ claude mcp add fairbooks-email-domain-audit -- npx -y fairbooks-email-domain-aud
 | `maildomain_draft_records` | **ask (Auto-eligible)** | Pre-stage record changes in `zone-change.md` and `proposed-records.json` with its hash (DNS untouched) |
 | `maildomain_plan_dmarc_rollout` | **ask (Auto-eligible)** | Write a staged DMARC plan (`.md`, `.json`, `.ics`) and a proposal for the next stage only (DNS untouched) |
 | `maildomain_request_dns_change` | **ask · one-click** | After a named human approves, record the change (bound to its hash) for whoever edits DNS; refused while `[TO CONFIRM]` markers remain |
-| `dns_update` | **block** | Listed so agents see the refusal. Fairbooks Email Domain Audit never edits DNS. |
-| `send_test_email` | **block** | Listed so agents see the refusal. Fairbooks Email Domain Audit never sends mail. |
+| `dns_update` | **block** | Listed so agents see the refusal. Fair-Agents Email Domain Audit never edits DNS. |
+| `send_test_email` | **block** | Listed so agents see the refusal. Fair-Agents Email Domain Audit never sends mail. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -68,7 +68,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `maildomain_audit`, `maildomain_dmarc_reports` and `maildomain_write_report` can run on a schedule, and `maildomain_draft_records` and `maildomain_plan_dmarc_rollout` can go on Auto. Changing DNS is a `production_deploy`: it stays **one-click even in Auto**, and `--auto maildomain_request_dns_change` is refused. The approval is tied to the proposal's hash and is refused while any `[TO CONFIRM]` or `[CHECK MERGE]` marker is left. Editing DNS and sending mail stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -100,7 +100,7 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 
 ## Data
 
-Live audits send only domain names to the public resolver you choose (`cloudflare-dns.com` or `dns.google`) over HTTPS. Nothing else leaves your machine; no telemetry. With `records` the audit is fully offline. DMARC reports and message headers are always read offline from files under `--root`. The bundled fixtures are fictional records for reserved example domains.
+Live lookups are off by default. With `allow_network: true`, audits send only domain names to the public resolver you choose (`cloudflare-dns.com` or `dns.google`) over HTTPS. Nothing else leaves your machine; no telemetry. With `records` the audit is fully offline. DMARC reports and message headers are always read offline from files under `--root`. The bundled fixtures are fictional records for reserved example domains.
 
 ## License
 
