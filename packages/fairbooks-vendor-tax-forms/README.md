@@ -1,17 +1,17 @@
-# Fairbooks Vendor Tax Forms (`fairbooks-vendor-tax-forms`)
+# Fair-Agents Vendor Tax Forms (`fairbooks-vendor-tax-forms`)
 
 > Vendor W-9 readiness from CSV exports: what is missing, what needs fixing and who to ask, with request drafts. Sending is one human click. It never files with the IRS and is not tax advice.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Vendor Tax Forms a vendor export (`vendor_id, name, legal_name, entity_type, country, tin, w9_received, w9_signed, address, email, requested_date`, plus `w8_received, w8_type, w8_signed` for non-US vendors) and, optionally, payments (`vendor_id, date, amount, method`). For each vendor it reports:
+Give Fair-Agents Vendor Tax Forms a vendor export (`vendor_id, name, legal_name, entity_type, country, tin, w9_received, w9_signed, address, email, requested_date`, plus `w8_received, w8_type, w8_signed` for non-US vendors) and, optionally, payments (`vendor_id, date, amount, method`). For each vendor it reports:
 - a status: `ready`, `request_w9`, `fix_details` (unsigned form, missing TIN, TIN format or pattern problem, LLC classification missing), `review` (form older than `refresh_years`, default 3) or `ask_preparer` (non-US vendor);
 - the TIN **masked** (`•••••1234`). Full TINs are never returned, written or logged;
-- **TIN pattern rules per entity type**: EIN prefixes the IRS has never assigned (for example 00, 07–09, 17–19), SSN numbers that are never issued (area 000, 666 or 900–999, group 00, serial 0000), ITIN middle-digit ranges, placeholder numbers (all one digit, 123456789), and the wrong kind of number for the entity type (an SSN-style number for a corporation or partnership, an EIN for an individual who is not a sole proprietor). These are structure checks only: a number that passes is not verified, and Fairbooks Vendor Tax Forms does not do IRS TIN matching;
-- the expected form and a **checklist**: W-9 items for US vendors; for non-US vendors the **W-8 checklist** instead (W-8 on file, signed, still within its usual validity period — generally the end of the third calendar year after signing — and the form usually used for the entity type, W-8BEN or W-8BEN-E). Which W-8 applies is your preparer's call; Fairbooks Vendor Tax Forms only suggests the usual one;
-- payments for the year by non-card methods, with card and payment-app amounts listed separately, against a threshold. The default is 600 for payments before 2026 and 2000 for 2026. For later years the figure is inflation-adjusted, so Fairbooks Vendor Tax Forms marks it unconfirmed until you pass `threshold`;
+- **TIN pattern rules per entity type**: EIN prefixes the IRS has never assigned (for example 00, 07–09, 17–19), SSN numbers that are never issued (area 000, 666 or 900–999, group 00, serial 0000), ITIN middle-digit ranges, placeholder numbers (all one digit, 123456789), and the wrong kind of number for the entity type (an SSN-style number for a corporation or partnership, an EIN for an individual who is not a sole proprietor). These are structure checks only: a number that passes is not verified, and Fair-Agents Vendor Tax Forms does not do IRS TIN matching;
+- the expected form and a **checklist**: W-9 items for US vendors; for non-US vendors the **W-8 checklist** instead (W-8 on file, signed, still within its usual validity period — generally the end of the third calendar year after signing — and the form usually used for the entity type, W-8BEN or W-8BEN-E). Which W-8 applies is your preparer's call; Fair-Agents Vendor Tax Forms only suggests the usual one;
+- payments for the year by non-card methods, with card and payment-app amounts listed separately, against a threshold. The default is 600 for payments before 2026 and 2000 for 2026. For later years the figure is inflation-adjusted, so Fair-Agents Vendor Tax Forms marks it unconfirmed until you pass `threshold`;
 - a priority (high if over the threshold and not ready) and whether a first request or a reminder is due (`remind_days`, default 7).
 
 It also:
@@ -61,13 +61,13 @@ fairbooks-vendor-tax-forms demo        # runs on the bundled fictional sample da
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-vendor-tax-forms -- npx -y fairbooks-vendor-tax-forms@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-vendor-tax-forms -- npx -y fairbooks-vendor-tax-forms@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-vendor-tax-forms": { "command": "npx", "args": ["-y", "fairbooks-vendor-tax-forms@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-vendor-tax-forms": { "command": "npx", "args": ["-y", "fairbooks-vendor-tax-forms@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -82,8 +82,8 @@ claude mcp add fairbooks-vendor-tax-forms -- npx -y fairbooks-vendor-tax-forms@0
 | `taxforms_find_duplicates` | **allow** | Possible duplicate vendor records and payments split under the threshold |
 | `taxforms_draft_requests` | **ask (Auto-eligible)** | Write request and reminder drafts to `fairbooks-out/taxforms/requests` (not sent) |
 | `taxforms_request_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |
-| `irs_efile` | **block** | Listed so agents see the refusal. Fairbooks Vendor Tax Forms never files with the IRS. |
-| `send_email` | **block** | Listed so agents see the refusal. Fairbooks Vendor Tax Forms never sends. |
+| `irs_efile` | **block** | Listed so agents see the refusal. Fair-Agents Vendor Tax Forms never files with the IRS. |
+| `send_email` | **block** | Listed so agents see the refusal. Fair-Agents Vendor Tax Forms never sends. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -99,7 +99,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `taxforms_draft_requests` can go on Auto. Sending a request to a vendor is a `binding_send`: it stays **one-click even in Auto**, and `--auto taxforms_request_send` is refused. E-filing and sending stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

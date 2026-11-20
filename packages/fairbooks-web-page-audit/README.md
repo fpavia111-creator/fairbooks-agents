@@ -1,13 +1,13 @@
-# Fairbooks Web Page Audit (`fairbooks-web-page-audit`)
+# Fair-Agents Web Page Audit (`fairbooks-web-page-audit`)
 
 > Audits a folder of exported HTML pages for broken links, basic SEO gaps and automatable WCAG checklist items, and writes a fix list. Publishing changes is one human click. A technical checklist, not a legal opinion.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Point Fairbooks Web Page Audit at a folder of HTML pages: a static build, or a saved copy of your site. It reads every `.html` file and reports, with the file and line:
-- **links**: internal links, `#anchors` and images that point at nothing; `javascript:` and empty links. External links are listed, not fetched; Fairbooks Web Page Audit makes no network calls;
+Point Fair-Agents Web Page Audit at a folder of HTML pages: a static build, or a saved copy of your site. It reads every `.html` file and reports, with the file and line:
+- **links**: internal links, `#anchors` and images that point at nothing; `javascript:` and empty links. External links are listed, not fetched; Fair-Agents Web Page Audit makes no network calls;
 - **SEO basics**: missing, short, long or duplicate titles and descriptions, no `<h1>` or several, `noindex`, no canonical link, no viewport;
 - **sitemap and robots** (when `sitemap.xml` or `robots.txt` is in the site folder; read, never fetched): indexable pages missing from the sitemap, sitemap URLs with no page, sitemap URLs blocked by robots.txt, noindex or non-canonical pages listed in the sitemap, pages blocked by robots.txt without noindex, `Disallow: /` for every crawler, no `Sitemap:` line. robots.txt rules are read Google-style (longest match wins, `*` and `$` supported);
 - **accessibility**: automatable checks mapped to WCAG 2.2 success criteria (a mapping, not a conformance result): images with no `alt` (1.1.1), form fields with no label (1.3.1, 4.1.2), links and buttons with no name (2.4.4, 4.1.2), vague link text, skipped heading levels, no page language (3.1.1), zoom blocked (1.4.4), untitled frames, positive `tabindex` (2.4.3), meta refresh (2.2.1), media that autoplays with sound (1.4.2), duplicate ids;
@@ -17,7 +17,7 @@ Point Fairbooks Web Page Audit at a folder of HTML pages: a static build, or a s
 
 Every element-level issue carries a **CSS selector** (for example `body > main > a.btn-primary`), and every result has a **"do these first" list**: issues grouped by check and selector, scored by severity and reach, and marked "likely one template fix" when the same element fails on several pages.
 
-It writes `page-audit.md`, a self-contained `page-audit.html` (no scripts) and `fix-list.csv` (selector column; blank owner and status columns). With approval it writes fixed **copies** and one **unified diff** (`fixes.diff`, applies with `patch -p1` or `git apply` inside the site folder) for mechanical fixes only: setting the page language you name, removing zoom blocks, adding a viewport, resetting positive `tabindex`. Alt text, titles, descriptions, labels and link text are left for a person; Fairbooks Web Page Audit does not invent them.
+It writes `page-audit.md`, a self-contained `page-audit.html` (no scripts) and `fix-list.csv` (selector column; blank owner and status columns). With approval it writes fixed **copies** and one **unified diff** (`fixes.diff`, applies with `patch -p1` or `git apply` inside the site folder) for mechanical fixes only: setting the page language you name, removing zoom blocks, adding a viewport, resetting positive `tabindex`. Alt text, titles, descriptions, labels and link text are left for a person; Fair-Agents Web Page Audit does not invent them.
 
 ## Install
 
@@ -31,13 +31,13 @@ fairbooks-web-page-audit demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-web-page-audit -- npx -y fairbooks-web-page-audit@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-web-page-audit -- npx -y fairbooks-web-page-audit@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-web-page-audit": { "command": "npx", "args": ["-y", "fairbooks-web-page-audit@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-web-page-audit": { "command": "npx", "args": ["-y", "fairbooks-web-page-audit@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -50,8 +50,8 @@ claude mcp add fairbooks-web-page-audit -- npx -y fairbooks-web-page-audit@0.2.0
 | `pages_write_report` | **allow** | Write `page-audit.md`, `page-audit.html` and `fix-list.csv` to `fairbooks-out/pages` |
 | `pages_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `fairbooks-out/pages/proposed`, `fixes.diff`, `changes.md` and `proposal.json` (your files untouched) |
 | `pages_request_publish` | **ask · one-click** | After a named human approves, record the proposal (bound to its hash) for whoever publishes |
-| `deploy_site` | **block** | Listed so agents see the refusal. Fairbooks Web Page Audit never deploys. |
-| `http_fetch` | **block** | Listed so agents see the refusal. Fairbooks Web Page Audit makes no network calls. |
+| `deploy_site` | **block** | Listed so agents see the refusal. Fair-Agents Web Page Audit never deploys. |
+| `http_fetch` | **block** | Listed so agents see the refusal. Fair-Agents Web Page Audit makes no network calls. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -69,7 +69,7 @@ The `pages_site_review` prompt (arguments `site`, optional `base_url`, `lang`, `
 
 `pages_draft_fixes` can go on Auto. Publishing to a live site is a `production_deploy`: it stays **one-click even in Auto**, and `--auto pages_request_publish` is refused. The approval is tied to the proposal's hash, and every proposed file and `fixes.diff` is re-hashed before it is recorded. Deploying and fetching stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
