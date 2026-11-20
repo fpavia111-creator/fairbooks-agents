@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-expense-policy",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-expense-policy",
   "description": "Fairbooks Expense Policy: an MCP agent that compares expense report lines and receipt text to your written expense policy (limits, per diem by location and date, dated mileage rates), cites the policy section for every finding, flags possible duplicates across periods, ranks reports for review and pre-stages a reimbursement batch. Reimbursing is moving money: always one human click; paying is blocked.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-expense-policy.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",

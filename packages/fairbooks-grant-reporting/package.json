@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-grant-reporting",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-grant-reporting",
   "description": "Fairbooks Grant Reporting: an MCP agent that maps grant deadlines, budget lines, outcomes and evidence from CSV exports into a draft report packet with gaps marked for a person: budget-vs-actual variance with explanation markers, spend-down projection, funder template mapping, deadline calendar (.ics) and hashed evidence packs. Submitting to a funder is a binding send: always one human click, never automatic.",
   "type": "module",
@@ -31,7 +31,7 @@
     "eval": "node bin/fairbooks-grant-reporting.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
