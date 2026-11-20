@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.fpavia111-creator/fairbooks-contract-clauses",
-  "title": "Fairbooks Contract Clauses",
+  "title": "Fair-Agents Contract Clauses",
   "description": "An MCP agent that checks a contract (.docx, .txt or .md) against your own clause playbook…",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/fpavia111-creator/fairbooks-agents",
     "source": "github",
     "subfolder": "packages/fairbooks-contract-clauses"
   },
-  "websiteUrl": "https://mythosmachines.com/",
+  "websiteUrl": "https://fair-agents.com/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fairbooks-contract-clauses",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
