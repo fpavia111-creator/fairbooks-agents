@@ -1,12 +1,12 @@
-# Fairbooks Data Erasure Requests (`fairbooks-data-erasure-requests`)
+# Fair-Agents Data Erasure Requests (`fairbooks-data-erasure-requests`)
 
-> A data-subject erasure request workflow over your exports: where the person's data lives, what you may have to keep, and a checklist. Deleting is one human click; Fairbooks Data Erasure Requests never deletes.
+> A data-subject erasure request workflow over your exports: where the person's data lives, what you may have to keep, and a checklist. Deleting is one human click; Fair-Agents Data Erasure Requests never deletes.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Point Fairbooks Data Erasure Requests at a folder of exports (CSV, JSON, JSONL) from your CRM, support desk, newsletter tool, billing and so on. It:
+Point Fair-Agents Data Erasure Requests at a folder of exports (CSV, JSON, JSONL) from your CRM, support desk, newsletter tool, billing and so on. It:
 - maps which columns look like personal data (email, phone, name, address, birth date, IP address, government id, payment details, customer id);
 - finds the requester's rows by email (case-insensitive), phone (last 10 digits) or customer id, and also in pseudonymised exports where the email or phone is stored as a SHA-256 or MD5 hash (ad audiences, ESP subscriber hashes). Output says which column matched and how, never the value;
 - flags files that look like records you may have to retain (invoices, tax, payroll, orders, contracts);
@@ -29,13 +29,13 @@ fairbooks-data-erasure-requests demo        # runs on the bundled fictional samp
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-data-erasure-requests -- npx -y fairbooks-data-erasure-requests@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-data-erasure-requests -- npx -y fairbooks-data-erasure-requests@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-data-erasure-requests": { "command": "npx", "args": ["-y", "fairbooks-data-erasure-requests@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-data-erasure-requests": { "command": "npx", "args": ["-y", "fairbooks-data-erasure-requests@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -52,7 +52,7 @@ claude mcp add fairbooks-data-erasure-requests -- npx -y fairbooks-data-erasure-
 | `erasure_evidence_pack` | **allow** | `evidence-<key>.json` + `.html` for one request; hash recorded in the audit log |
 | `erasure_log_request` | **ask (Auto-eligible)** | Add the request to `requests.csv` with a target date |
 | `erasure_request_deletion` | **ask · one-click** | After a named human approves, record a deletion for one system's owner |
-| `erasure_delete_records` | **block** | Listed so agents see the refusal. Fairbooks Data Erasure Requests never deletes or edits data. |
+| `erasure_delete_records` | **block** | Listed so agents see the refusal. Fair-Agents Data Erasure Requests never deletes or edits data. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -69,7 +69,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 }
 ```
 
-`file_pattern` is plain text the export's path contains (case-insensitive). The file is checked against a schema; a typo such as `keep_dayz` fails with a JSON pointer. Check it first with `fairbooks-data-erasure-requests validate-config retention_rules rules.json`. The rules are yours: Fairbooks Data Erasure Requests applies them and cites them, it does not decide which rule or exemption applies.
+`file_pattern` is plain text the export's path contains (case-insensitive). The file is checked against a schema; a typo such as `keep_dayz` fails with a JSON pointer. Check it first with `fairbooks-data-erasure-requests validate-config retention_rules rules.json`. The rules are yours: Fair-Agents Data Erasure Requests applies them and cites them, it does not decide which rule or exemption applies.
 
 ### MCP prompt
 
@@ -83,7 +83,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `erasure_log_request` can go on Auto. Deleting personal data is `delete_personal_data`: it stays **one-click even in Auto**, and `--auto erasure_request_deletion` is refused. Deleting directly stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

@@ -3,6 +3,10 @@
 Renamed from `echo-of-docs` on 18 Nov 2026 (tool names were `echo_*`, now `docsdrift_*`).
 
 
+## 0.2.1
+
+- GitHub Action: the step that writes the `sarif` output ran `docs` instead of `echo` after the rename, so the output was never set. Fixed. Default `version` input is now 0.2.1.
+
 ## Final pass (19 Nov 2026, still 0.2.0, not published)
 
 - A tool list from a 0.2.0 npm pack (with `mythos_info`) and from this version (with `fairbooks_info`) are both read without counting the info tool as undocumented.

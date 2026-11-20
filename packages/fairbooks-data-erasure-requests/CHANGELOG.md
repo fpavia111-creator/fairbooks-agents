@@ -2,6 +2,10 @@
 
 Renamed from `macaria-of-erasure` on 18 Nov 2026 (tool names were `macaria_*`, now `erasure_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0
 
 - New `erasure_retention_check`: applies your own retention rules and legal holds (JSON) to the subject's matched rows; holds win; every row cites the rule or hold id (on_hold, retain_until, period_ended, date_missing, no_rule). Expired holds are listed and ignored.

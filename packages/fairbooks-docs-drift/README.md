@@ -1,12 +1,12 @@
-# Fairbooks Docs Drift (`fairbooks-docs-drift`)
+# Fair-Agents Docs Drift (`fairbooks-docs-drift`)
 
 > Finds where a package's README, docs and skills no longer match its tools, input schemas, OpenAPI spec, CHANGELOG and package.json, runs as a CI gate with SARIF output, and drafts low-risk fixes as copies. Publishing docs is one human click. Never overwrites docs.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Point Fairbooks Docs Drift at a package folder and, ideally, its tool list: an MCP `tools/list` result, `fairbooks_info` output, or a plain array. It reads `README.md`, `SKILL.md`, `docs/` and `skills/`, and reports drift with the file and line:
+Point Fair-Agents Docs Drift at a package folder and, ideally, its tool list: an MCP `tools/list` result, `fairbooks_info` output, or a plain array. It reads `README.md`, `SKILL.md`, `docs/` and `skills/`, and reports drift with the file and line:
 - **tools**: tools in the code that no doc mentions; tools in the docs (tables, backticks, `call` examples) that no longer exist, with the nearest real name when one is one or two letters off; allow/ask/block labels that differ from the tool list; one-click tools whose docs do not say so; "N tools" counts that are wrong;
 - **examples**: `call <tool> '{...}'` examples with invalid JSON, parameters the input schema does not have, or required parameters left out; `npm run` scripts that do not exist; `npx` for a package with no bin;
 - **package.json**: version pins (`name@x.y.z`), "Node ≥ N" and the License section that differ from package.json;
@@ -31,13 +31,13 @@ fairbooks-docs-drift demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-docs-drift -- npx -y fairbooks-docs-drift@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-docs-drift -- npx -y fairbooks-docs-drift@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-docs-drift": { "command": "npx", "args": ["-y", "fairbooks-docs-drift@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-docs-drift": { "command": "npx", "args": ["-y", "fairbooks-docs-drift@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -51,8 +51,8 @@ claude mcp add fairbooks-docs-drift -- npx -y fairbooks-docs-drift@0.2.0 mcp --r
 | `docsdrift_ci` | **allow** | CI gate: write `fairbooks-docs-drift.sarif` and `drift.json`, pass or fail by `fail_on`, compare with a `baseline` |
 | `docsdrift_draft_fixes` | **ask (Auto-eligible)** | Write fixed copies to `fairbooks-out/docs/proposed` within caps, plus `changes.md` and `proposal.json` (your docs untouched) |
 | `docsdrift_request_publish` | **ask · one-click** | After a named human approves, record the proposal (bound to its hash; originals must be unchanged) for whoever publishes |
-| `write_docs` | **block** | Listed so agents see the refusal. Fairbooks Docs Drift never overwrites docs in place. |
-| `git_push` | **block** | Listed so agents see the refusal. Fairbooks Docs Drift never commits, pushes or publishes. |
+| `write_docs` | **block** | Listed so agents see the refusal. Fair-Agents Docs Drift never overwrites docs in place. |
+| `git_push` | **block** | Listed so agents see the refusal. Fair-Agents Docs Drift never commits, pushes or publishes. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -64,9 +64,9 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 The check and `docsdrift_ci` can run on every push, and `docsdrift_draft_fixes` can go on Auto within its caps. Publishing docs is a `production_deploy`: it stays **one-click even in Auto**, and `--auto docsdrift_request_publish` is refused. The approval is tied to the proposal's hash, every proposed file is re-hashed, and the original docs must not have changed since the proposal. Overwriting and pushing stay **blocked**.
 
-Get a tool list for any MCP server by saving its `tools/list` response (add a `prompts` array from `prompts/list` so prompt names are not mistaken for tools), or for a Fairbooks pack with `<pack> mcp` and a `tools/list` request.
+Get a tool list for any MCP server by saving its `tools/list` response (add a `prompts` array from `prompts/list` so prompt names are not mistaken for tools), or for a Fair-Agents pack with `<pack> mcp` and a `tools/list` request.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## GitHub Action
 
