@@ -1,12 +1,12 @@
-# Fairbooks Process Evals (`fairbooks-process-evals`)
+# Fair-Agents Process Evals (`fairbooks-process-evals`)
 
 > Private, fixture-based evals for one business process on one pinned model. Grades recorded responses, tells real regressions from noise, and writes an offline dashboard; calls no model; publishes nothing.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-You write a suite (`suite.json`: the process, the pinned model id, and cases with checks) and record your agent's responses (JSONL: `case_id, output, tool_calls, model`). Fairbooks Process Evals grades them deterministically. Checks:
+You write a suite (`suite.json`: the process, the pinned model id, and cases with checks) and record your agent's responses (JSONL: `case_id, output, tool_calls, model`). Fair-Agents Process Evals grades them deterministically. Checks:
 - `contains`, `not_contains`, `regex`, `not_regex`, `equals`;
 - `max_words`, `min_words`;
 - `refusal` / `no_refusal`;
@@ -19,11 +19,11 @@ Cases can carry `tags` (results are also reported per tag), `critical: true` (a 
 
 The suite must pin an exact model id (no `latest`). Responses with no model id, or from a different model, are graded but marked **not comparable**. `evals_compare` lists regressions and fixes between a baseline and a candidate run. Reports come as Markdown, JSON and JUnit XML for CI.
 
-**Repeated trials.** Record the same case several times (several rows with the same `case_id`) and Fairbooks Process Evals reports a pass rate per case, which cases are flaky, and passes a case when its rate reaches the suite's `pass_threshold` (default 1: every trial).
+**Repeated trials.** Record the same case several times (several rows with the same `case_id`) and Fair-Agents Process Evals reports a pass rate per case, which cases are flaky, and passes a case when its rate reaches the suite's `pass_threshold` (default 1: every trial).
 
 **Is the change real?** `evals_compare` adds `stats`: a bootstrap confidence interval on the score change, with a verdict of `regression`, `improvement` or `within_noise`. It is seeded (default seed 1, 2000 resamples), so the same files give the same interval. With trials it resamples trials inside each case and runs a one-sided Fisher exact test per case, naming the cases that regressed significantly and the ones that only wobbled. With one response per case it resamples cases and adds an exact sign test; with a small suite that interval is wide, and the result says so. `min_delta` ignores drops smaller than a number of points you choose.
 
-**Rubric grading with cited criteria.** `evals_grade_rubric` scores each response against a rubric (`criteria` with `id`, `text`, `points`). A criterion is graded either by checks (Fairbooks Process Evals quotes the text that met it) or by a judgment you recorded elsewhere, from a person or your own judge model. Fairbooks Process Evals calls no judge. It verifies recorded judgments instead: each must cite a criterion that exists and quote text that really is in the recorded output; a quote that is not there earns nothing (`citation_not_found`), and criteria without a judgment are `pending` and left out of the score. Every grade carries the criterion id, its text and the evidence or reason.
+**Rubric grading with cited criteria.** `evals_grade_rubric` scores each response against a rubric (`criteria` with `id`, `text`, `points`). A criterion is graded either by checks (Fair-Agents Process Evals quotes the text that met it) or by a judgment you recorded elsewhere, from a person or your own judge model. Fair-Agents Process Evals calls no judge. It verifies recorded judgments instead: each must cite a criterion that exists and quote text that really is in the recorded output; a quote that is not there earns nothing (`citation_not_found`), and criteria without a judgment are `pending` and left out of the score. Every grade carries the criterion id, its text and the evidence or reason.
 
 **Gate.** A gate file sets `min_score`, `max_regressions` or `fail_on: "significant_regression"`, `must_pass`, `max_flaky`, `min_rubric_score` and whether the run must be comparable. Tools that take `gate` return `gate: { result: pass|fail, reasons }`.
 
@@ -41,13 +41,13 @@ fairbooks-process-evals demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-process-evals -- npx -y fairbooks-process-evals@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-process-evals -- npx -y fairbooks-process-evals@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-process-evals": { "command": "npx", "args": ["-y", "fairbooks-process-evals@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-process-evals": { "command": "npx", "args": ["-y", "fairbooks-process-evals@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -101,7 +101,7 @@ Judgments (JSONL/CSV/JSON) for judged criteria: `case_id, criterion, score` (0 t
 
 All tools are read or report, so Auto changes nothing here. Publishing scores is `binding_send` and stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
@@ -118,8 +118,8 @@ Every call is written to `.fairbooks/audit.jsonl` (hash-chained JSONL; arguments
 ## What it is not
 
 - Not a benchmark or leaderboard, and a score is not a certification. It covers your suite and your pinned model only.
-- It does not run your agent or call any model. You record the responses; Fairbooks Process Evals grades them.
-- Rule-based checks cannot judge open-ended quality. Use them for things that must or must not happen. For judged rubric criteria Fairbooks Process Evals checks the citation, not the judgment: a verified quote shows the judge pointed at real text, not that the score is right.
+- It does not run your agent or call any model. You record the responses; Fair-Agents Process Evals grades them.
+- Rule-based checks cannot judge open-ended quality. Use them for things that must or must not happen. For judged rubric criteria Fair-Agents Process Evals checks the citation, not the judgment: a verified quote shows the judge pointed at real text, not that the score is right.
 - The statistics describe the recorded runs. An interval from one response per case on a small suite is wide; `within_noise` means the data cannot tell, not that nothing changed. Critical cases belong in the gate (`critical: true` or `must_pass`), not in a significance test.
 - With trials, the rubric grades the first recorded response of each case.
 - The dashboard is a static page. It has no filters or drill-down, and it shows only the runs you pass in.

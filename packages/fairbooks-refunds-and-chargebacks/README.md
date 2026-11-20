@@ -1,12 +1,12 @@
-# Fairbooks Refunds and Chargebacks (`fairbooks-refunds-and-chargebacks`)
+# Fair-Agents Refunds and Chargebacks (`fairbooks-refunds-and-chargebacks`)
 
 > Triage refund requests and chargebacks against your written policy. Issuing money is blocked; a refund request is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Refunds and Chargebacks a requests export (`request_id, type, order_id, customer, amount, reason, requested_at, returned`), an orders export (`order_id, customer, amount, refunded, order_date, delivered_date, tracking`) and your policy as JSON (`window_days`, `window_from`, `review_over`, `max_refunds_per_customer_90d`, `chargeback_response_days`, `return_required_over`). For each request it flags:
+Give Fair-Agents Refunds and Chargebacks a requests export (`request_id, type, order_id, customer, amount, reason, requested_at, returned`), an orders export (`order_id, customer, amount, refunded, order_date, delivered_date, tracking`) and your policy as JSON (`window_days`, `window_from`, `review_over`, `max_refunds_per_customer_90d`, `chargeback_response_days`, `return_required_over`). For each request it flags:
 - outside the refund window; more than the refundable balance (order total minus earlier refunds);
 - duplicate requests on the same order; repeat requests from one customer within 90 days;
 - returns your policy requires but that are not received; amounts above your review threshold;
@@ -49,7 +49,7 @@ Where a layout says "checked", its column names were compared with the vendor's 
 
 ### Disputes from other markets
 
-When a dispute has no known reason code, Fairbooks Refunds and Chargebacks classifies it from the reason text. That text can be in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`Ware nicht erhalten`, `Cobro duplicado`, `商品が届いていない`, `重复扣款`, `환불되지 않았습니다`...). Network names are read in other scripts too (ビザ, 마스터카드, 美国运通). JCB and UnionPay are recognised by name, but their reason codes are not in Fairbooks Refunds and Chargebacks's table, so their disputes are always classified from the text and the result says so. The word lists are short and a person still checks the category.
+When a dispute has no known reason code, Fair-Agents Refunds and Chargebacks classifies it from the reason text. That text can be in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese or Korean (`Ware nicht erhalten`, `Cobro duplicado`, `商品が届いていない`, `重复扣款`, `환불되지 않았습니다`...). Network names are read in other scripts too (ビザ, 마스터카드, 美国运通). JCB and UnionPay are recognised by name, but their reason codes are not in Fair-Agents Refunds and Chargebacks's table, so their disputes are always classified from the text and the result says so. The word lists are short and a person still checks the category.
 
 ## Install
 
@@ -63,13 +63,13 @@ fairbooks-refunds-and-chargebacks demo        # runs on the bundled fictional sa
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-refunds-and-chargebacks -- npx -y fairbooks-refunds-and-chargebacks@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-refunds-and-chargebacks -- npx -y fairbooks-refunds-and-chargebacks@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-refunds-and-chargebacks": { "command": "npx", "args": ["-y", "fairbooks-refunds-and-chargebacks@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-refunds-and-chargebacks": { "command": "npx", "args": ["-y", "fairbooks-refunds-and-chargebacks@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -84,7 +84,7 @@ claude mcp add fairbooks-refunds-and-chargebacks -- npx -y fairbooks-refunds-and
 | `refunds_reason_code` | **allow** | Look up a reason code or reason text: category, label and evidence checklist |
 | `refunds_evidence_pack` | **allow** | Per-dispute HTML evidence packs with row citations, `evidence-index.json`, `dispute-deadlines.ics` |
 | `refunds_request_refund` | **ask · one-click** | After a named human approves, record a refund for a person to issue |
-| `payments_issue_refund` | **block** | Listed so agents see the refusal. Fairbooks Refunds and Chargebacks never moves money. |
+| `payments_issue_refund` | **block** | Listed so agents see the refusal. Fair-Agents Refunds and Chargebacks never moves money. |
 | `payments_submit_dispute` | **block** | Listed so agents see the refusal. A person submits evidence. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
@@ -105,7 +105,7 @@ The policy JSON is checked against the `refund_policy` schema: unknown keys (a t
 
 All triage tools are read or report. A refund is `move_money`: it stays **one-click even in Auto**, and `--auto refunds_request_refund` is refused. Issuing refunds and submitting disputes stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
