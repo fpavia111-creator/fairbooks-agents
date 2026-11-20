@@ -1,21 +1,21 @@
-# Fairbooks Board Pack (`fairbooks-board-pack`)
+# Fair-Agents Board Pack (`fairbooks-board-pack`)
 
 > Board pack assembly from locked source figures and documents, with variance commentary that cites its figures and a claims check on every number. Controller sign-off and distribution are each one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Board Pack a figures CSV (`id, metric, period, actual, budget, prior, source`) and the documents that go in the pack (Markdown or text). It:
+Give Fair-Agents Board Pack a figures CSV (`id, metric, period, actual, budget, prior, source`) and the documents that go in the pack (Markdown or text). It:
 - **locks** the figures file by hash. A pack is only built from locked figures, and sign-off is refused if they change afterwards;
 - computes the variance of each figure against budget (or prior period when there is no budget) and flags material ones (`materiality_abs`, default 50,000, or `materiality_pct`, default 10%);
-- drafts commentary, one line per material variance, citing the figure id (for example `[F1]`). Each "Reason" is left as `[TO WRITE]` for the line owner, because Fairbooks Board Pack does not guess causes;
+- drafts commentary, one line per material variance, citing the figure id (for example `[F1]`). Each "Reason" is left as `[TO WRITE]` for the line owner, because Fair-Agents Board Pack does not guess causes;
 - **checks claims**: every sentence with a number must cite a known figure id, and each number must match a value of a cited figure (actual, budget, prior, variance or variance %) at the precision written, so `$1.23M` matches 1,234,000 but `1.3M` does not, and `up 12%` matches a 12.18% variance but `up 12.3%` does not. A hedge ("about", "roughly", "nearly", "~") widens the match to one full unit of the last digit. A percentage can also be a ratio or change between two cited figures (`58.5% of revenue [F3, F1]`). When a sentence uses only "up" words (up, above, over, rose…) or only "down" words (down, below, under, fell…), a number that matched a variance must have that sign, so "5,000 above budget" on a figure that is 5,000 *under* budget is flagged. It reports uncited numbers, unknown citations, mismatches and wrong directions;
 - **compares with the prior pack**: given last month's figures file, it flags prior-period values that no longer equal what was reported (restatements), same-period values that changed, new and dropped metrics and changed figure ids, and lists every sentence that cites an affected figure so its author can re-read it. With the prior `pack-manifest.json` it also checks the prior figures file is the one that pack was built from;
 - **draws charts** from the locked figures only: self-contained SVG (no scripts, no links, no external references) for variance, variance % and actual against budget. Every bar carries `data-figure-id`, `data-field` and `data-value`, and `charts.json` lists each point, so every mark traces to a figure id;
 - assembles `board-pack.md` (variance table, commentary, each document with its hash, figure sources, claims-check result), `citations.csv` and `pack-manifest.json`, and on request a self-contained `board-pack.html` (no scripts; the charts inline). The pack hash is recorded as `output_sha256` in the audit line.
 
-Sign-off names the pack by its hash. It is refused while claims issues or `[TO WRITE]` markers remain, unless the controller accepts them with a note, and refused if `board-pack.md` or `board-pack.html` changed after assembly. Distribution is refused unless the sign-off matches the current pack exactly. `pack-manifest.json` is validated against a JSON Schema whenever Fairbooks Board Pack reads it back (`fairbooks-board-pack validate-config pack_manifest <file>`).
+Sign-off names the pack by its hash. It is refused while claims issues or `[TO WRITE]` markers remain, unless the controller accepts them with a note, and refused if `board-pack.md` or `board-pack.html` changed after assembly. Distribution is refused unless the sign-off matches the current pack exactly. `pack-manifest.json` is validated against a JSON Schema whenever Fair-Agents Board Pack reads it back (`fairbooks-board-pack validate-config pack_manifest <file>`).
 
 ## Install
 
@@ -29,13 +29,13 @@ fairbooks-board-pack demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-board-pack -- npx -y fairbooks-board-pack@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-board-pack -- npx -y fairbooks-board-pack@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-board-pack": { "command": "npx", "args": ["-y", "fairbooks-board-pack@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-board-pack": { "command": "npx", "args": ["-y", "fairbooks-board-pack@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -53,8 +53,8 @@ claude mcp add fairbooks-board-pack -- npx -y fairbooks-board-pack@0.2.0 mcp --r
 | `board_assemble_pack` | **allow** | Write `board-pack.md`, `citations.csv`, `pack-manifest.json`, and `board-pack.html` with `html: true` (needs locked, unchanged figures) |
 | `board_record_signoff` | **ask · one-click** | After the controller's named click, write `signoff.json` for that pack hash |
 | `board_request_distribution` | **ask · one-click** | After a named click, record distribution of the signed pack |
-| `board_portal_upload` | **block** | Listed so agents see the refusal. Fairbooks Board Pack never uploads. |
-| `send_email` | **block** | Listed so agents see the refusal. Fairbooks Board Pack never sends. |
+| `board_portal_upload` | **block** | Listed so agents see the refusal. Fair-Agents Board Pack never uploads. |
+| `send_email` | **block** | Listed so agents see the refusal. Fair-Agents Board Pack never sends. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -68,9 +68,9 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `fairbooks-board-pack approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`fairbooks-board-pack kill`).
 
-`board_lock_figures` and `board_draft_commentary` can go on Auto. A controller sign-off is an attestation and distribution is a send, so Fairbooks Board Pack files both under `binding_send`: they stay **one-click even in Auto**, and `--auto` on them is refused. Uploading and emailing stay **blocked**.
+`board_lock_figures` and `board_draft_commentary` can go on Auto. A controller sign-off is an attestation and distribution is a send, so Fair-Agents Board Pack files both under `binding_send`: they stay **one-click even in Auto**, and `--auto` on them is refused. Uploading and emailing stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

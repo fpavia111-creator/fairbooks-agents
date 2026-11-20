@@ -1,12 +1,12 @@
-# Fairbooks Certificate Expiry (`fairbooks-certificate-expiry`)
+# Fair-Agents Certificate Expiry (`fairbooks-certificate-expiry`)
 
 > Expiry tracking for TLS certificates, domains, licences and vendor certificates of insurance, with chase-email drafts. Paid renewals, production changes and sends are one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Certificate Expiry an inventory CSV (`id, type, name, holder, issuer, expires, auto_renew, renewal_cost, owner, key_type, key_bits, signature, registrar_lock`; names matched loosely) and, if you track vendor insurance, a COI CSV (`vendor, coverage, limit, expires, additional_insured, certificate_id`) plus your own written requirement list (`coverage, min_limit, additional_insured`). It:
+Give Fair-Agents Certificate Expiry an inventory CSV (`id, type, name, holder, issuer, expires, auto_renew, renewal_cost, owner, key_type, key_bits, signature, registrar_lock`; names matched loosely) and, if you track vendor insurance, a COI CSV (`vendor, coverage, limit, expires, additional_insured, certificate_id`) plus your own written requirement list (`coverage, min_limit, additional_insured`). It:
 - sorts everything by days left: expired, critical (≤ 14 days), warning (≤ 30), upcoming (≤ 90), ok; thresholds are settable;
 - flags TLS certificates with weak keys (RSA < 2048, EC < 256), SHA-1/MD5 signatures or a self-signed issuer, domains with auto-renew or registrar lock off, and items with no owner or no expiry date;
 - says what each item needs next: a confirmation that auto-renew worked, a paid renewal, or a production change to install a new certificate;
@@ -17,7 +17,7 @@ Give Fairbooks Certificate Expiry an inventory CSV (`id, type, name, holder, iss
 - writes `expiry-report.md`, `expiry-report.html` (self-contained, no scripts), `expiry.csv` (blank reviewer columns) and `renewals.ics` (reminders at the warning and critical thresholds and one day before, or your own `reminder_days`), records the output hash in the audit line, and drafts one chase email per vendor with gaps, marked DRAFT;
 - optionally runs a **live TLS check** (`certs_tls_live_check`, see below).
 
-Apart from the opt-in live TLS check, Fairbooks Certificate Expiry reads only the files you export. It does not query registrars or insurers.
+Apart from the opt-in live TLS check, Fair-Agents Certificate Expiry reads only the files you export. It does not query registrars or insurers.
 
 ### Live TLS check (opt-in, network)
 
@@ -62,13 +62,13 @@ fairbooks-certificate-expiry demo        # runs on the bundled fictional sample 
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-certificate-expiry -- npx -y fairbooks-certificate-expiry@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-certificate-expiry -- npx -y fairbooks-certificate-expiry@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-certificate-expiry": { "command": "npx", "args": ["-y", "fairbooks-certificate-expiry@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-certificate-expiry": { "command": "npx", "args": ["-y", "fairbooks-certificate-expiry@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -86,9 +86,9 @@ claude mcp add fairbooks-certificate-expiry -- npx -y fairbooks-certificate-expi
 | `certs_request_chase_send` | **ask · one-click** | After a named human approves, record a draft as approved to send |
 | `certs_request_renewal` | **ask · one-click** | After a named human approves, record a paid renewal for whoever holds the card |
 | `certs_request_production_change` | **ask · one-click** | After a named human approves, record a certificate install or rotation for your change process |
-| `purchase_renewal` | **block** | Listed so agents see the refusal. Fairbooks Certificate Expiry never pays. |
-| `deploy_certificate` | **block** | Listed so agents see the refusal. Fairbooks Certificate Expiry never touches a server. |
-| `send_email` | **block** | Listed so agents see the refusal. Fairbooks Certificate Expiry never sends. |
+| `purchase_renewal` | **block** | Listed so agents see the refusal. Fair-Agents Certificate Expiry never pays. |
+| `deploy_certificate` | **block** | Listed so agents see the refusal. Fair-Agents Certificate Expiry never touches a server. |
+| `send_email` | **block** | Listed so agents see the refusal. Fair-Agents Certificate Expiry never sends. |
 
 Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, caps and every decision.
 
@@ -104,7 +104,7 @@ Any other tool name is blocked. `fairbooks_info` shows the pinned model, mode, c
 
 `certs_draft_chase` and `certs_tls_live_check` can go on Auto if you opt in. A vendor-facing send (`binding_send`), a renewal that costs money (`move_money`) and a production change (`production_deploy`) each stay **one-click even in Auto**; `--auto` on those tools is refused. Paying, deploying and sending stay **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
