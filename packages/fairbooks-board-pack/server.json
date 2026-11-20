@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.fpavia111-creator/fairbooks-board-pack",
-  "title": "Fairbooks Board Pack",
+  "title": "Fair-Agents Board Pack",
   "description": "An MCP agent that assembles a board pack from locked source figures and source documents…",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/fpavia111-creator/fairbooks-agents",
     "source": "github",
     "subfolder": "packages/fairbooks-board-pack"
   },
-  "websiteUrl": "https://mythosmachines.com/",
+  "websiteUrl": "https://fair-agents.com/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fairbooks-board-pack",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
