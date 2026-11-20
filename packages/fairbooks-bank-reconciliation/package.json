@@ -1,6 +1,6 @@
 {
   "name": "fairbooks-bank-reconciliation",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "mcpName": "io.github.fpavia111-creator/fairbooks-bank-reconciliation",
   "description": "Fairbooks Bank Reconciliation: an MCP agent for bank-to-GL reconciliation from CSV/JSON, CAMT.053, BAI2 or OFX exports. Proposes matches (including rules a person accepted), lists reconciling items, ties balances, rolls outstanding items forward month to month and drafts adjusting entries. Posting an entry is always one human click and only records a request.",
   "type": "module",
@@ -32,7 +32,7 @@
     "eval": "node bin/fairbooks-bank-reconciliation.js eval"
   },
   "dependencies": {
-    "fairbooks-core": "^0.2.0"
+    "fairbooks-core": "^0.2.1"
   },
   "repository": {
     "type": "git",
