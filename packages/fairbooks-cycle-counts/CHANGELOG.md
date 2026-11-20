@@ -2,6 +2,10 @@
 
 Renamed from `hesperides-of-inventory` on 18 Nov 2026 (tool names were `hesperides_*`, now `counts_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0 (2026-11-15)
 
 - Real exports: Reads NetSuite inventory searches and Shopify inventory exports directly; count sheets map common scanner column names. Shopify exports carry no unit cost, so variance values are reported as unknown. Table inputs also accept TSV and Excel `.xlsx`; `inspect <file>` and `mythos-sources.json` help when columns differ.

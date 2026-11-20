@@ -1,12 +1,12 @@
-# Fairbooks Cycle Counts (`fairbooks-cycle-counts`)
+# Fair-Agents Cycle Counts (`fairbooks-cycle-counts`)
 
 > Compares cycle counts with your on-hand export, ranks variances by value and says which need a recount or an investigation. Posting an adjustment is one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks Cycle Counts a count export (`sku, location, counted_qty, recount_qty, uom, counter, counted_at`), the on-hand snapshot from your system (`sku, location, description, system_qty, unit_cost, uom`) and, optionally, movements (`sku, location, posted_at, qty, type, ref`). For each item and location it:
+Give Fair-Agents Cycle Counts a count export (`sku, location, counted_qty, recount_qty, uom, counter, counted_at`), the on-hand snapshot from your system (`sku, location, description, system_qty, unit_cost, uom`) and, optionally, movements (`sku, location, posted_at, qty, type, ref`). For each item and location it:
 - computes the variance in units and value, after taking out movements posted between the count and the snapshot (timing differences);
 - sorts lines into match, within tolerance (`tolerance_pct` 2%, `tolerance_units` 0 by default, and under `value_threshold`, default 250), explained by timing, recount needed, confirmed by recount, investigate, or not counted;
 - flags likely unit-of-measure errors (count and system differ by a pack factor such as 6, 12 or 24), recounts that disagree with the first count, negative system stock, items counted but not in the system, and mismatched units;
@@ -18,7 +18,7 @@ It writes `variance-review.md`, `variances.csv` (blank reviewer and decision col
 
 It also:
 - plans counts: ranks items A/B/C by value (annual usage × cost when the export has `annual_usage`, otherwise on-hand value) and spreads counts over your working days so A items are counted most often. It writes `abc-classes.csv`, blind count sheets (`count-plan.csv`) and a calendar (`count-plan.ics`);
-- reports inventory record accuracy (share of counted lines within tolerance) and value accuracy, overall and by location, counter and ABC class, with the change since your previous count. With approval it drafts `adjustments-draft.csv` for lines within tolerance or confirmed by a recount only. Reason codes come from the person who reviewed them; Fairbooks Cycle Counts does not choose them.
+- reports inventory record accuracy (share of counted lines within tolerance) and value accuracy, overall and by location, counter and ABC class, with the change since your previous count. With approval it drafts `adjustments-draft.csv` for lines within tolerance or confirmed by a recount only. Reason codes come from the person who reviewed them; Fair-Agents Cycle Counts does not choose them.
 
 <!-- sources:start -->
 ## Exports it reads
@@ -57,13 +57,13 @@ fairbooks-cycle-counts demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-cycle-counts -- npx -y fairbooks-cycle-counts@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-cycle-counts -- npx -y fairbooks-cycle-counts@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-cycle-counts": { "command": "npx", "args": ["-y", "fairbooks-cycle-counts@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-cycle-counts": { "command": "npx", "args": ["-y", "fairbooks-cycle-counts@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -78,7 +78,7 @@ claude mcp add fairbooks-cycle-counts -- npx -y fairbooks-cycle-counts@0.2.0 mcp
 | `counts_accuracy` | **allow** | Record and value accuracy by location, counter and class, with change since the last count |
 | `counts_draft_adjustments` | **ask (Auto-eligible)** | Draft `adjustments-draft.csv` + `adjustment.json` (nothing posted) |
 | `counts_request_post` | **ask · one-click** | After a named human approves, record the adjustment (bound to its hash; every line needs a reason code) for whoever posts |
-| `erp_post_adjustment` | **block** | Listed so agents see the refusal. Fairbooks Cycle Counts never writes to an ERP. |
+| `erp_post_adjustment` | **block** | Listed so agents see the refusal. Fair-Agents Cycle Counts never writes to an ERP. |
 
 CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
 
@@ -90,9 +90,9 @@ Any other tool name is blocked. MCP hosts also get the prompt `cycle_count_revie
 - **Assist** (default): the policy above. `ask` returns an `approval_id`; a person approves once with `fairbooks-cycle-counts approve <id> --as "Your Name"`.
 - **Auto** (`--mode auto --auto <tool,...>`): off by default, opt-in per action, with step/spend caps (`--max-steps`, `--max-spend`) and a kill switch (`fairbooks-cycle-counts kill`).
 
-`counts_draft_adjustments` can go on Auto, so Auto only pre-stages. An inventory adjustment changes cost of goods and the books, so Fairbooks Cycle Counts files posting under `move_money` (the same category as ledger postings in other Fairbooks packs): it stays **one-click even in Auto**, and `--auto counts_request_post` is refused. Posting to an ERP stays **blocked**.
+`counts_draft_adjustments` can go on Auto, so Auto only pre-stages. An inventory adjustment changes cost of goods and the books, so Fair-Agents Cycle Counts files posting under `move_money` (the same category as ledger postings in other Fair-Agents packs): it stays **one-click even in Auto**, and `--auto counts_request_post` is refused. Posting to an ERP stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 

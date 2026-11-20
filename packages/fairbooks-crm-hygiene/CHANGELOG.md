@@ -2,6 +2,10 @@
 
 Renamed from `nausicaa-of-hygiene` on 18 Nov 2026 (tool names were `nausicaa_*`, now `crm_*`).
 
+## 0.2.1
+
+- Version bump with the rest of the suite (Fair-Agents brand in the README; no behaviour change in this package).
+
 ## 0.2.0
 
 Fixed (handoff ver 6)

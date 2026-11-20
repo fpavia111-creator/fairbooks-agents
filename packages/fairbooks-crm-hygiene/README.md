@@ -1,12 +1,12 @@
-# Fairbooks CRM Hygiene (`fairbooks-crm-hygiene`)
+# Fair-Agents CRM Hygiene (`fairbooks-crm-hygiene`)
 
 > CRM and contact-list hygiene from exports: bounces, role and disposable addresses, duplicates, stale records and consent flags. Bulk deletes are one human click.
 
-Part of [Fairbooks Machine](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
+Part of [Fair-Agents](https://mythosmachines.com) domain agents: one agent, one process, nothing outside its lane. Built on [`fairbooks-core`](https://www.npmjs.com/package/fairbooks-core). MIT, Node ≥ 20, runs on your machine, no account or API key needed.
 
 ## What it does
 
-Give Fairbooks CRM Hygiene a contact export (`id, email, name, company, last_activity, bounce, consent, consent_date, unsubscribed, status`; names matched loosely) and, optionally, a suppression list. It flags:
+Give Fair-Agents CRM Hygiene a contact export (`id, email, name, company, last_activity, bounce, consent, consent_date, unsubscribed, status`; names matched loosely) and, optionally, a suppression list. It flags:
 - invalid emails and common domain typos (`gmial.com` → `gmail.com`);
 - hard and soft bounces; addresses or domains on your suppression list;
 - role addresses (`info@`, `sales@`, `noreply@`…) and a short list of disposable domains;
@@ -48,7 +48,7 @@ Where a layout says "checked", its column names were compared with the vendor's 
 
 ### Lists from other markets
 
-Consent, status and bounce values are read in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese and Korean: `ja` and `widerrufen`, `oui` and `désabonné`, `はい` and `配信停止`, `동의` and `수신거부`, `ハードバウンス`, `rebote temporal`. Role mailboxes in those languages (`kontakt@`, `ventas@`, `contato@`, `amministrazione@`, romanized `eigyo@`) count as role addresses. These are short word lists; a value Fairbooks CRM Hygiene does not know is left as unknown, never guessed. Nothing here is a statement about any country's consent rules.
+Consent, status and bounce values are read in English, German, French, Spanish, Portuguese, Italian, Japanese, Chinese and Korean: `ja` and `widerrufen`, `oui` and `désabonné`, `はい` and `配信停止`, `동의` and `수신거부`, `ハードバウンス`, `rebote temporal`. Role mailboxes in those languages (`kontakt@`, `ventas@`, `contato@`, `amministrazione@`, romanized `eigyo@`) count as role addresses. These are short word lists; a value Fair-Agents CRM Hygiene does not know is left as unknown, never guessed. Nothing here is a statement about any country's consent rules.
 
 ## Install
 
@@ -62,13 +62,13 @@ fairbooks-crm-hygiene demo        # runs on the bundled fictional sample data
 **Claude Code**
 
 ```bash
-claude mcp add fairbooks-crm-hygiene -- npx -y fairbooks-crm-hygiene@0.2.0 mcp --root /path/to/your/exports
+claude mcp add fairbooks-crm-hygiene -- npx -y fairbooks-crm-hygiene@0.2.1 mcp --root /path/to/your/exports
 ```
 
 **Cursor / Claude Desktop / VS Code / Windsurf**
 
 ```json
-{ "mcpServers": { "fairbooks-crm-hygiene": { "command": "npx", "args": ["-y", "fairbooks-crm-hygiene@0.2.0", "mcp", "--root", "/path/to/your/exports"] } } }
+{ "mcpServers": { "fairbooks-crm-hygiene": { "command": "npx", "args": ["-y", "fairbooks-crm-hygiene@0.2.1", "mcp", "--root", "/path/to/your/exports"] } } }
 ```
 
 `--root` is the only folder the tools can read or write. Paths outside it are refused.
@@ -85,7 +85,7 @@ claude mcp add fairbooks-crm-hygiene -- npx -y fairbooks-crm-hygiene@0.2.0 mcp -
 | `crm_check_mx` | **ask (Auto-eligible)** | Opt-in domain MX check from a saved records file or, with `allow_network:true`, a public DoH resolver; `mx-check.csv` |
 | `crm_write_clean_copy` | **ask (Auto-eligible)** | Write `<name>.clean.csv` with flags and `do_not_email`; every row kept |
 | `crm_request_bulk_delete` | **ask · one-click** | After a named human approves, record a delete list for the CRM admin |
-| `crm_delete_contacts` | **block** | Listed so agents see the refusal. Fairbooks CRM Hygiene never deletes CRM records. |
+| `crm_delete_contacts` | **block** | Listed so agents see the refusal. Fair-Agents CRM Hygiene never deletes CRM records. |
 
 CSV files are written so that a spreadsheet does not run cell text as a formula: a cell that starts with `=`, or with `+`, `-` or `@` in a way a spreadsheet would run as a formula, gets a leading apostrophe. Plain numbers, phone-style values and `@handles` are left as they are. If you import the file somewhere else, such a cell arrives with the apostrophe.
 
@@ -121,7 +121,7 @@ Pass it as `rules`. It is checked against the `hygiene_rules` schema, so a typo 
 
 `crm_write_clean_copy` can go on Auto. Bulk deletes are `delete_personal_data`: they stay **one-click even in Auto**, and `--auto crm_request_bulk_delete` is refused. Deleting in the CRM stays **blocked**.
 
-Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fairbooks pack.
+Go-live, revoking access, deleting personal data, moving money, legally binding sends and production deploys always need a person's click, in every Fair-Agents pack.
 
 ## CLI
 
