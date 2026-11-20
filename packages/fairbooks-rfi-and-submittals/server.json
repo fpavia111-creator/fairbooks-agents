@@ -1,20 +1,20 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.fpavia111-creator/fairbooks-rfi-and-submittals",
-  "title": "Fairbooks RFI and Submittals",
+  "title": "Fair-Agents RFI and Submittals",
   "description": "An MCP agent that reviews a construction RFI and submittal log against your drawing and spec…",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "url": "https://github.com/fpavia111-creator/fairbooks-agents",
     "source": "github",
     "subfolder": "packages/fairbooks-rfi-and-submittals"
   },
-  "websiteUrl": "https://mythosmachines.com/",
+  "websiteUrl": "https://fair-agents.com/",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "fairbooks-rfi-and-submittals",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio"
       },
