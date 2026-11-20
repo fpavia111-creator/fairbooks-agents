@@ -6,7 +6,7 @@ import { sarif } from './sarif.js';
 import { reportMarkdown, actionPlan } from './report.js';
 import { normalizeToolDump, scanTools, pinTools, diffPins, PINS_SCHEMA } from './tools.js';
 import { POLICY_SCHEMA } from './policy.js';
-import { ADVISORIES_SCHEMA, bundledAdvisories } from './advisories.js';
+import { ADVISORIES_SCHEMA } from './advisories.js';
 
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
 const str = { type: 'string' };
@@ -18,7 +18,7 @@ const P = {
   server: { type: 'string', description: 'Server name for a single-server tools dump (default: file name)' },
   pins: { type: 'string', description: 'Pin file written by mcpreview_pin_tools' },
   policy: { type: 'string', description: 'Reviewer policy JSON (schema mcpreview-policy): suppressions with reasons, severity overrides, egress allowlist, ignored paths' },
-  advisories: { type: 'string', description: 'Extra offline advisory list JSON (schema mcpreview-advisories); the bundled snapshot is always used too' },
+  advisories: { type: 'string', description: 'Offline advisory list JSON (schema mcpreview-advisories) to match dependency versions against. None is bundled; without it no NEM-ADVISORY findings are made' },
 };
 const dirOf = (ctx, d) => { const p = ctx.path(d || '.'); if (!statSync(p).isDirectory()) throw new Error(`${d} is not a folder`); return p; };
 
@@ -26,9 +26,8 @@ function load(a, ctx) {
   const policy = a.policy ? ctx.readJson(a.policy, 'mcpreview-policy') : null;
   // A policy's advisories path is relative to the policy file.
   const extra = a.advisories || (policy?.advisories ? join(dirname(a.policy), policy.advisories).split('\\').join('/') : null);
-  const bundled = bundledAdvisories();
-  const advisories = [...bundled.advisories, ...(extra ? ctx.readJson(extra, 'mcpreview-advisories').advisories : [])];
-  return { policy, advisories, advisory_snapshot: bundled.snapshot };
+  const list = extra ? ctx.readJson(extra, 'mcpreview-advisories') : null;
+  return { policy, advisories: list ? list.advisories : [], advisory_snapshot: list ? (list.snapshot || null) : null, advisory_list: extra || null };
 }
 function readTools(a, ctx) {
   const text = ctx.readText(a.tools);

@@ -47,6 +47,6 @@ export function reportMarkdown(result, title, generatedAt) {
     L.push('', '## Suppressed by policy', '', '| Rule | Where | Reason |', '|---|---|---|');
     for (const i of result.suppressed) L.push(`| ${i.id} | ${cell(where(i))} | ${cell(i.suppressed)} |`);
   }
-  L.push('', '## Limits', '', '- Patterns and the one-file data-flow check find places to read; they can miss obfuscated or dynamic code and can flag safe code.', '- The advisory list is a small offline snapshot, not a vulnerability database.', '- This is not a penetration test, a certification or a guarantee.', '');
+  L.push('', '## Limits', '', '- Patterns and the one-file data-flow check find places to read; they can miss obfuscated or dynamic code and can flag safe code.', '- Advisories are matched only against the list you supplied (none is bundled); this is not a vulnerability database.', '- This is not a penetration test, a certification or a guarantee.', '');
   return L.join('\n');
 }

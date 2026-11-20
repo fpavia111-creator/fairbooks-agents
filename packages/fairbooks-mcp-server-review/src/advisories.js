@@ -1,5 +1,4 @@
-// Offline advisory list: a bundled snapshot plus any list the user supplies. No network.
-import { readFileSync } from 'node:fs';
+// Offline advisory list: only the list the user supplies (none is bundled since 0.2.1). No network.
 
 export const ADVISORIES_SCHEMA = {
   type: 'object', additionalProperties: false, required: ['advisories'],
@@ -25,8 +24,13 @@ export const ADVISORIES_SCHEMA = {
   },
 };
 
+/**
+ * Since 0.2.1 no advisory snapshot ships with the package (a dated list goes stale and can
+ * look like a vulnerability database). Advisories come only from the list you pass with
+ * `advisories` (or a policy's `advisories`). Kept so older callers still get a valid, empty list.
+ */
 export function bundledAdvisories() {
-  return JSON.parse(readFileSync(new URL('./data/advisories.json', import.meta.url), 'utf8'));
+  return { snapshot: null, source: 'none bundled: pass your own advisory list (schema mcpreview-advisories)', advisories: [] };
 }
 
 const parts = (v) => {
