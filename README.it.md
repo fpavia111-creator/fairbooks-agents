@@ -1,4 +1,4 @@
-# Fairbooks Machine domain agents
+# Fair-Agents domain agents
 
 > Questa traduzione è stata scritta da Claude e non è ancora stata rivista da madrelingua. In caso di differenze vale il [README in inglese](README.md).
 
@@ -77,14 +77,14 @@ Ogni agente ha una `demo` che gira su file fittizi e un server MCP (`npx -y <age
 
 Gli agenti leggono CSV, TSV, testo separato da punto e virgola o barra verticale, Excel `.xlsx`, JSON e JSONL. Dodici di loro riconoscono 39 esportazioni con nome dalle colonne (Okta, Microsoft Entra ID, Google Workspace, NetSuite, QuickBooks Online, Xero, Stripe, Shopify, Salesforce, Ramp, cinque banche statunitensi e altre). Due di questi formati sono stati verificati sulla documentazione del produttore; gli altri sono stati scritti a partire dalla conoscenza di quelle esportazioni, e nessuno è stato provato su un account reale.
 
-I file dei sistemi italiani si leggono così come escono: nomi di colonna in italiano (`Importo`, `Fornitore`, `Partita IVA`, `Causale`, `Dare`, `Avere`, `Data di scadenza` e altri), file in Windows-1252 o UTF-16, importi come `1.234,56 €`, date come `14/11/2026` o `14 novembre 2026`, ragioni sociali con S.r.l., S.p.A., S.n.c. o S.a.s. Anche gli estratti conto CAMT.053 e MT940 vengono letti. Con `--lang it`, la pagina di approvazione, il report di prontezza di Fairbooks ERP Migration e il riepilogo di ricertificazione e la pagina delle prove di Fairbooks Access Review appaiono in italiano; risultati, codici e file CSV restano in inglese.
+I file dei sistemi italiani si leggono così come escono: nomi di colonna in italiano (`Importo`, `Fornitore`, `Partita IVA`, `Causale`, `Dare`, `Avere`, `Data di scadenza` e altri), file in Windows-1252 o UTF-16, importi come `1.234,56 €`, date come `14/11/2026` o `14 novembre 2026`, ragioni sociali con S.r.l., S.p.A., S.n.c. o S.a.s. Anche gli estratti conto CAMT.053 e MT940 vengono letti. Con `--lang it`, la pagina di approvazione, il report di prontezza di Fair-Agents ERP Migration e il riepilogo di ricertificazione e la pagina delle prove di Fair-Agents Access Review appaiono in italiano; risultati, codici e file CSV restano in inglese.
 
 ## Le regole che ogni agente segue
 
 - Gli strumenti sconosciuti sono bloccati. La decisione predefinita è bloccare.
 - **Auto** è spento per impostazione predefinita e si attiva azione per azione, con limiti di passaggi e di spesa e un arresto di emergenza.
 - Avvio in produzione, revoca degli accessi, cancellazione di dati personali, movimenti di denaro, invii giuridicamente vincolanti e deploy in produzione richiedono sempre il clic di una persona indicata per nome, anche in Auto. Lo stesso vale per cambiare ciò che un agente ricorda.
-- Gli agenti con memoria (Fairbooks ERP Migration e Fairbooks Access Review) usano solo fatti accettati da una persona indicata per nome, dicono quali fatti ha usato ogni risultato e non possono imparare nulla che allenti un controllo.
+- Gli agenti con memoria (Fair-Agents ERP Migration e Fair-Agents Access Review) usano solo fatti accettati da una persona indicata per nome, dicono quali fatti ha usato ogni risultato e non possono imparare nulla che allenti un controllo.
 - Ogni decisione finisce in un log di audit JSONL concatenato tramite hash, firmato se fornite una chiave.
 - Il testo dei vostri file è trattato come dato. Formule dei fogli di calcolo, HTML grezzo e `../` negli identificativi vengono neutralizzati in uscita, e un risultato che cita un testo rivolto a un modello di IA ("ignore previous instructions") viene segnalato. La segnalazione è un'euristica, non un filtro.
 
